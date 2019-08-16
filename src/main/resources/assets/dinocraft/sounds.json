@@ -1,0 +1,62 @@
+{
+	"grab": {
+		"category": "entity",
+		"subtitle": "item.grab",
+		"sounds": [ { "name": "dinocraft:grab", "stream": true } ]
+	},
+	"charm_used": {
+		"category": "random",
+		"subtitle": "charm_used",
+		"sounds": [ { "name": "dinocraft:charm_used", "stream": true } ]
+	},
+	"harp": {
+		"category": "random",
+		"subtitle": "harp",
+		"sounds": [ { "name": "dinocraft:harp", "stream": true } ]
+	},
+	"crunch": {
+		"category": "random",
+		"subtitle": "crunch",
+		"sounds": [ { "name": "dinocraft:crunch", "stream": true } ]
+	},
+	"shot": {
+		"category": "random",
+		"subtitle": "shot",
+		"sounds": [ { "name": "dinocraft:shot", "stream": true } ]
+	},
+	"shot_gun_shot": {
+		"category": "random",
+		"subtitle": "shot_gun_shot",
+		"sounds": [ { "name": "dinocraft:shot_gun_shot", "stream": true } ]
+	},
+	"ray_gun_shot": {
+		"category": "random",
+		"subtitle": "ray_gun_shot",
+		"sounds": [ { "name": "dinocraft:ray_gun_shot", "stream": true } ]
+	},
+	"gun_shot": {
+		"category": "random",
+		"subtitle": "gun_shot",
+		"sounds": [ { "name": "dinocraft:gun_shot", "stream": true } ]
+	},
+	"hit": {
+		"category": "random",
+		"subtitle": "hit",
+		"sounds": [ { "name": "dinocraft:hit", "stream": true } ]
+	},
+	"crack": {
+		"category": "random",
+		"subtitle": "crack",
+		"sounds": [ { "name": "dinocraft:crack", "stream": true } ]
+	},
+	"boing": {
+		"category": "random",
+		"subtitle": "boing",
+		"sounds": [ { "name": "dinocraft:boing", "stream": true } ]
+	},
+	"seed_shot": {
+		"category": "random",
+		"subtitle": "seed_shot",
+		"sounds": [ { "name": "dinocraft:seed_shot", "stream": true } ]
+	}
+}

@@ -1,0 +1,130 @@
+tile.pebbles_block.name=Pebbles Block
+tile.flobber_ore.name=Flobber Ore
+tile.sheeplite_ore.name=Sheeplite Ore
+tile.chlorophyte_ore.name=Chlorophyte Ore
+tile.ranium_ore.name=Ranium Ore
+tile.pebble_block.name=Pebble Block
+tile.pebble_bricks.name=Pebble Bricks
+tile.cracked_pebble_bricks.name=Cracked Pebble Bricks
+tile.pebbeloneum_ore.name=Pebbeloneum Ore
+
+item.pebbeloneum.name=Pebbeloneum
+
+item.chlorophyte_ingot.name=Chlorophyte Ingot
+item.chlorophyte_pickaxe.name=Chlorophyte Pickaxe
+item.chlorophyte_hoe.name=Chlorophyte Hoe
+item.chlorophyte_shovel.name=Chlorophyte Shovel
+item.chlorophyte_sword.name=Chlorophyte Sword
+item.chlorophyte_helmet.name=Chlorophyte Helmet
+item.chlorophyte_chestplate.name=Chlorophyte Chestplate
+item.chlorophyte_leggings.name=Chlorophyte Leggings
+item.chlorophyte_boots.name=Chlorophyte Boots
+
+item.sheeplite_ingot.name=Sheeplite Ingot
+item.sheeplite_sword.name=Sheeplite Sword
+item.sheeplite_helmet.name=Sheeplite Helmet
+item.sheeplite_chestplate.name=Sheeplite Chestplate
+item.sheeplite_leggings.name=Sheeplite Leggings
+item.sheeplite_boots.name=Sheeplite Boots
+
+item.heart.name=Heart
+item.tuskerers_sword.name=Tuskerer's Sword
+item.tuskerers_charm.name=Tuskerer's Charm
+item.tuskerers_gem.name=Tuskerer's Gem
+item.tusk.name=Tusk
+
+item.ranium.name=Ranium
+item.ranium_helmet.name=Ranium Helmet
+item.ranium_chestplate.name=Ranium Chestplate
+item.ranium_leggings.name=Ranium Leggings
+item.ranium_boots.name=Ranium Boots
+
+item.umbrella_hat.name=Umbrella Hat
+item.cloud_chestplate.name=Cloud Chestplate
+item.leafy_boots.name=Leafy Boots
+item.katana.name=Katana
+item.tuskerers_old_rags.name=Tuskerer's Old Rags
+
+item.blevent_ingot.name=Blevent Ingot
+item.blevent_boots.name=Blevent Boots
+
+item.potatoshroom_pie.name=Potatoshroom Pie
+item.fruit_pie.name=Fruit Pie
+item.chunky_flesh.name=Chunky Flesh
+
+item.pebbles.name=Pebbles
+item.cracked_pebbles.name=Cracked Pebbles
+item.leaf.name=Leaf
+item.leaferang.name=Leaferang
+item.soul_scratcher.name=Soul Scratcher
+
+item.flobber_ingot.name=Flobber Ingot
+item.flobber_pickaxe.name=Flobber Pickaxe
+item.flobber_hoe.name=Flobber Hoe
+item.flobber_shovel.name=Flobber Shovel
+item.flobber_sword.name=Flobber Sword
+item.flobber_axe.name=Flobber Axe
+
+item.vine_ball_bundle.name=Vine Ball Bundle
+item.vine_ball.name=Vine Ball
+item.slingshot.name=Slingshot
+item.ray_bullet.name=Ray Bullet
+
+item.dino_hammer.name=Dino Hammer
+item.smoken_sword.name=Smoken Sword
+item.ray_gun.name=Ray Gun
+item.seed.name=Seed
+item.seed_pipe.name=Seed Pipe
+
+dinocraft.umbrella_hat.tooltip=Weeeeeeee!
+dinocraft.tuskerers_charm.tooltip=Increase your maximum health when... very... weak...
+dinocraft.soul_scratcher.tooltip=Hit mobs to obtain their junk
+dinocraft.tuskerers_sword.tooltip=Hearty saviours
+dinocraft.leafy_boots.tooltip=Made skillfully from pure leaves...
+dinocraft.blevent_boots.tooltip=Very deadly...
+dinocraft.sheeplite_sword.tooltip=Random knockback, higher altitudes!
+
+itemGroup.dinocraftblocks=Dinocraft Blocks
+itemGroup.dinocraftitems=Dinocraft Items
+itemGroup.dinocraftcombat=Dinocraft Combat
+itemGroup.dinocraftmaterials=Dinocraft Materials
+itemGroup.dinocrafttools=Dinocraft Tools
+
+commands.maxhealth.success=Set %s's max health to %d
+commands.maxhealth.failure.level=Cannot set the player's max health to 0 or a negative number
+commands.maxhealth.usage=/maxhealth <amount> [player]
+commands.health.success=Set %s's health to %d
+commands.health.usage=/health <amount> [player]
+commands.feed.success=Fed %s
+commands.feed.usage=/feed [player]
+commands.heal.success=Healed %s
+commands.heal.usage=/heal [entity]
+commands.boing.success=Bounced %s to the sky!
+commands.boing.usage=/boing [player]
+commands.asServer.usage=/asServer <command> [args] ...
+commands.break.success=Broke %s
+commands.break.failure=Cannot find a block to break
+commands.jump.success=Jumped to block
+commands.jump.failure=Cannot find a block to jump to
+commands.ping.usage=/ping [player]
+commands.fly.usage=/fly [player]
+commands.fly.success.on=Turned %s flight for %d
+commands.fly.success.off=Turned %s flight for %d
+commands.kaboom.success.allPlayers=Kaboomed all players
+commands.kaboom.success.player=Kaboomed %s
+commands.kaboom.usage=/kaboom [entity]
+commands.god.usage=/god <time> [player]
+commands.god.failure.time=Cannot set the time to 0 or a negative number
+commands.god.success=Made %s a god for %d seconds
+commands.more.usage=/more <amount> [player] [item]
+commands.more.failure.noitem=Item '%s' not found
+commands.more.failure.empty=No item found
+commands.more.failure.amount=The amount you entered (%s) is too high, it must be at most %d
+commands.more.success.increase=Increased %1$s's stack size by %2$s for %3$s
+commands.more.success.decrease=Decreased %1$s's stack size by %2$s for %3$s
+commands.strike.usage=/strike [entity]
+commands.strike.success=Struck %s
+commands.strike.failure=Cannot find an entity or block to strike
+
+
+
