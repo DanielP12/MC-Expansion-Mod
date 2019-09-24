@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemRayBullet extends Item
 {
-	public ItemRayBullet(String unlocalizedName)
+	public ItemRayBullet(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

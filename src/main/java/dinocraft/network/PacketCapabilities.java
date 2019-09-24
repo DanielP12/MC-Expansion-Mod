@@ -1,7 +1,7 @@
 package dinocraft.network;
 
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.capabilities.player.DinocraftPlayerActions;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.capabilities.entity.DinocraftEntityActions;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 
@@ -21,6 +21,11 @@ public class PacketCapabilities extends AbstractPacket<PacketCapabilities>
 		this.capability = capability;
 		this.state = state;
 	}
+	
+	public PacketCapabilities(Capability capability)
+	{
+		this.capability = capability;
+	}
 
 	@Override
 	public void fromBytes(ByteBuf buffer)
@@ -38,26 +43,26 @@ public class PacketCapabilities extends AbstractPacket<PacketCapabilities>
 
 	public enum Capability
 	{
-		DOUBLE_JUMPED, DOUBLE_JUMP, FALL_DAMAGE
+		DOUBLE_JUMPED, DOUBLE_JUMP, FALL_DAMAGE, FALL_DISTANCE, REDUCTION
 	}
 
 	@Override
-	public void handleClientSide(PacketCapabilities message, EntityPlayer playerIn) 
+	public void handleClientSide(PacketCapabilities message, EntityPlayer player) 
 	{
 		
 	}
 
 	@Override
-	public void handleServerSide(PacketCapabilities message, EntityPlayer playerIn) 
+	public void handleServerSide(PacketCapabilities message, EntityPlayer player) 
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-		DinocraftPlayerActions actions = player.getActions();
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+		DinocraftEntityActions actions = dinoEntity.getActionsModule();
 		
 		if (player != null)
 		{
 			if (message.capability == Capability.FALL_DAMAGE)
 			{
-				player.setFallDamage(message.state);
+				dinoEntity.setFallDamage(message.state);
 			}
 			else if (message.capability == Capability.DOUBLE_JUMP)
 			{
@@ -66,6 +71,14 @@ public class PacketCapabilities extends AbstractPacket<PacketCapabilities>
 			else if (message.capability == Capability.DOUBLE_JUMPED)
 			{
 				actions.setHasDoubleJumped(message.state);
+			}
+			else if (message.capability == Capability.FALL_DISTANCE)
+			{
+				player.fallDistance = 0.0F;
+			}
+			else if (message.capability == Capability.REDUCTION)
+			{
+				dinoEntity.setFallDamageReductionAmount(4.0F);
 			}
 		}
 	}

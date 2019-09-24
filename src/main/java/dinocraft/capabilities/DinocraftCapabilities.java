@@ -1,13 +1,13 @@
 package dinocraft.capabilities;
 
-import org.jline.utils.Log;
-
 import dinocraft.Reference;
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.capabilities.player.DinocraftPlayerProvider;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.capabilities.entity.DinocraftEntityProvider;
+import dinocraft.capabilities.entity.IDinocraftEntity;
 import dinocraft.capabilities.player.IDinocraftPlayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -19,17 +19,27 @@ public class DinocraftCapabilities
 {
 	@CapabilityInject(IDinocraftPlayer.class)
 	public static final Capability<IDinocraftPlayer> DINOCRAFT_PLAYER = null;
+	@CapabilityInject(IDinocraftEntity.class)
+	public static final Capability<IDinocraftEntity> DINOCRAFT_ENTITY = null;
 
 	public static void registerCapabilities()
 	{
 		MinecraftForge.EVENT_BUS.register(DinocraftCapabilities.class);
-		CapabilityManager.INSTANCE.register(IDinocraftPlayer.class, new DinocraftPlayer.Storage(), DinocraftPlayer.class);
+		//CapabilityManager.INSTANCE.register(IDinocraftPlayer.class, new DinocraftPlayer.Storage(), DinocraftPlayer.class);
+		CapabilityManager.INSTANCE.register(IDinocraftEntity.class, new DinocraftEntity.Storage(), DinocraftEntity.class);
 	}
 	
 	@SubscribeEvent
-	public static void onEntityLoad(final AttachCapabilitiesEvent<Entity> event)
+	public static void onAttachCapabilities(AttachCapabilitiesEvent<Entity> event)
 	{
-		if (event.getObject() == null) return;
-		if (event.getObject() instanceof EntityPlayer) event.addCapability(Reference.getResource("DinocraftPlayer"), new DinocraftPlayerProvider(new DinocraftPlayer((EntityPlayer) event.getObject())));
+		if (event.getObject() == null)
+		{
+			return;
+		}
+		
+		if (event.getObject() instanceof EntityLivingBase)
+		{
+			event.addCapability(new ResourceLocation(Reference.MODID, "DinocraftEntity"), new DinocraftEntityProvider(new DinocraftEntity((EntityLivingBase) event.getObject())));
+		}
 	}
 }

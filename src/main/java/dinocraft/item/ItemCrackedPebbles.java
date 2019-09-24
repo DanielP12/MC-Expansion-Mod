@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemCrackedPebbles extends Item
 {
-	public ItemCrackedPebbles(String unlocalizedName, String registryName) 
+	public ItemCrackedPebbles(String name) 
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

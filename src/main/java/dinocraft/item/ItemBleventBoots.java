@@ -3,32 +3,106 @@ package dinocraft.item;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.collect.Lists;
+
 import dinocraft.Reference;
-import dinocraft.util.DinocraftServer;
-import dinocraft.util.Utils;
-import net.minecraft.client.util.ITooltipFlag;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.network.NetworkHandler;
+import dinocraft.network.PacketCapabilities;
+import dinocraft.network.PacketCapabilities.Capability;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ItemBleventBoots extends ItemArmor
 {
-    public ItemBleventBoots(ArmorMaterial materialIn, int renderIndexIn, EntityEquipmentSlot equipmentSlotIn, String unlocalizedName)
+    public ItemBleventBoots(ArmorMaterial material, int renderIndex, EntityEquipmentSlot equipmentSlot, String name)
     {
-        super (materialIn, renderIndexIn, equipmentSlotIn);
-        this.setUnlocalizedName(unlocalizedName);
-        this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+        super(material, renderIndex, equipmentSlot);
+        this.setUnlocalizedName(name);
+        this.setRegistryName(new ResourceLocation(Reference.MODID, name));
         this.setMaxDamage(200);
+        
+		MinecraftForge.EVENT_BUS.register(this);
     }
-  /*
+    
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onLivingFall(LivingFallEvent event)
+    {
+    	EntityLivingBase entityliving = event.getEntityLiving();
+
+    	if (entityliving instanceof EntityPlayer && entityliving.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == this && entityliving.isSneaking() && entityliving.fallDistance >= 4.0F)
+    	{
+    		EntityPlayer player = (EntityPlayer) entityliving;
+    		List<Entity> entities = Lists.newArrayList(player.world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().grow(1.5D, 1.5D, 1.5D)));
+    		Random rand = player.world.rand;
+    		entityliving.getItemStackFromSlot(EntityEquipmentSlot.FEET).attemptDamageItem(1, rand, null);
+    		
+			if (!player.world.isRemote) 
+			{
+				player.world.playSound(null, player.getPosition(), SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.PLAYERS, 1.0F, 0.25F);
+			}
+			
+			for (Entity entity : entities) 
+			{
+				if (!player.world.isRemote) entity.attackEntityFrom(DamageSource.causePlayerDamage(player), 20.0F);
+					
+				for (int i = 0; i < 100; ++i)
+				{
+					player.world.spawnParticle(EnumParticleTypes.BLOCK_CRACK,
+							  entity.posX + (rand.nextDouble() - 0.5D) * entity.width, 
+							  entity.posY + rand.nextDouble() - entity.getYOffset() + 0.25D, 
+							  entity.posZ + (rand.nextDouble() - 0.5D) * entity.width, 
+							  Math.random() * 0.2D - 0.1D, Math.random() * 0.25D, Math.random() * 0.2D - 0.1D, 
+							  Block.getIdFromBlock(Blocks.REDSTONE_BLOCK)
+						   );  
+					player.world.spawnParticle(EnumParticleTypes.CRIT,
+							  entity.posX + (rand.nextDouble() - 0.5D) * entity.width, 
+							  entity.posY + rand.nextDouble() - entity.getYOffset() + 0.25D, 
+							  entity.posZ + (rand.nextDouble() - 0.5D) * entity.width, 
+							  Math.random() * 0.2D - 0.1D, Math.random() * 0.25D, Math.random() * 0.2D - 0.1D, 
+							  0
+						   ); 
+				}
+			}
+    	}
+    }
+    
+    @Override
+    public void onArmorTick(World world, EntityPlayer player, ItemStack stack)
+    {
+    	if (player.isSneaking() && world.isRemote && player.motionY < 0.0D && !player.isCreative() && !player.capabilities.isFlying && !player.isInWater() && !player.isOnLadder() && !player.isInLava() && player.isAirBorne)
+    	{
+    		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+    		
+    		if (!dinoEntity.hasReducedFallDamage())
+    		{
+    			dinoEntity.setFallDamageReductionAmount(4.0F);
+    			NetworkHandler.sendToServer(new PacketCapabilities(Capability.REDUCTION));
+    		}
+    		
+    		player.motionY = player.motionY - 0.25D;
+    	}
+    	
+    	super.onArmorTick(world, player, stack);
+    }
+    
+    /*
     private int int1, int2, int3;
  
 	@Override
@@ -128,7 +202,7 @@ public class ItemBleventBoots extends ItemArmor
     	}
     } */
 	
-    
+    /*
     private boolean doubleJumped;
     
     private boolean cooldown;
@@ -220,4 +294,5 @@ public class ItemBleventBoots extends ItemArmor
         tooltip.add(TextFormatting.DARK_GRAY + Utils.getLang().localize("blevent_boots.tooltip"));
     	super.addInformation(stack, worldIn, tooltip, flagIn);
     }
+    */
 }

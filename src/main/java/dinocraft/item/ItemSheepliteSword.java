@@ -1,15 +1,11 @@
 package dinocraft.item;
 
 import java.util.List;
-import java.util.Random;
 
 import dinocraft.Reference;
 import dinocraft.util.Utils;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.enchantment.Enchantment;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.util.ResourceLocation;
@@ -21,51 +17,58 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemSheepliteSword extends ItemSword 
 {
-	public ItemSheepliteSword(ToolMaterial material, String unlocalizedName) 
+	public ItemSheepliteSword(ToolMaterial material, String name) 
 	{
 		super(material);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
-	/** Special Effect: Random Launch */
 	@Override
 	public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker) 
 	{		
 		if (target.hurtTime == target.maxHurtTime && target.deathTime <= 0)
 		{
-			Random random = new Random();
 			Vec3d vector = attacker.getLookVec().normalize();
 	        target.motionX = vector.x;
-	        target.motionY = vector.y + random.nextDouble();
+	        target.motionY = vector.y + target.world.rand.nextDouble();
 	        target.motionZ = vector.z;	
 		}
+		
 		return super.hitEntity(stack, target, attacker);
 	}
 	
 	/*
 	@Override
-    public boolean hitEntity(ItemStack i, EntityLivingBase t, EntityLivingBase a) {
-       	if (t.hurtTime == t.maxHurtTime && t.deathTime <= 0) {
-       	    double d = t.posX - a.posX;
+    public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker) 
+    {
+       	if (target.hurtTime == target.maxHurtTime && target.deathTime <= 0) 
+       	{
+       	    double d = target.posX - attacker.posX;
 		    double d1;
-	    	for (d1 = t.posZ - a.posZ; d * d + d1 * d1 < 0.0001D; d1 = (Math.random() - Math.random()) * 0.01D) {
+	    	
+	    	for (d1 = target.posZ - attacker.posZ; d * d + d1 * d1 < 0.0001D; d1 = (Math.random() - Math.random()) * 0.01D)
+	    	{
 	    		d = (Math.random() - Math.random()) * 0.01D;
     		}
-    		t.isAirBorne = true;
+    		
+    		target.isAirBorne = true;
     		float f = MathHelper.sqrt_double(d * d + d1 * d1);
         	float f1 = 0.4F;
-    	    t.motionX /= 2D;
-        	t.motionY /= 2D;
-        	t.motionZ /= 2D;
-        	t.motionX += (d / (double)f) * (double)f1 * 2;
-	    	t.motionY += 0.40000000596046448D;
-	    	t.motionZ += (d1 / (double)f) * (double)f1 * 2;
-	    	if (t.motionY > 0.40000000596046448D) {
-		    	t.motionY = 0.40000000596046448D;
+    	    target.motionX /= 2D;
+        	target.motionY /= 2D;
+        	target.motionZ /= 2D;
+        	target.motionX += (d / (double) f) * (double) f1 * 2;
+	    	target.motionY += 0.40000000596046448D;
+	    	target.motionZ += (d1 / (double) f) * (double) f1 * 2;
+	    	
+	    	if (target.motionY > 0.40000000596046448D)
+	    	 {
+		    	target.motionY = 0.40000000596046448D;
 		    }
        	}
-        return super.hitEntity(i, t, a);
+       	
+        return super.hitEntity(stack, target, attacker);
 	} */
 	
     @SideOnly(Side.CLIENT)

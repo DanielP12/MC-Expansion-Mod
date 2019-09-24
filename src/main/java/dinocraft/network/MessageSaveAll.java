@@ -4,13 +4,11 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.IProgressUpdate;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.MinecraftException;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class MessageSaveAll extends AbstractPacket<MessageSaveAll> 
 {	
@@ -27,15 +25,15 @@ public class MessageSaveAll extends AbstractPacket<MessageSaveAll>
     }
 
 	@Override
-	public void handleClientSide(MessageSaveAll message, EntityPlayer playerIn) 
+	public void handleClientSide(MessageSaveAll message, EntityPlayer player) 
 	{
 
 	}
 
 	@Override
-	public void handleServerSide(MessageSaveAll message, EntityPlayer playerIn) 
+	public void handleServerSide(MessageSaveAll message, EntityPlayer player) 
 	{
-		MinecraftServer server = playerIn.world.getMinecraftServer();
+		MinecraftServer server = player.world.getMinecraftServer();
 		PlayerList list = server.getPlayerList();
 		
 		if (list != null)

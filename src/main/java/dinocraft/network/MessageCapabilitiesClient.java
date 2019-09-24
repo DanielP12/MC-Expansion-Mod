@@ -1,14 +1,13 @@
 package dinocraft.network;
 
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.capabilities.player.DinocraftPlayerActions;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.capabilities.entity.DinocraftEntityActions;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 
 public class MessageCapabilitiesClient extends AbstractPacket<MessageCapabilitiesClient> 
 {
 	private Capability capability;
-	
 	private boolean state;
 	
 	public MessageCapabilitiesClient()
@@ -21,18 +20,6 @@ public class MessageCapabilitiesClient extends AbstractPacket<MessageCapabilitie
 		this.capability = capability;
 		this.state = state;
 	}
-	
-	public MessageCapabilitiesClient(Capability capability)
-	{
-		this.capability = capability;
-	}
-
-	@Override
-	public void fromBytes(ByteBuf buffer)
-	{
-        this.state = buffer.readBoolean();
-		this.capability = Capability.values()[buffer.readByte()];
-	}
 
 	@Override
 	public void toBytes(ByteBuf buffer)
@@ -40,27 +27,34 @@ public class MessageCapabilitiesClient extends AbstractPacket<MessageCapabilitie
         buffer.writeBoolean(this.state);
 		buffer.writeByte(this.capability.ordinal());
 	}
+	
+	@Override
+	public void fromBytes(ByteBuf buffer)
+	{
+        this.state = buffer.readBoolean();
+		this.capability = Capability.values()[buffer.readByte()];
+	}
 
 	public enum Capability
 	{
-		DOUBLE_JUMPED, DOUBLE_JUMP, FALL_DAMAGE, INVULNERABLE
+		DOUBLE_JUMPED, DOUBLE_JUMP, FALL_DAMAGE, INVULNERABLE, SPEED, VANISH
 	}
 
 	@Override
-	public void handleClientSide(MessageCapabilitiesClient message, EntityPlayer playerIn) 
+	public void handleClientSide(MessageCapabilitiesClient message, EntityPlayer player) 
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-		DinocraftPlayerActions actions = player.getActions();
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+		DinocraftEntityActions actions = dinoEntity.getActionsModule();
 		
 		if (player != null)
 		{
 			if (message.capability == Capability.FALL_DAMAGE)
 			{
-				player.setFallDamage(message.state);
+				dinoEntity.setFallDamage(message.state);
 			}
 			else if (message.capability == Capability.INVULNERABLE)
 			{
-				player.setInvulnerable(100);
+				dinoEntity.setInvulnerable(100);
 			}
 			else if (message.capability == Capability.DOUBLE_JUMP)
 			{
@@ -70,13 +64,27 @@ public class MessageCapabilitiesClient extends AbstractPacket<MessageCapabilitie
 			{
 				actions.setHasDoubleJumped(message.state);
 			}
+			else if (message.capability == Capability.SPEED)
+			{
+				if (message.state)
+				{
+					dinoEntity.freeze();
+				}
+				else
+				{
+					dinoEntity.unFreeze();
+				}
+			}
+			else if (message.capability == Capability.VANISH)
+			{
+				dinoEntity.vanish();
+			}
 		}
 	}
 
 	@Override
-	public void handleServerSide(MessageCapabilitiesClient message, EntityPlayer playerIn) 
+	public void handleServerSide(MessageCapabilitiesClient message, EntityPlayer player) 
 	{
 		
 	}
 }
-

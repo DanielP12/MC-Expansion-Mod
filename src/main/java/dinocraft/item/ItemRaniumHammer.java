@@ -15,7 +15,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttribute;
-import net.minecraft.entity.item.EntityFallingBlock;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
@@ -27,7 +26,6 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -40,11 +38,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemRaniumHammer extends ItemSword
 {
-	public ItemRaniumHammer(ToolMaterial material, String unlocalizedName)
+	public ItemRaniumHammer(ToolMaterial material, String name)
 	{
 		super(material);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 		
 		MinecraftForge.EVENT_BUS.register(this);
 	}
@@ -53,7 +51,11 @@ public class ItemRaniumHammer extends ItemSword
     public Multimap<String, AttributeModifier> getAttributeModifiers(EntityEquipmentSlot slot, ItemStack stack)
 	{
         final Multimap<String, AttributeModifier> modifiers = super.getAttributeModifiers(slot, stack);
-        if (slot == EntityEquipmentSlot.MAINHAND) replaceModifier(modifiers, SharedMonsterAttributes.ATTACK_SPEED, ATTACK_SPEED_MODIFIER, 1.5 /* find a number that will make the attack speed relatively slow */);
+        
+        if (slot == EntityEquipmentSlot.MAINHAND)
+        {
+        	this.replaceModifier(modifiers, SharedMonsterAttributes.ATTACK_SPEED, ATTACK_SPEED_MODIFIER, 1.5 /* find a number that will make the attack speed relatively slow */);
+        }
         
         return modifiers;
     }
@@ -75,7 +77,10 @@ public class ItemRaniumHammer extends ItemSword
 	@SubscribeEvent
 	public void onItemTooltip(ItemTooltipEvent event)
 	{
-		if (event.getItemStack().getItem() == this) event.getToolTip().add(TextFormatting.GRAY + " +1 Block Reach");
+		if (event.getItemStack().getItem() == this)
+		{
+			event.getToolTip().add(TextFormatting.GRAY + " +1 Block Reach");
+		}
 	}
 	
 	@SubscribeEvent
@@ -84,45 +89,35 @@ public class ItemRaniumHammer extends ItemSword
 		if (event.getItemStack() != null && event.getItemStack().getItem() != null)
 		{
 			Item item = event.getItemStack().getItem();
-			EntityPlayer playerIn = event.getEntityPlayer();
+			EntityPlayer player = event.getEntityPlayer();
 
-			if (item == this && !playerIn.getCooldownTracker().hasCooldown(this))
+			if (item == this && !player.getCooldownTracker().hasCooldown(this))
 			{
-				World worldIn = playerIn.world;
+				World world = player.world;
 				Random rand = new Random();
-				List<Entity> list = Lists.newArrayList(worldIn.getEntitiesWithinAABBExcludingEntity(playerIn, playerIn.getEntityBoundingBox().expand(5, 5, 5)));
-				playerIn.addVelocity(0.0D, 0.55D, 0.0D);
+				List<Entity> entities = Lists.newArrayList(world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().expand(5, 5, 5)));
+				player.addVelocity(0.0D, 0.55D, 0.0D);
 
-    			if (!worldIn.isRemote) 
+    			if (!world.isRemote) 
     			{
-    				worldIn.playSound((EntityPlayer) null, playerIn.getPosition(), SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.PLAYERS, 1.0F, 0.5F);
-    				playerIn.getCooldownTracker().setCooldown(this, 100);
+    				world.playSound((EntityPlayer) null, player.getPosition(), SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.PLAYERS, 1.0F, 0.5F);
+    				player.getCooldownTracker().setCooldown(this, 100);
     			}
     			
-    			for (int i = 0; i < rand.nextInt(10) + 5; ++i)
+    			for (Entity entity : entities) 
     			{
-    				EntityFallingBlock block =  new EntityFallingBlock(playerIn.world, playerIn.posX, playerIn.posY, playerIn.posZ, playerIn.world.getBlockState(playerIn.getPosition().down()));
-    				BlockPos pos = playerIn.getPosition();
-    				block.setPositionAndUpdate(pos.getX(), pos.getY() + 0.25D, pos.getZ());
-    				block.fallTime = 100;
-    				block.setVelocity(rand.nextDouble() - 0.5, rand.nextDouble(), rand.nextDouble() - 0.5);
-    				worldIn.spawnEntity(block);
-    			}
-    			
-    			for (Entity entity : list) 
-    			{
-    				if (!worldIn.isRemote) entity.attackEntityFrom(DamageSource.GENERIC, rand.nextInt(8) + 1);
+    				if (!world.isRemote) entity.attackEntityFrom(DamageSource.GENERIC, rand.nextInt(8) + 1);
     					
     				for (int i = 0; i < 100; ++i)
 					{
-						worldIn.spawnParticle(EnumParticleTypes.BLOCK_CRACK,
+						world.spawnParticle(EnumParticleTypes.BLOCK_CRACK,
 								  entity.posX + (rand.nextDouble() - 0.5D) * (double)entity.width, 
 								  entity.posY + rand.nextDouble() - (double)entity.getYOffset() + 0.25D, 
 								  entity.posZ + (rand.nextDouble() - 0.5D) * (double)entity.width, 
 								  Math.random() * 0.2D - 0.1D, Math.random() * 0.25D, Math.random() * 0.2D - 0.1D, 
 								  Block.getIdFromBlock(Blocks.REDSTONE_BLOCK)
 							   );  
-						worldIn.spawnParticle(EnumParticleTypes.CRIT,
+						world.spawnParticle(EnumParticleTypes.CRIT,
 								  entity.posX + (rand.nextDouble() - 0.5D) * (double)entity.width, 
 								  entity.posY + rand.nextDouble() - (double)entity.getYOffset() + 0.25D, 
 								  entity.posZ + (rand.nextDouble() - 0.5D) * (double)entity.width, 
@@ -131,7 +126,7 @@ public class ItemRaniumHammer extends ItemSword
 							   ); 
 					}
 					
-					Vec3d vector = playerIn.getLookVec().normalize();
+					Vec3d vector = player.getLookVec().normalize();
 					entity.addVelocity(0.0D, 1.5D, 0.0D);
     				entity.motionX -= vector.x;
         			entity.motionZ -= vector.z;

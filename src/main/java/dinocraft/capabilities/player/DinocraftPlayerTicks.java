@@ -1,3 +1,4 @@
+/*
 package dinocraft.capabilities.player;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -9,9 +10,9 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		super(player);
 	}
 		
-	private int regenerationTicks = 0;
-	private double regenerationLoopTicks = 0.0D;
-	private float heartsRegenerate = 0.0F;
+	protected int regenerationTicks = 0;
+	protected double regenerationLoopTicks = 0.0D;
+	protected float heartsRegenerate = 0.0F;
 		
 	protected int getRegenerationTicks()
 	{
@@ -43,7 +44,7 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.heartsRegenerate = heartsRegenerate;
 	}
 	
-	private int regenerationCount = 0;
+	protected int regenerationCount = 0;
 	
 	protected int getRegenerationCount()
 	{
@@ -55,16 +56,16 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.regenerationCount = count;
 	}
 	
-	private int degenerationTicks = 0;
-	private int degenerationLoopTicks = 0;
-	private float heartsDegenerate = 0.0F;
+	protected int degenerationTicks = 0;
+	protected double degenerationLoopTicks = 0.0D;
+	protected float heartsDegenerate = 0.0F;
 		
 	protected int getDegenerationTicks()
 	{
 		return this.degenerationTicks;
 	}
 	
-	protected int getDegenerationLoopTicks()
+	protected double getDegenerationLoopTicks()
 	{
 		return this.degenerationLoopTicks;
 	}
@@ -79,7 +80,7 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.degenerationTicks = degenerationTicks;
 	}
 	
-	protected void setDegenerationLoopTicks(int degenerationLoopTicks)
+	protected void setDegenerationLoopTicks(double degenerationLoopTicks)
 	{
 		this.degenerationLoopTicks = degenerationLoopTicks;
 	}
@@ -89,7 +90,7 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.heartsDegenerate = heartsDegenerate;
 	}
 	
-	private int degenerationCount = 0;
+	protected int degenerationCount = 0;
 	
 	protected int getDegenerationCount()
 	{
@@ -101,7 +102,7 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.degenerationCount = count;
 	}
 	
-    private int ticksInvulnerable;
+	protected int ticksInvulnerable;
 	
 	protected int getTicksInvulnerable()
 	{
@@ -123,7 +124,7 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		tag.setInteger("Regeneration Count", this.regenerationCount);
 		tag.setFloat("Regeneration Hearts", this.heartsRegenerate);
 		tag.setInteger("Ticks Invulnerable", this.ticksInvulnerable);
-		tag.setInteger("Degeneration Loop Ticks", this.degenerationLoopTicks);
+		tag.setDouble("Degeneration Loop Ticks", this.degenerationLoopTicks);
 		tag.setInteger("Degeneration Ticks", this.degenerationTicks);
 		tag.setInteger("Degeneration Count", this.degenerationCount);
 		tag.setFloat("Degeneration Hearts", this.heartsDegenerate);
@@ -139,8 +140,9 @@ public class DinocraftPlayerTicks extends DinocraftPlayerModule
 		this.heartsRegenerate = root.getFloat("Regeneration Hearts");
 		this.ticksInvulnerable = root.getInteger("Ticks Invulnerable");
 		this.degenerationTicks = root.getInteger("Degeneration Ticks");
-		this.degenerationLoopTicks = root.getInteger("Degeneration Loop Ticks");
+		this.degenerationLoopTicks = root.getDouble("Degeneration Loop Ticks");
 		this.degenerationCount = root.getInteger("Degeneration Count");
 		this.heartsDegenerate = root.getFloat("Degeneration Hearts");
 	}
 }
+*/

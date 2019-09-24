@@ -2,13 +2,11 @@ package dinocraft.network;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-
 
 public abstract class ParticleDoublePacket<REQ extends IMessage> extends AbstractPacket<REQ>
 {
-
     protected double x, y, z;
 
     public ParticleDoublePacket()
@@ -26,26 +24,26 @@ public abstract class ParticleDoublePacket<REQ extends IMessage> extends Abstrac
     @Override
     public void toBytes(ByteBuf buffer)
     {
-    	buffer.writeDouble(x);
-    	buffer.writeDouble(y);
-    	buffer.writeDouble(z);
+    	buffer.writeDouble(this.x);
+    	buffer.writeDouble(this.y);
+    	buffer.writeDouble(this.z);
     }
 
     @Override
     public void fromBytes(ByteBuf buffer)
     {
-        x = buffer.readDouble();
-        y = buffer.readDouble();
-        z = buffer.readDouble();
+    	this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
     }
 
-    public NetworkRegistry.TargetPoint getTargetPoint(World worldIn)
+    public TargetPoint getTargetPoint(World world)
     {
-        return getTargetPoint(worldIn, 64);
+        return this.getTargetPoint(world, 400.0D);
     }
 
-    public NetworkRegistry.TargetPoint getTargetPoint(World worldIn, double updateDistance)
+    public TargetPoint getTargetPoint(World world, double updateDistance)
     {
-        return new NetworkRegistry.TargetPoint(worldIn.provider.getDimension(), x, y, z, updateDistance);
+        return new TargetPoint(world.provider.getDimension(), x, y, z, updateDistance);
     }
 }

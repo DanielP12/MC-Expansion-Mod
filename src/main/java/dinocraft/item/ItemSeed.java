@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemSeed extends Item
 {
-	public ItemSeed(String unlocalizedName)
+	public ItemSeed(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

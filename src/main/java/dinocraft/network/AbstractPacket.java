@@ -10,11 +10,11 @@ import net.minecraftforge.fml.relauncher.Side;
 public abstract class AbstractPacket<REQ extends IMessage> implements IMessage, IMessageHandler<REQ, REQ>
 {
     @Override
-    public REQ onMessage(REQ message, MessageContext ctx)
+    public REQ onMessage(REQ message, MessageContext context)
     {
-        if (ctx.side == Side.SERVER)
+        if (context.side == Side.SERVER)
         {
-            this.handleServerSide(message, ctx.getServerHandler().player);
+            this.handleServerSide(message, context.getServerHandler().player);
         } 
         else
         {
@@ -24,7 +24,7 @@ public abstract class AbstractPacket<REQ extends IMessage> implements IMessage, 
         return null;
     }
 
-    public abstract void handleClientSide(REQ message, EntityPlayer playerIn);
+    public abstract void handleClientSide(REQ message, EntityPlayer player);
 
-    public abstract void handleServerSide(REQ message, EntityPlayer playerIn);
+    public abstract void handleServerSide(REQ message, EntityPlayer player);
 }

@@ -3,7 +3,10 @@ package dinocraft.item;
 import java.util.List;
 
 import dinocraft.Reference;
-import dinocraft.capabilities.player.DinocraftPlayer;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.network.NetworkHandler;
+import dinocraft.network.PacketCapabilities;
+import dinocraft.network.PacketCapabilities.Capability;
 import dinocraft.util.DinocraftServer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
@@ -21,24 +24,30 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemCloudChestplate extends ItemArmor
 {
-	public ItemCloudChestplate(ArmorMaterial materialIn, int renderIndexIn, EntityEquipmentSlot equipmentSlotIn, String unlocalizedName)
+	public ItemCloudChestplate(ArmorMaterial material, int renderIndex, EntityEquipmentSlot equipmentSlot, String name)
 	{
-        super (materialIn, renderIndexIn, equipmentSlotIn);
-        this.setUnlocalizedName(unlocalizedName);
-        this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+        super(material, renderIndex, equipmentSlot);
+        this.setUnlocalizedName(name);
+        this.setRegistryName(new ResourceLocation(Reference.MODID, name));
         this.setMaxDamage(600);        
     }
-
-	/** Cloud Jump */
+	
 	@Override
-	public void onArmorTick(World worldIn, EntityPlayer playerIn, ItemStack stack) 
+	public void onArmorTick(World world, EntityPlayer player, ItemStack stack) 
 	{
-		if (worldIn.isRemote && DinocraftPlayer.getPlayer(playerIn).isJumping() && playerIn.motionY < 0.38D)
+		if (world.isRemote && DinocraftEntity.getEntity(player).isJumping() && player.motionY < 0.33D)
 		{
-			if (playerIn.motionY <= 0.0D) DinocraftServer.spawnCloudParticles();		
-			playerIn.motionY *= playerIn.motionY > 0.0D ? 1.2D : 0.75D;
-			playerIn.fallDistance = 0.0F;
-			DinocraftServer.cancelPlayerFallDamage();
+			if (player.motionY <= 0.0D && player.ticksExisted % 3 == 0)
+			{
+				for (int i = 0; i < 2; ++i)
+				{
+					DinocraftServer.spawnCloudParticles();
+				}				
+			}
+			
+			player.motionY *= player.motionY > 0.0D ? 1.25D : 0.75D;
+			player.fallDistance = 0.0F;
+			NetworkHandler.sendToServer(new PacketCapabilities(Capability.FALL_DISTANCE));
 		}
 	}
 	
@@ -50,7 +59,7 @@ public class ItemCloudChestplate extends ItemArmor
         
         if (GameSettings.isKeyDown(shift))
         {
-        	tooltip.add(TextFormatting.GRAY + "Cloud Jump I");
+        	tooltip.add(TextFormatting.GRAY + "Cloud Jump");
             tooltip.add(TextFormatting.GRAY + "Durability: " + (stack.getMaxDamage() - stack.getItemDamage()) +  " / " + stack.getMaxDamage());
         }
         else tooltip.add(TextFormatting.GRAY + "Press " + TextFormatting.DARK_GRAY + "[SHIFT] " + TextFormatting.GRAY + "for more!");

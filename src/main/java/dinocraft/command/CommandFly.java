@@ -3,9 +3,9 @@ package dinocraft.command;
 import java.util.Collections;
 import java.util.List;
 
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.network.CapFly;
+import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.network.NetworkHandler;
+import dinocraft.network.PacketFly;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -13,9 +13,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
 
+/**
+ * Toggles fly on or off for specified player.
+ * <br><br>
+ * <b> Copyright © Danfinite 2019 </b>
+ */
 public class CommandFly extends CommandBase
 {
 	@Override
@@ -31,34 +34,34 @@ public class CommandFly extends CommandBase
 	}
 	
 	@Override
-    public int getRequiredPermissionLevel()
-    {
-        return 4;
-    }
+	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
+	{		
+		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(3) : true;
+	}
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
 	{
-		EntityPlayer playerIn = args.length > 0 ? getPlayer(server, sender, args[0]) : getCommandSenderAsPlayer(sender);            
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-        EntityPlayerMP playerMP = (EntityPlayerMP) playerIn;
+		EntityPlayer player = args.length > 0 ? getPlayer(server, sender, args[0]) : getCommandSenderAsPlayer(sender);            
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+        EntityPlayerMP playerMP = (EntityPlayerMP) player;
 
-        if (!player.canFly())
+        if (!dinoEntity.canFly())
         {
-        	player.sendChatMessage(TextFormatting.GREEN + "Turned on flight!");
-			player.setAllowFlight(true);
-            notifyCommandListener(sender, this, "commands.fly.success.on", new Object[] {"on".toString(), playerIn.getName()});
-        	NetworkHandler.sendTo(new CapFly(true), playerMP);
-			player.setFlight(true);
+        	//dinoEntity.sendChatMessage(TextFormatting.GREEN + "Turned on flight!");
+        	dinoEntity.setAllowFlight(true);
+            notifyCommandListener(sender, this, "commands.fly.success", new Object[] {"on", player.getName()});
+        	NetworkHandler.sendTo(new PacketFly(true), playerMP);
+        	dinoEntity.setFlight(true);
         }
         else
         {
-        	player.sendChatMessage(TextFormatting.RED + "Turned off flight!");
-			player.setAllowFlight(false);
-            notifyCommandListener(sender, this, "commands.fly.success.off", new Object[] {"off".toString(), playerIn.getName()});
-        	NetworkHandler.sendTo(new CapFly(false), playerMP);
-			player.setFlight(false);
-			DinocraftPlayer.getPlayer(playerIn).setFallDamage(false);
+        	//dinoEntity.sendChatMessage(TextFormatting.RED + "Turned off flight!");
+        	dinoEntity.setAllowFlight(false);
+            notifyCommandListener(sender, this, "commands.fly.success", new Object[] {"off", player.getName()});
+        	NetworkHandler.sendTo(new PacketFly(false), playerMP);
+        	dinoEntity.setFlight(false);
+			dinoEntity.setFallDamage(false);
         }
 	}
 
@@ -67,7 +70,7 @@ public class CommandFly extends CommandBase
 	{
         return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.<String>emptyList();
 	}
-
+	
 	@Override
 	public boolean isUsernameIndex(String[] args, int index) 
 	{

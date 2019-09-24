@@ -2,8 +2,9 @@ package dinocraft.entity;
 
 import javax.annotation.Nonnull;
 
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.init.DinocraftEntities;
 import dinocraft.init.DinocraftItems;
-import dinocraft.init.DinocraftTools;
 import dinocraft.util.VectorHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
@@ -25,7 +26,9 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
@@ -39,14 +42,19 @@ public class EntityLeaferang extends EntityThrowable
 	private boolean bounced = false;
 	private ItemStack stack = ItemStack.EMPTY;
 
+	public ResourceLocation getTexture()
+	{
+		return DinocraftEntities.LEAFERANG_TEXTURE;
+	}
+	
 	public EntityLeaferang(World world) 
 	{
 		super(world);
 	}
 
-	public EntityLeaferang(World world, EntityLivingBase e, ItemStack stack)
+	public EntityLeaferang(World world, EntityLivingBase entity, ItemStack stack)
 	{
-		super(world, e);
+		super(world, entity);
 		this.stack = stack.copy();
 	}
 
@@ -54,9 +62,9 @@ public class EntityLeaferang extends EntityThrowable
 	protected void entityInit() 
 	{
 		super.entityInit();
-		dataManager.register(BOUNCES, 0);
-		dataManager.register(FLARE, false);
-		dataManager.register(RETURN_TO, -1);
+		this.dataManager.register(BOUNCES, 0);
+		this.dataManager.register(FLARE, false);
+		this.dataManager.register(RETURN_TO, -1);
 	}
 
 	@Override
@@ -70,129 +78,161 @@ public class EntityLeaferang extends EntityThrowable
 	@Override
 	public void onUpdate() 
 	{
-		// Standard motion
-		double mx = motionX;
-		double my = motionY;
-		double mz = motionZ;
+		double mx = this.motionX;
+		double my = this.motionY;
+		double mz = this.motionZ;
 
 		super.onUpdate();
 
-		if (!bounced)
+		if (!this.bounced)
 		{
-			// Reset the drag applied by super
-			motionX = mx;
-			motionY = my;
-			motionZ = mz;
+			this.motionX = mx;
+			this.motionY = my;
+			this.motionZ = mz;
 		}
 
-		bounced = false;
+		this.bounced = false;
 
-		// Returning motion
-		if (isReturning())
+		if (this.isReturning())
 		{
-			Entity thrower = getThrower();
+			Entity thrower = this.getThrower();
 			
 			if (thrower != null) 
 			{
 				VectorHelper motion = VectorHelper.fromEntityCenter(thrower).subtract(VectorHelper.fromEntityCenter(this)).normalize();
-				motionX = motion.x;
-				motionY = motion.y;
-				motionZ = motion.z;
+				this.motionX = motion.x;
+				this.motionY = motion.y;
+				this.motionZ = motion.z;
 			}
 		}
 
-		// Client FX
-		if (world.isRemote)
+		if (this.world.isRemote)
 		{
-			if (isFire() || isBurning()) 
+			if (this.isFire() || this.isBurning()) 
 			{
 				double r = 0.1;
 				double m = 0.1;
 			
-				for (int i = 0; i < 3; i++)
+				for (int i = 0; i < 3; ++i)
 				{
-					world.spawnParticle(EnumParticleTypes.FLAME, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.LEAF));
-					world.spawnParticle(EnumParticleTypes.FLAME, posX + r * (Math.random() - 0.5), posY + r * (Math.random() - 0.5), posZ + r * (Math.random() - 0.5), m * (Math.random() - 0.5), m * (Math.random() - 0.5), m * (Math.random() - 0.5));
+					this.world.spawnParticle(EnumParticleTypes.FLAME, true, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.LEAF));
+					this.world.spawnParticle(EnumParticleTypes.FLAME, true, this.posX + r * (Math.random() - 0.5), this.posY + r * (Math.random() - 0.5), this.posZ + r * (Math.random() - 0.5), m * (Math.random() - 0.5), m * (Math.random() - 0.5), m * (Math.random() - 0.5));
 				}
 			}
 			else
-			for (int i = 0; i < 4; ++i)
 			{
-				world.spawnParticle(EnumParticleTypes.ITEM_CRACK, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.LEAF));
+				for (int i = 0; i < 4; ++i)
+				{
+					this.world.spawnParticle(EnumParticleTypes.ITEM_CRACK, true, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.LEAF));
+				}
 			}
 			
-			++tick;
+			++this.tick;
 		}
 		
-		if (tick % 3 == 0)
+		if (this.tick % 3 == 0)
 		{
-			tick = 0;
-			world.playSound(this.posX, this.posY, this.posZ, SoundEvents.BLOCK_GRASS_BREAK, SoundCategory.NEUTRAL, 0.25F, 0.25F, false);
+			this.tick = 0;
+			this.world.playSound(this.posX, this.posY, this.posZ, SoundEvents.BLOCK_GRASS_BREAK, SoundCategory.NEUTRAL, 0.25F, 0.25F, false);
 		}
 		
-		// Server state control
-		if (!world.isRemote && (getTimesBounced() >= MAX_BOUNCES || ticksExisted > 60))
+		if (!this.world.isRemote && (this.getTimesBounced() >= MAX_BOUNCES || this.ticksExisted > 60))
 		{
-			EntityLivingBase thrower = getThrower();
+			EntityLivingBase thrower = this.getThrower();
 			
-			if (thrower == null) dropAndKill();
+			if (thrower == null)
+			{
+				this.dropAndKill();
+			}
 			else 
 			{
-				setEntityToReturnTo(thrower.getEntityId());
+				this.setEntityToReturnTo(thrower.getEntityId());
 				
-				if (getDistanceSq(thrower) < 2) dropAndKill();
+				if (this.getDistanceSq(thrower) < 2)
+				{
+					this.dropAndKill();
+				}
 			}
 		}
 	}
 
 	private void dropAndKill() 
 	{
-		ItemStack stack = getItemStack();
-		EntityItem item = new EntityItem(world, posX, posY, posZ, stack);
-		world.spawnEntity(item);
-		setDead();
+		if (this.thrower instanceof EntityPlayer)
+		{
+			if (!((EntityPlayer) this.thrower).isCreative())
+			{
+				this.world.spawnEntity(new EntityItem(this.world, this.posX, this.posY, this.posZ, this.getItemStack()));
+			}
+		}
+		else if (this.thrower != null)
+		{
+			if (!this.thrower.getHeldItemMainhand().isEmpty())
+			{
+				ItemStack stack = this.thrower.getHeldItemMainhand();
+				
+				if (stack.getItem() != DinocraftItems.LEAFERANG)
+				{
+					this.thrower.dropItem(stack.getItem(), stack.getCount());
+				}
+			}
+			
+			DinocraftEntity.getEntity(this.thrower).setShootingTick(10);
+			this.thrower.setHeldItem(EnumHand.MAIN_HAND, this.getItemStack());
+		}
+		
+		this.setDead();
 	}
 
 	private ItemStack getItemStack() 
 	{
-		return !stack.isEmpty() ? stack.copy() : new ItemStack(DinocraftTools.LEAFERANG, 1, isFire() ? 1 : 0);
+		return !this.stack.isEmpty() ? this.stack.copy() : new ItemStack(DinocraftItems.LEAFERANG, 1, isFire() ? 1 : 0);
 	}
 
 	@Override
-	protected void onImpact(@Nonnull RayTraceResult pos) 
+	protected void onImpact(@Nonnull RayTraceResult result) 
 	{
-		if (isReturning()) return;
+		if (this.isReturning())
+		{
+			return;
+		}
 
-		switch (pos.typeOfHit) 
+		switch (result.typeOfHit) 
 		{
 			case BLOCK: 
 			{
-				Block block = world.getBlockState(pos.getBlockPos()).getBlock();
+				Block block = this.world.getBlockState(result.getBlockPos()).getBlock();
 				
-				if (block instanceof BlockBush || block instanceof BlockReed || block instanceof BlockVine) return;
+				if (block instanceof BlockBush || block instanceof BlockReed || block instanceof BlockVine)
+				{
+					return;
+				}
 
-				int bounces = getTimesBounced();
+				int bounces = this.getTimesBounced();
 				
 				if (bounces < MAX_BOUNCES)
 				{
 					for (int i = 0; i < 15; ++i)
 					{
-						world.spawnParticle(EnumParticleTypes.BLOCK_CRACK, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Block.getIdFromBlock(block));
+						this.world.spawnParticle(EnumParticleTypes.BLOCK_CRACK, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Block.getIdFromBlock(block));
 					}
 					
-					world.playSound(this.posX, this.posY, this.posZ, SoundEvents.ENTITY_PLAYER_SMALL_FALL, SoundCategory.NEUTRAL, 1.0F, 0.25F, false);
+					this.world.playSound(this.posX, this.posY, this.posZ, SoundEvents.ENTITY_PLAYER_SMALL_FALL, SoundCategory.NEUTRAL, 1.0F, 0.25F, false);
 
-					VectorHelper currentMovementVec = new VectorHelper(motionX, motionY, motionZ);
-					EnumFacing dir = pos.sideHit;
-					VectorHelper normalVector = new VectorHelper(dir.getFrontOffsetX(), dir.getFrontOffsetY(), dir.getFrontOffsetZ()).normalize();
-					VectorHelper movementVec = normalVector.multiply(-2 * currentMovementVec.dotProduct(normalVector)).add(currentMovementVec);
+					VectorHelper currentMovementVector = new VectorHelper(this.motionX, this.motionY, this.motionZ);
+					EnumFacing direction = result.sideHit;
+					VectorHelper normalVector = new VectorHelper(direction.getFrontOffsetX(), direction.getFrontOffsetY(), direction.getFrontOffsetZ()).normalize();
+					VectorHelper movementVector = normalVector.multiply(-2 * currentMovementVector.dotProduct(normalVector)).add(currentMovementVector);
 
-					motionX = movementVec.x;
-					motionY = movementVec.y;
-					motionZ = movementVec.z;
-					bounced = true;
+					this.motionX = movementVector.x;
+					this.motionY = movementVector.y;
+					this.motionZ = movementVector.z;
+					this.bounced = true;
 
-					if (!world.isRemote) setTimesBounced(getTimesBounced() + 1);
+					if (!this.world.isRemote)
+					{
+						this.setTimesBounced(this.getTimesBounced() + 1);
+					}
 				}
 
 				break;
@@ -200,21 +240,30 @@ public class EntityLeaferang extends EntityThrowable
 			
 			case ENTITY: 
 			{
-				if (!world.isRemote && pos.entityHit != null && pos.entityHit instanceof EntityLivingBase && pos.entityHit != getThrower())
+				if (!this.world.isRemote && result.entityHit != null && result.entityHit instanceof EntityLivingBase && result.entityHit != this.getThrower())
 				{
-					EntityLivingBase thrower = getThrower();
-					pos.entityHit.attackEntityFrom(thrower != null ? thrower instanceof EntityPlayer ? DamageSource.causeThrownDamage(this, thrower) : DamageSource.causeMobDamage(thrower) : DamageSource.GENERIC, (isFire() || isBurning()) ? 7 : 6);
+					EntityLivingBase thrower = this.getThrower();
+					result.entityHit.attackEntityFrom(thrower != null ? thrower instanceof EntityPlayer ? DamageSource.causeThrownDamage(this, thrower) : DamageSource.causeMobDamage(thrower) : DamageSource.GENERIC, (this.isFire() || this.isBurning()) ? 7 : 6);
 				
-					if (isFire() || isBurning()) pos.entityHit.setFire(10);
-					else if (world.rand.nextInt(3) == 0) ((EntityLivingBase) pos.entityHit).addPotionEffect(new PotionEffect(MobEffects.POISON, 100, 0));
+					if (this.isFire() || this.isBurning())
+					{
+						result.entityHit.setFire(10);
+					}
+					else if (this.world.rand.nextInt(3) == 0)
+					{
+						((EntityLivingBase) result.entityHit).addPotionEffect(new PotionEffect(MobEffects.POISON, 100, 0));
+					}
 										
-					if (thrower == null) dropAndKill();
+					if (thrower == null)
+					{
+						this.dropAndKill();
+					}
 					else 
 					{
-						setTimesBounced(16);
-						setEntityToReturnTo(thrower.getEntityId());
+						this.setTimesBounced(16);
+						this.setEntityToReturnTo(thrower.getEntityId());
 
-						if (getDistanceSq(thrower) < 2) dropAndKill();
+						if (this.getDistanceSq(thrower) < 2) this.dropAndKill();
 					}
 				}
 
@@ -271,9 +320,12 @@ public class EntityLeaferang extends EntityThrowable
 	{
 		super.writeEntityToNBT(compound);
 		
-		if(!stack.isEmpty()) compound.setTag("fly_stack", stack.writeToNBT(new NBTTagCompound()));
+		if (!this.stack.isEmpty())
+		{
+			compound.setTag("fly_stack", this.stack.writeToNBT(new NBTTagCompound()));
+		}
 		
-		compound.setBoolean("flare", isFire());
+		compound.setBoolean("flare", this.isFire());
 	}
 
 	@Override
@@ -281,9 +333,11 @@ public class EntityLeaferang extends EntityThrowable
 	{
 		super.readEntityFromNBT(compound);
 		
-		if(compound.hasKey("fly_stack")) stack = new ItemStack(compound.getCompoundTag("fly_stack"));
+		if (compound.hasKey("fly_stack"))
+		{
+			this.stack = new ItemStack(compound.getCompoundTag("fly_stack"));
+		}
 		
 		setFire(compound.getBoolean("flare"));
 	}
-
 }

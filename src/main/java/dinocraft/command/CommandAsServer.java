@@ -3,14 +3,20 @@ package dinocraft.command;
 import java.util.Collections;
 import java.util.List;
 
+import dinocraft.capabilities.entity.DinocraftEntity;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.item.Item;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
+/**
+ * Runs a command as the server.
+ * <br><br>
+ * <b> Copyright © Danfinite 2019 </b>
+ */
 public class CommandAsServer extends CommandBase
 {
 	@Override
@@ -19,7 +25,6 @@ public class CommandAsServer extends CommandBase
 		return "asServer";
 	}
 
-	
 	@Override
 	public String getUsage(ICommandSender sender) 
 	{
@@ -27,15 +32,18 @@ public class CommandAsServer extends CommandBase
 	}
 	
 	@Override
-    public int getRequiredPermissionLevel()
-    {
-        return 4;
-    }
+	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
+	{		
+		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(4) : true;
+	}
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
 	{
-		if (args.length <= 0) throw new WrongUsageException("commands.asServer.usage", new Object[0]);
+		if (args.length <= 0)
+		{
+			throw new WrongUsageException("commands.asServer.usage", new Object[0]);
+		}
 		else
 		{
 			server.getCommandManager().executeCommand(server, args[0] + (args.length >= 2 ? " " + args[1] : "") 
@@ -51,11 +59,5 @@ public class CommandAsServer extends CommandBase
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) 
 	{
 		return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.commandManager.getTabCompletions(sender, args[0], pos)) : Collections.<String>emptyList();
-	}
-	
-	@Override
-	public boolean isUsernameIndex(String[] args, int index) 
-	{
-        return index == 1;
 	}
 }

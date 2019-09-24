@@ -1,3 +1,4 @@
+/*
 package dinocraft.capabilities.player;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -8,17 +9,9 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 	{
 		super(player);
 	}
-
-	public float speed;
 	
-	public void setSpeed(float speed)
-	{
-		this.speed = speed;
-	}
-	
-	/* Double Jump */
-	private boolean hasDoubleJumped;
-    private boolean doubleJump;
+	protected boolean hasDoubleJumped;
+	protected boolean doubleJump;
                 
 	public boolean hasDoubleJumped()
 	{
@@ -40,8 +33,7 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		this.doubleJump = flag;
 	}
 	
-	/* Long Jump */
-    private boolean longJump;
+	protected boolean longJump;
     
 	public boolean canLongJumpAgain()
 	{
@@ -53,7 +45,7 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		this.longJump = flag;
 	}
 	
-	private boolean extraMaxHealth;
+	protected boolean extraMaxHealth;
 	
 	public boolean hasExtraMaxHealth()
 	{
@@ -65,7 +57,19 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		this.extraMaxHealth = flag;
 	}
 	
-	private int chlorophyteTick = 0;
+	protected boolean extraMaxHealth2;
+	
+	public boolean hasExtraMaxHealth2()
+	{
+		return this.extraMaxHealth2;
+	}
+	
+	public void setHasExtraMaxHealth2(boolean flag)
+	{
+		this.extraMaxHealth2 = flag;
+	}
+	
+	protected int chlorophyteTick = 0;
 	
 	public int getChlorophyteTick() 
 	{
@@ -77,7 +81,7 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		this.chlorophyteTick = chlorophyteTick;
 	}
 	
-	private float chlorophyteAbsorptionAmount = 0.0F;
+	protected float chlorophyteAbsorptionAmount = 0.0F;
 	
 	public float getChlorophyteAbsorptionAmount() 
 	{
@@ -98,6 +102,7 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		tag.setBoolean("hasDoubleJumped", this.hasDoubleJumped);
 		tag.setBoolean("jumpCooldown", this.longJump);
 		tag.setBoolean("extraMaxHealth", this.extraMaxHealth);
+		tag.setBoolean("extraMaxHealth2", this.extraMaxHealth2);
 		tag.setInteger("chlorophyteTick", this.chlorophyteTick);
 		tag.setFloat("chlorophyteAbsorptionAmount", this.chlorophyteAbsorptionAmount);
 	}
@@ -110,7 +115,9 @@ public class DinocraftPlayerActions extends DinocraftPlayerModule
 		this.hasDoubleJumped = root.getBoolean("hasDoubleJumped");
 		this.longJump = root.getBoolean("jumpCooldown");
 		this.extraMaxHealth = root.getBoolean("extraMaxHealth");
+		this.extraMaxHealth2 = root.getBoolean("extraMaxHealth2");
 		this.chlorophyteTick = root.getInteger("chlorophyteTick");
 		this.chlorophyteAbsorptionAmount = root.getFloat("chlorophyteAbsorptionAmount");
 	}
 }
+*/

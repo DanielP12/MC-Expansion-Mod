@@ -1,14 +1,10 @@
 package dinocraft.item;
 
-import java.util.Random;
-import java.util.function.Predicate;
-
 import dinocraft.Reference;
-import dinocraft.capabilities.player.DinocraftPlayer;
+import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.entity.EntityRayBullet;
-import dinocraft.handlers.DinocraftSoundEvents;
 import dinocraft.init.DinocraftItems;
-import dinocraft.util.PlayerHelper;
+import dinocraft.init.DinocraftSoundEvents;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
@@ -24,58 +20,54 @@ import net.minecraft.world.World;
 
 public class ItemRayGun extends Item
 {
-	private static final Predicate<ItemStack> RAY_BULLET = s -> s != null && s.getItem().equals(DinocraftItems.RAY_BULLET);
-
-	public ItemRayGun(String unlocalizedName)
+	public ItemRayGun(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
+		this.setUnlocalizedName(name);
 		this.setMaxStackSize(1);
 		this.setMaxDamage(1000);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
-
+	
 	@Override
-	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand)
 	{
-		ItemStack stack = playerIn.getHeldItem(handIn);
+		ItemStack stack = player.getHeldItem(hand);
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 		
-		if (!worldIn.isRemote)
+		if (stack != null && (player.isCreative() || dinoEntity.hasAmmo(DinocraftItems.RAY_BULLET)))
 		{
-			if (stack != null && (playerIn.isCreative() || PlayerHelper.hasAmmo(playerIn, RAY_BULLET)))
+			if (!player.isCreative())
 			{
-				if (!playerIn.isCreative())
-				{
-					PlayerHelper.consumeAmmo((EntityPlayer) playerIn, RAY_BULLET);
-					stack.damageItem(1, playerIn);
-				}
-			
-				playerIn.setActiveHand(handIn);
-				playerIn.getCooldownTracker().getCooldown(this, 5);
-				EntityRayBullet ball = new EntityRayBullet(playerIn, 0.001F);
-				ball.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 10.0F, 0.0F);
-				Vec3d vector = playerIn.getForward();
-                double x2 = vector.x;
-                double y2 = vector.y;
-                double z2 = vector.z;
-                ball.setVelocity(x2 * 3, y2 * 3, z2 * 3);
-				worldIn.spawnEntity(ball);
-				
-				Random rand = worldIn.rand;
-				float j = rand.nextFloat() + 0.5F;
-			
-				worldIn.playSound((EntityPlayer) null, playerIn.getPosition(), DinocraftSoundEvents.RAY_GUN_SHOT, SoundCategory.NEUTRAL, 5F, j);
-				return ActionResult.newResult(EnumActionResult.SUCCESS, stack);
+				dinoEntity.consumeAmmo(DinocraftItems.RAY_BULLET, 1);
+				stack.damageItem(1, player);
 			}
-		
-			if (!PlayerHelper.hasAmmo(playerIn, RAY_BULLET))
+			
+			if (!world.isRemote)
 			{
-				DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-				player.sendActionbarMessage(TextFormatting.RED + "Out of ammo!");
-				worldIn.playSound((EntityPlayer) null, playerIn.getPosition(), SoundEvents.BLOCK_DISPENSER_DISPENSE, SoundCategory.PLAYERS, 0.5F, 5.0F);
-				
-				return ActionResult.newResult(EnumActionResult.FAIL, stack);
+				player.setActiveHand(hand);
+				EntityRayBullet ball = new EntityRayBullet(player, 0.001F);
+				ball.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 5.0F, 1.0F);
+				Vec3d vector = player.getLookVec();
+				double x2 = vector.x;
+				double y2 = vector.y;
+            	double z2 = vector.z;
+            	ball.motionX = x2 * 3;
+            	ball.motionY = y2 * 3;
+            	ball.motionZ = z2 * 3;
+            	ball.setPositionAndUpdate(player.posX - (x2 * 0.75D), player.posY + player.eyeHeight, player.posZ - (z2 * 0.75D));
+            	world.spawnEntity(ball);
+            	world.playSound(null, player.getPosition(), DinocraftSoundEvents.RAY_GUN_SHOT, SoundCategory.NEUTRAL, 3.0F, world.rand.nextFloat() + 0.5F);
 			}
+            
+			DinocraftEntity.getEntity(player).recoil(0.1F, 1.0F, true);
+			
+			return ActionResult.newResult(EnumActionResult.SUCCESS, stack);
+		}
 		
+		if (!dinoEntity.hasAmmo(DinocraftItems.RAY_BULLET) && !world.isRemote)
+		{
+			DinocraftEntity.getEntity(player).sendActionbarMessage(TextFormatting.RED + "Out of ammo!");
+			world.playSound(null, player.getPosition(), SoundEvents.BLOCK_DISPENSER_DISPENSE, SoundCategory.NEUTRAL, 0.5F, 5.0F);
 			return ActionResult.newResult(EnumActionResult.FAIL, stack);
 		}
 		

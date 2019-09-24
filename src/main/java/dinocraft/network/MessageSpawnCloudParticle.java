@@ -23,29 +23,26 @@ public class MessageSpawnCloudParticle extends AbstractPacket<MessageSpawnCloudP
 	}
 
 	@Override
-	public void handleClientSide(MessageSpawnCloudParticle message, EntityPlayer playerIn)
+	public void handleClientSide(MessageSpawnCloudParticle message, EntityPlayer player)
 	{
 		
 	}
 
 	@Override
-	public void handleServerSide(MessageSpawnCloudParticle message, EntityPlayer playerIn)
+	public void handleServerSide(MessageSpawnCloudParticle message, EntityPlayer player)
 	{
-		Random random = new Random();
-		DinocraftServer.spawnParticle(EnumParticleTypes.CLOUD,
-				playerIn.world,
-				playerIn.posX + (random.nextDouble() - 0.5D) * (double) playerIn.width,
-				playerIn.posY + random.nextDouble() - (double) playerIn.getYOffset() - 1D,
-				playerIn.posZ + (random.nextDouble() - 0.5D) * (double) playerIn.width,
-				0, 0, 0, 1
+		Random rand = new Random();
+		DinocraftServer.spawnParticle(EnumParticleTypes.CLOUD, true, player.world,
+				player.posX + (rand.nextDouble() - 0.5D) * player.width,
+				player.posY + rand.nextDouble() - player.getYOffset() - 1.0D,
+				player.posZ + (rand.nextDouble() - 0.5D) * player.width,
+				0.0D, 0.0D, 0.0D, 1
 			);
-        DinocraftServer.spawnParticle(EnumParticleTypes.CLOUD,
-        		playerIn.world,
-        		playerIn.posX + (random.nextDouble() - 1D) * (double) playerIn.width,
-        		playerIn.posY + random.nextDouble() - (double) playerIn.getYOffset() - 1D,
-        		playerIn.posZ + (random.nextDouble() - 1D) * (double) playerIn.width,
-        		0, 0, 0, 1
+        DinocraftServer.spawnParticle(EnumParticleTypes.CLOUD, true, player.world,
+        		player.posX + (rand.nextDouble() - 1.0D) * player.width,
+        		player.posY + rand.nextDouble() - player.getYOffset() - 1.0D,
+        		player.posZ + (rand.nextDouble() - 1.0D) * player.width,
+        		0.0D, 0.0D, 0.0D, 1
         	);
 	}
 }
-

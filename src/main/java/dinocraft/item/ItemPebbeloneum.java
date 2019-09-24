@@ -3,33 +3,28 @@ package dinocraft.item;
 import java.util.List;
 import java.util.Random;
 
-import org.jline.utils.Log;
-
 import dinocraft.Reference;
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.handlers.DinocraftSoundEvents;
+import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.init.DinocraftItems;
-import net.minecraft.entity.item.EntityItem;
+import dinocraft.init.DinocraftSoundEvents;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public class ItemPebbeloneum extends Item 
 {
-	public ItemPebbeloneum(String unlocalizedName, String registryName) 
+	public ItemPebbeloneum(String name) 
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 		this.setMaxStackSize(1);
 	}
 	
@@ -107,12 +102,11 @@ public class ItemPebbeloneum extends Item
 	}
 	*/
 	@Override
-	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand)
 	{
 		List<Item> items = ForgeRegistries.ITEMS.getValues();
 		Item item = items.get(rand.nextInt(items.size()));
-		
-		ItemStack stack = playerIn.getHeldItem(handIn);
+		ItemStack stack = player.getHeldItem(hand);
 		
 		if (item != Items.NETHER_STAR && item != Item.getItemFromBlock(Blocks.END_PORTAL)
 				&& item != Item.getItemFromBlock(Blocks.DRAGON_EGG) && item != Item.getItemFromBlock(Blocks.END_PORTAL_FRAME)
@@ -120,13 +114,12 @@ public class ItemPebbeloneum extends Item
 				&& item != Item.getItemFromBlock(Blocks.MOB_SPAWNER) && item != Item.getItemFromBlock(Blocks.BARRIER)
 				&& item != Items.AIR && item != Item.getItemFromBlock(Blocks.STRUCTURE_VOID) && item != Item.getItemFromBlock(Blocks.STRUCTURE_BLOCK)
 				&& item != DinocraftItems.SEED && item != DinocraftItems.HEART && item != Item.getItemFromBlock(Blocks.COMMAND_BLOCK)
-				&& item != Item.getItemFromBlock(Blocks.CHAIN_COMMAND_BLOCK) && item != Item.getItemFromBlock(Blocks.REPEATING_COMMAND_BLOCK)) //Check for unacceptable overpowered items that should NEVER come out
+				&& item != Item.getItemFromBlock(Blocks.CHAIN_COMMAND_BLOCK) && item != Item.getItemFromBlock(Blocks.REPEATING_COMMAND_BLOCK)
+				&& item != Items.COMMAND_BLOCK_MINECART)
 		{
-			DinocraftPlayer.getPlayer(playerIn).addStack(item, 1);
-			
+			DinocraftEntity.getEntity(player).addStack(item, 1);
 			stack.shrink(1);
-			playerIn.playSound(DinocraftSoundEvents.CRACK, 1.0F, rand.nextFloat());
-
+			player.playSound(DinocraftSoundEvents.CRACK, 1.0F, rand.nextFloat());
 			return ActionResult.newResult(EnumActionResult.SUCCESS, stack);
 		}
 		

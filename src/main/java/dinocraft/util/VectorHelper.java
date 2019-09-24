@@ -19,206 +19,226 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class VectorHelper
 {
-	public static final VectorHelper ZERO = new VectorHelper(0, 0, 0);
-	public static final VectorHelper ONE = new VectorHelper(1, 1, 1);
-	public static final VectorHelper CENTER = new VectorHelper(0.5, 0.5, 0.5);
+	public static final VectorHelper ZERO = new VectorHelper(0.0D, 0.0D, 0.0D);
+	public static final VectorHelper ONE = new VectorHelper(1.0D, 1.0D, 1.0D);
+	public static final VectorHelper CENTER = new VectorHelper(0.5D, 0.5D, 0.5D);
 
 	public final double x;
 	public final double y;
 	public final double z;
 
-	public VectorHelper(double d, double d1, double d2) {
-		x = d;
-		y = d1;
-		z = d2;
+	public VectorHelper(double d, double d1, double d2)
+	{
+		this.x = d;
+		this.y = d1;
+		this.z = d2;
 	}
 
-	public VectorHelper(Vec3d vec) {
+	public VectorHelper(Vec3d vec)
+	{
 		this(vec.x, vec.y, vec.z);
 	}
 
-	public static VectorHelper fromBlockPos(BlockPos pos) {
+	public static VectorHelper fromBlockPos(BlockPos pos)
+	{
 		return new VectorHelper(pos.getX(), pos.getY(), pos.getZ());
 	}
 
-	public static VectorHelper fromEntity(Entity e) {
-		return new VectorHelper(e.posX, e.posY, e.posZ);
+	public static VectorHelper fromEntity(Entity entity)
+	{
+		return new VectorHelper(entity.posX, entity.posY, entity.posZ);
 	}
 
-	public static VectorHelper fromEntityCenter(Entity e) {
-		return new VectorHelper(e.posX, e.posY - e.getYOffset() + e.height / 2, e.posZ);
+	public static VectorHelper fromEntityCenter(Entity entity)
+	{
+		return new VectorHelper(entity.posX, entity.posY - entity.getYOffset() + entity.height / 2.0F, entity.posZ);
 	}
 
-	public static VectorHelper fromTileEntity(TileEntity e) {
-		return fromBlockPos(e.getPos());
+	public static VectorHelper fromTileEntity(TileEntity tileEntity)
+	{
+		return fromBlockPos(tileEntity.getPos());
 	}
 
-	public static VectorHelper fromTileEntityCenter(TileEntity e) {
-		return fromTileEntity(e).add(0.5);
+	public static VectorHelper fromTileEntityCenter(TileEntity tileEntity)
+	{
+		return fromTileEntity(tileEntity).add(0.5D);
 	}
 
-	public double dotProduct(VectorHelper vec) {
-		double d = vec.x * x + vec.y * y + vec.z * z;
-
-		if(d > 1 && d < 1.00001)
-			d = 1;
-		else if(d < -1 && d > -1.00001)
-			d = -1;
-		return d;
+	public double dotProduct(VectorHelper vec)
+	{
+		double d = vec.x * this.x + vec.y * this.y + vec.z * this.z;
+		return d > 1.0D && d < 1.00001D ? 1.0D : d < -1.0D && d > -1.00001D ? -1.0D : d;
 	}
 
-	public double dotProduct(double d, double d1, double d2) {
-		return d * x + d1 * y + d2 * z;
+	public double dotProduct(double d, double d1, double d2)
+	{
+		return d * this.x + d1 * this.y + d2 * this.z;
 	}
 
-	public VectorHelper crossProduct(VectorHelper vec) {
-		double d = y * vec.z - z * vec.y;
-		double d1 = z * vec.x - x * vec.z;
-		double d2 = x * vec.y - y * vec.x;
+	public VectorHelper crossProduct(VectorHelper vec)
+	{
+		double d = this.y * vec.z - this.z * vec.y;
+		double d1 = this.z * vec.x - this.x * vec.z;
+		double d2 = this.x * vec.y - this.y * vec.x;
 		return new VectorHelper(d, d1, d2);
 	}
 
-	public VectorHelper add(double d, double d1, double d2) {
-		return new VectorHelper(x + d, y + d1, z + d2);
+	public VectorHelper add(double d, double d1, double d2)
+	{
+		return new VectorHelper(this.x + d, this.y + d1, this.z + d2);
 	}
 
-	public VectorHelper add(VectorHelper vec) {
+	public VectorHelper add(VectorHelper vec)
+	{
 		return add(vec.x, vec.y, vec.z);
 	}
 
-	public VectorHelper add(double d) {
+	public VectorHelper add(double d) 
+	{
 		return add(d, d, d);
 	}
 
-	public VectorHelper subtract(VectorHelper vec) {
-		return new VectorHelper(x - vec.x, y - vec.y, z - vec.z);
+	public VectorHelper subtract(VectorHelper vec) 
+	{
+		return new VectorHelper(this.x - vec.x, this.y - vec.y, this.z - vec.z);
 	}
 
-	public VectorHelper multiply(double d) {
+	public VectorHelper multiply(double d) 
+	{
 		return multiply(d, d, d);
 	}
 
-	public VectorHelper multiply(VectorHelper f) {
+	public VectorHelper multiply(VectorHelper f)
+	{
 		return multiply(f.x, f.y, f.z);
 	}
 
-	public VectorHelper multiply(double fx, double fy, double fz) {
-		return new VectorHelper(x * fx, y * fy, z * fz);
+	public VectorHelper multiply(double fx, double fy, double fz) 
+	{
+		return new VectorHelper(this.x * fx, this.y * fy, this.z * fz);
 	}
 
-	public double mag() {
-		return Math.sqrt(x * x + y * y + z * z);
+	public double mag()
+	{
+		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 	}
 
-	public double magSquared() {
-		return x * x + y * y + z * z;
+	public double magSquared() 
+	{
+		return this.x * this.x + this.y * this.y + this.z * this.z;
 	}
 
-	public VectorHelper normalize() {
+	public VectorHelper normalize() 
+	{
 		double d = mag();
-		if(d != 0)
-			return multiply(1 / d);
-
-		return this;
+		return d != 0 ? this.multiply(1.0D / d) : this;
 	}
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		MathContext cont = new MathContext(4, RoundingMode.HALF_UP);
-		return "VectorHelper(" + new BigDecimal(x, cont) + ", " +new BigDecimal(y, cont) + ", " + new BigDecimal(z, cont) + ")";
+		return "VectorHelper(" + new BigDecimal(this.x, cont) + ", " + new BigDecimal(this.y, cont) + ", " + new BigDecimal(this.z, cont) + ")";
 	}
 
-	public VectorHelper perpendicular() {
-		if(z == 0)
-			return zCrossProduct();
-		return xCrossProduct();
+	public VectorHelper perpendicular() 
+	{
+		return this.z == 0.0D ? this.zCrossProduct() : this.xCrossProduct();
 	}
 
-	public VectorHelper xCrossProduct() {
-		double d = z;
-		double d1 = -y;
-		return new VectorHelper(0, d, d1);
+	public VectorHelper xCrossProduct() 
+	{
+		return new VectorHelper(0.0D, this.z, -this.y);
 	}
 
-	public VectorHelper zCrossProduct() {
-		double d = y;
-		double d1 = -x;
-		return new VectorHelper(d, d1, 0);
+	public VectorHelper zCrossProduct() 
+	{
+		return new VectorHelper(this.y, -this.x, 0.0D);
 	}
 
-	public VectorHelper yCrossProduct() {
-		double d = -z;
-		double d1 = x;
-		return new VectorHelper(d, 0, d1);
+	public VectorHelper yCrossProduct() 
+	{
+		return new VectorHelper(-this.z, 0.0D, this.x);
 	}
 
-	public Vec3d toVec3D() {
-		return new Vec3d(x, y, z);
+	public Vec3d toVec3D() 
+	{
+		return new Vec3d(this.x, this.y, this.z);
 	}
 
-	public double angle(VectorHelper vec) {
+	public double angle(VectorHelper vec) 
+	{
 		return Math.acos(normalize().dotProduct(vec.normalize()));
 	}
 
-	public boolean isInside(AxisAlignedBB aabb) {
-		return x >= aabb.minX && y >= aabb.maxY && z >= aabb.minZ && x < aabb.maxX && y < aabb.maxY && z < aabb.maxZ;
+	public boolean isInside(AxisAlignedBB aabb) 
+	{
+		return this.x >= aabb.minX && this.y >= aabb.maxY && this.z >= aabb.minZ && this.x < aabb.maxX && this.y < aabb.maxY && this.z < aabb.maxZ;
 	}
 
-	public boolean isZero() {
-		return x == 0 && y == 0 && z == 0;
+	public boolean isZero() 
+	{
+		return this.x == 0.0D && this.y == 0.0D && this.z == 0.0D;
 	}
 
-	public boolean isAxial() {
-		return x == 0 ? y == 0 || z == 0 : y == 0 && z == 0;
+	public boolean isAxial()
+	{
+		return this.x == 0.0D ? this.y == 0.0D || this.z == 0.0D : this.y == 0.0D && this.z == 0.0D;
 	}
 
-	public Vector3f VectorHelperf() {
-		return new Vector3f((float)x, (float)y, (float)z);
+	public Vector3f VectorHelperf() 
+	{
+		return new Vector3f((float) this.x, (float) this.y, (float) this.z);
 	}
 
-	public Vector4f vector4f() {
-		return new Vector4f((float)x, (float)y, (float)z, 1);
+	public Vector4f vector4f() 
+	{
+		return new Vector4f((float) this.x, (float) this.y, (float) this.z, 1.0F);
 	}
 
 	@SideOnly(Side.CLIENT)
-	public void glVertex() {
-		GL11.glVertex3d(x, y, z);
+	public void glVertex() 
+	{
+		GL11.glVertex3d(this.x, this.y, this.z);
 	}
 
-	public VectorHelper negate() {
-		return new VectorHelper(-x, -y, -z);
+	public VectorHelper negate() 
+	{
+		return new VectorHelper(-this.x, -this.y, -this.z);
 	}
 
-	public double scalarProject(VectorHelper b) {
+	public double scalarProject(VectorHelper b) 
+	{
 		double l = b.mag();
-		return l == 0 ? 0 : dotProduct(b)/l;
+		return l == 0 ? 0 : dotProduct(b) / l;
 	}
 
-	public VectorHelper project(VectorHelper b) {
+	public VectorHelper project(VectorHelper b) 
+	{
 		double l = b.magSquared();
-		if(l == 0) {
-			return ZERO;
-		}
-
-		double m = dotProduct(b)/l;
-		return b.multiply(m);
+		return l == 0.0D ? this.ZERO : b.multiply(this.dotProduct(b) / l);
 	}
 
-	public VectorHelper rotate(double angle, VectorHelper axis) {
+	public VectorHelper rotate(double angle, VectorHelper axis)
+	{
 		return Quat.aroundAxis(axis.normalize(), angle).rotate(this);
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(Object o)
+	{
 		if(!(o instanceof VectorHelper))
+		{
 			return false;
-
-		VectorHelper v = (VectorHelper)o;
-		return x == v.x && y == v.y && z == v.z;
+		}
+		
+		VectorHelper v = (VectorHelper) o;
+		return this.x == v.x && this.y == v.y && this.z == v.z;
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(x, y, z);
+	public int hashCode()
+	{
+		return Objects.hash(this.x, this.y, this.z);
 	}
 }

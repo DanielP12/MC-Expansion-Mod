@@ -1,3 +1,4 @@
+/*
 package dinocraft.capabilities.player;
 
 import dinocraft.util.NBT;
@@ -8,9 +9,9 @@ public abstract class DinocraftPlayerModule implements NBT
 {
 	private final DinocraftPlayer player;
 
-	public DinocraftPlayerModule(DinocraftPlayer playerIn)
+	public DinocraftPlayerModule(DinocraftPlayer player)
 	{
-		this.player = playerIn;
+		this.player = player;
 	}
 	
 	public final DinocraftPlayer getDinocraftPlayer()
@@ -28,3 +29,4 @@ public abstract class DinocraftPlayerModule implements NBT
 		return this.getEntityPlayer().world;
 	}
 }
+*/

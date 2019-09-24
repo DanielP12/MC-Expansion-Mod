@@ -4,8 +4,9 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
-import dinocraft.handlers.DinocraftSoundEvents;
+import dinocraft.init.DinocraftEntities;
 import dinocraft.init.DinocraftItems;
+import dinocraft.init.DinocraftSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockVine;
 import net.minecraft.block.properties.PropertyBool;
@@ -38,22 +39,22 @@ public class EntityVineBall extends EntityThrowable
 	
 	public ResourceLocation getTexture()
 	{
-		return RenderEntities.VINE_BALL_TEXTURE;
+		return DinocraftEntities.VINE_BALL_TEXTURE;
 	}
 	
-	public EntityVineBall(World worldIn) 
+	public EntityVineBall(World world) 
 	{
-	    super(worldIn);
+	    super(world);
 	}
 	
-	public EntityVineBall(World worldIn, EntityLivingBase living) 
+	public EntityVineBall(World world, EntityLivingBase thrower) 
 	{
-	    super(worldIn, living);
+	    super(world, thrower);
 	}
 
-	public EntityVineBall(EntityLivingBase living, float gravity)
+	public EntityVineBall(EntityLivingBase thrower, float gravity)
 	{
-		super(living.world, living);
+		super(thrower.world, thrower);
 		dataManager.set(GRAVITY, gravity);
 	}
 		
@@ -70,36 +71,33 @@ public class EntityVineBall extends EntityThrowable
 	{	
 		if (id == 3) 
 		{
-			World worldIn = this.world;
-			worldIn.playSound(this.posX, this.posY, this.posZ, SoundEvents.BLOCK_GRASS_HIT, SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
-			worldIn.playSound(this.posX, this.posY, this.posZ, DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
+			this.world.playSound(this.posX, this.posY, this.posZ, SoundEvents.BLOCK_GRASS_HIT, SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
+			this.world.playSound(this.posX, this.posY, this.posZ, DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 1.0F, 1.0F, false);
 			
 			for (int i = 0; i < 16; ++i) 
 			{
-				worldIn.spawnParticle(EnumParticleTypes.ITEM_CRACK, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.VINE_BALL));
+				this.world.spawnParticle(EnumParticleTypes.ITEM_CRACK, this.posX, this.posY, this.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.VINE_BALL));
 			}
 		}
 	}
 	
 	@Override
 	protected void onImpact(RayTraceResult trace) 
-	{
-		World worldIn = this.world;
-		
+	{		
 		if (trace.entityHit != null && trace.entityHit instanceof EntityLivingBase)
         {
-			EntityLivingBase livingIn = (EntityLivingBase) trace.entityHit;
+			EntityLivingBase entity = (EntityLivingBase) trace.entityHit;
              
-            if (!worldIn.isRemote)
+            if (!this.world.isRemote)
             {
-            	livingIn.attackEntityFrom(DamageSource.causeThrownDamage(this, this.getThrower()), 1F);
-            	livingIn.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, 200, 0, false, false));
+            	entity.attackEntityFrom(DamageSource.causeThrownDamage(this, this.getThrower()), 1F);
+            	entity.addPotionEffect(new PotionEffect(MobEffects.SLOWNESS, 200, 0, false, false));
      		}
              
-            worldIn.spawnParticle(EnumParticleTypes.ITEM_CRACK, livingIn.posX, livingIn.posY, livingIn.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.VINE_BALL));
+            this.world.spawnParticle(EnumParticleTypes.ITEM_CRACK, entity.posX, entity.posY, entity.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, Item.getIdFromItem(DinocraftItems.VINE_BALL));
         }
 			
-		if (!worldIn.isRemote && trace != null) 
+		if (!this.world.isRemote && trace != null) 
 		{
 			EnumFacing dir = trace.sideHit;
 				
@@ -109,21 +107,21 @@ public class EntityVineBall extends EntityThrowable
 					
 				while (pos.getY() > 0) 
 				{
-					IBlockState state = worldIn.getBlockState(pos);
+					IBlockState state = this.world.getBlockState(pos);
 					Block block = state.getBlock();
 						
-					if (block.isAir(state, worldIn, pos)) 
+					if (block.isAir(state, this.world, pos)) 
 					{
 						IBlockState stateSet = Blocks.VINE.getDefaultState().withProperty(propMap.get(dir.getOpposite()), true);
-						worldIn.setBlockState(pos, stateSet, 1 | 2);
-						worldIn.playEvent(2001, pos, Block.getStateId(stateSet));
+						this.world.setBlockState(pos, stateSet, 1 | 2);
+						this.world.playEvent(2001, pos, Block.getStateId(stateSet));
 						pos = pos.down();
 					}
 					else break;
 				}
 			}
 			
-			worldIn.setEntityState(this, (byte)3);
+			this.world.setEntityState(this, (byte)3);
 			this.setDead();
 		}
 	}
@@ -133,7 +131,10 @@ public class EntityVineBall extends EntityThrowable
 	@Override
 	public void onUpdate() 
 	{
-		if (this.motionX == 0 && this.motionY == 0 && this.motionZ == 0) ++this.existedTicks;
+		if (this.motionX == 0 && this.motionY == 0 && this.motionZ == 0)
+		{
+			++this.existedTicks;
+		}
 		
 		if (this.existedTicks > 40)
 		{

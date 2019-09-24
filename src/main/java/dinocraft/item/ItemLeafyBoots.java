@@ -1,11 +1,10 @@
 package dinocraft.item;
 
 import java.util.List;
-import java.util.Random;
 
 import dinocraft.Reference;
-import dinocraft.capabilities.player.DinocraftPlayer;
-import dinocraft.capabilities.player.DinocraftPlayerActions;
+import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.capabilities.entity.DinocraftEntityActions;
 import dinocraft.network.MessageDoubleJump;
 import dinocraft.network.NetworkHandler;
 import dinocraft.util.Utils;
@@ -27,54 +26,48 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemLeafyBoots extends ItemArmor
 {	
-    public ItemLeafyBoots(ArmorMaterial materialIn, int renderIndexIn, EntityEquipmentSlot equipmentSlotIn, String unlocalizedName)
+    public ItemLeafyBoots(ArmorMaterial material, int renderIndex, EntityEquipmentSlot equipmentSlot, String name)
     {
-        super(materialIn, renderIndexIn, equipmentSlotIn);
-        this.setUnlocalizedName(unlocalizedName);
-        this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
-        this.setMaxDamage(2000);
+        super(material, renderIndex, equipmentSlot);
+        this.setUnlocalizedName(name);
+        this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+        this.setMaxDamage(1000);
     }
-    
-	Random rand = new Random();
-    
-    /** Double Jump */
+        
     @Override
-    public void onArmorTick(World worldIn, EntityPlayer playerIn, ItemStack stack)
+    public void onArmorTick(World world, EntityPlayer player, ItemStack stack)
     {
-    	DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
+    	DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 
-		if (worldIn.isRemote && !player.isFlying() && !playerIn.isCreative() && !playerIn.isSpectator())
+		if (world.isRemote && !dinoEntity.isFlying() && !player.isCreative())
 		{
-	    	DinocraftPlayerActions actions = player.getActions();
+			DinocraftEntityActions actions = dinoEntity.getActionsModule();
 	    	
-	    	if (playerIn.onGround || !playerIn.isAirBorne || playerIn.isInWater() || playerIn.isInLava() || playerIn.isOnLadder())
+	    	if (player.onGround || !player.isAirBorne || player.isInWater() || player.isInLava() || player.isOnLadder())
 			{
 	    		actions.setHasDoubleJumped(true);
 	    		actions.setCanDoubleJumpAgain(false);
 			}
 	    		
-			if (playerIn.isAirBorne && !playerIn.onGround)
-			{					
-				if (!player.isJumping() && !actions.canDoubleJumpAgain())
+			if (player.isAirBorne && !player.onGround)
+			{
+				if (!dinoEntity.isJumping() && !actions.canDoubleJumpAgain())
 				{	
 					actions.setHasDoubleJumped(false);
 					actions.setCanDoubleJumpAgain(true);
 				}
 	            	
-				if (player.isJumping() && !actions.hasDoubleJumped())
+				if (dinoEntity.isJumping() && !actions.hasDoubleJumped())
 				{
 					actions.setHasDoubleJumped(true);
+					dinoEntity.setFallDamageReductionAmount(5.0F);
 					
-					player.setFallDamageReductionAmount(5.0F);
-						
-					double velY = 0.4875D + (0.4925D - 0.4875D) * rand.nextDouble();
-					double velXZ = 1.099D + (1.099D - 1.097D) * rand.nextDouble();							
-					playerIn.motionX *= /* 1.0975D */ velXZ;    
-					playerIn.motionZ *= /* 1.0975D */ velXZ;
-												
-					PotionEffect effect = playerIn.getActivePotionEffect(MobEffects.JUMP_BOOST);
-					playerIn.motionY = effect != null ? (effect.getAmplifier() * 0.095D) + 0.575D : /* 0.475D */ velY;
-						
+					PotionEffect effect = player.getActivePotionEffect(MobEffects.JUMP_BOOST);
+					player.motionY = effect != null ? (effect.getAmplifier() * 0.095D) + 0.575D : 0.4875D + (0.01D * world.rand.nextDouble());
+					player.motionX *= 1.015D;    
+					player.motionZ *= 1.015D;
+					player.fallDistance = 0.0F;
+					
 					NetworkHandler.sendToServer(new MessageDoubleJump());
 				}
 			}
@@ -83,7 +76,7 @@ public class ItemLeafyBoots extends ItemArmor
 	
     @SideOnly(Side.CLIENT)
     @Override
-    public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn) 
+    public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag) 
     {
     	tooltip.add(TextFormatting.DARK_GREEN + Utils.getLang().localize("leafy_boots.tooltip"));
         
@@ -91,9 +84,12 @@ public class ItemLeafyBoots extends ItemArmor
         
         if (GameSettings.isKeyDown(shift))
         {
-        	tooltip.add(TextFormatting.GRAY + "Double Jump I");
+        	tooltip.add(TextFormatting.GRAY + "Double Jump");
             tooltip.add(TextFormatting.GRAY + "Durability: " + (stack.getMaxDamage() - stack.getItemDamage()) +  " / " + stack.getMaxDamage());
         } 
-        else tooltip.add(TextFormatting.GRAY + "Press " + TextFormatting.DARK_GRAY + "[SHIFT] " + TextFormatting.GRAY + "for more!");
+        else
+        {
+        	tooltip.add(TextFormatting.GRAY + "Press " + TextFormatting.DARK_GRAY + "[SHIFT] " + TextFormatting.GRAY + "for more!");
+        }
     }
 }

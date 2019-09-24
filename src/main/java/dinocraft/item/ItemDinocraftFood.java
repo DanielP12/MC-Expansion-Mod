@@ -12,24 +12,24 @@ public class ItemDinocraftFood extends ItemFood
 {
 	private PotionEffect[] effects;
 
-	public ItemDinocraftFood(String unlocalizedName, int amount, float saturation, boolean isWolfFood, PotionEffect...potionEffects) 
+	public ItemDinocraftFood(String name, int amount, float saturation, boolean isWolfFood, PotionEffect... potionEffects) 
 	{
 		super(amount, saturation, isWolfFood);
 		this.effects = potionEffects;
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
-	public ItemDinocraftFood(String unlocalizedName, int amount, boolean isWolfFood, PotionEffect...potionEffects)
+	public ItemDinocraftFood(String name, int amount, boolean isWolfFood, PotionEffect... potionEffects)
 	{
 		super(amount, isWolfFood);
 		this.effects = potionEffects;
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
 	@Override
-	protected void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) 
+	protected void onFoodEaten(ItemStack stack, World world, EntityPlayer player) 
 	{
 		for (PotionEffect effect : this.effects) 
 		{

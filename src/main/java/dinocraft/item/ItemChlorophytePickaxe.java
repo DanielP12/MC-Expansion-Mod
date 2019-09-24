@@ -6,10 +6,10 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemChlorophytePickaxe extends ItemPickaxe
 {
-	public ItemChlorophytePickaxe(ToolMaterial material, String unlocalizedName)
+	public ItemChlorophytePickaxe(ToolMaterial material, String name)
 	{
 		super(material);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemRanium extends Item
 {
-	public ItemRanium(String unlocalizedName, String registryName)
+	public ItemRanium(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

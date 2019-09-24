@@ -6,20 +6,17 @@ import java.util.Locale;
 
 public final class Quat
 {
-	public static final Quat IDENTITY = new Quat(0, 0, 0, 1);
-	public final double x;
-	public final double y;
-	public final double z;
-	public final double s;
+	public static final Quat IDENTITY = new Quat(0.0D, 0.0D, 0.0D, 1.0D);
+	public final double x, y, z, s;
 	private final int hashCode;
 
 	public Quat(double d, double d1, double d2, double d3) 
 	{
-		x = d1;
-		y = d2;
-		z = d3;
-		s = d;
-		hashCode = Arrays.hashCode(new double[] { d, d1, d2, d3 } );
+		this.x = d1;
+		this.y = d2;
+		this.z = d3;
+		this.s = d;
+		this.hashCode = Arrays.hashCode(new double[] { d, d1, d2, d3 } );
 	}
 
 	public static Quat aroundAxis(double ax, double ay, double az, double angle) 
@@ -81,17 +78,17 @@ public final class Quat
 	@Override
 	public int hashCode() 
 	{
-		return hashCode;
+		return this.hashCode;
 	}
 
 	@Override
 	public boolean equals(Object o)
 	{
 		return o instanceof Quat
-				&& ((Quat) o).x == x
-				&& ((Quat) o).y == y
-				&& ((Quat) o).z == z
-				&& ((Quat) o).s == s;
+				&& ((Quat) o).x == this.x
+				&& ((Quat) o).y == this.y
+				&& ((Quat) o).z == this.z
+				&& ((Quat) o).s == this.s;
 	}
 
 	@Override
@@ -110,5 +107,4 @@ public final class Quat
 	{
 		return aroundAxis(axis.x, axis.y, axis.z, angle);
 	}
-
 }

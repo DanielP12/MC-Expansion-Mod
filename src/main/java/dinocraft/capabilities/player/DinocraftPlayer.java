@@ -1,59 +1,6 @@
 package dinocraft.capabilities.player;
 
-import java.util.UUID;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-
-import org.jline.utils.Log;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
-import dinocraft.api.MaxHealth;
-import dinocraft.capabilities.DinocraftCapabilities;
-import dinocraft.util.PlayerHelper;
-import io.netty.buffer.Unpooled;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.settings.GameSettings;
-import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.init.MobEffects;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.server.SPacketCustomPayload;
-import net.minecraft.network.play.server.SPacketTitle;
-import net.minecraft.potion.PotionEffect;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.World;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.Capability.IStorage;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
-
+/*
 @EventBusSubscriber
 public class DinocraftPlayer implements IDinocraftPlayer
 {
@@ -62,31 +9,47 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	private final DinocraftPlayerActions actions;
 	private final DinocraftPlayerTicks ticks;
 	
-	public DinocraftPlayer(EntityPlayer playerIn)
+	public DinocraftPlayer(EntityPlayer player)
 	{
 		this.actions = new DinocraftPlayerActions(this);
 		this.ticks = new DinocraftPlayerTicks(this);
-		this.player = playerIn;
+		this.player = player;
 	}
  
 	/**
+	 * Gets this capability data's corresponding player
+	 */
+/*
+	@Override
+	public EntityPlayer getPlayer() 
+	{
+		return this.player;
+	}
+	
+	/**
 	 * Gets this capability data's corresponding player by their name
 	 */
+/*
 	public static EntityPlayer getEntityPlayerByName(String name)
 	{
-		/* for (EntityPlayer playerIn : DinocraftPlayer.SERVER.getPlayerList().getPlayers())
+		/* for (EntityPlayer player : DinocraftPlayer.SERVER.getPlayerList().getPlayers())
 		{
-			if (playerIn.getName().equals(name)) return playerIn;
+			if (player.getName().equals(name))
+			{
+				return player;
+			}
 		}
 		
 		return null;
 		*/
+/*
 		return SERVER.getPlayerList().getPlayerByUsername(name);
 	}
 	
 	/**
 	 * Gets the capability data for the player by their name
 	 */
+/*
 	public static DinocraftPlayer getPlayer(String name)
 	{
 		return DinocraftPlayer.getPlayer(DinocraftPlayer.getEntityPlayerByName(name));
@@ -95,62 +58,59 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Gets the capability data for specified player
 	 */
-	public static DinocraftPlayer getPlayer(EntityPlayer playerIn)
+/*
+	public static DinocraftPlayer getPlayer(EntityPlayer player)
 	{
-		if (!DinocraftPlayer.hasCapability(playerIn)) return null;
-		return (DinocraftPlayer) playerIn.getCapability(DinocraftCapabilities.DINOCRAFT_PLAYER, null);
+		return !DinocraftPlayer.hasCapability(player) ? null : (DinocraftPlayer) player.getCapability(DinocraftCapabilities.DINOCRAFT_PLAYER, null);
 	}
  
 	/** 
 	 * Returns if this player has this capability
 	 */
-	public static boolean hasCapability(EntityPlayer playerIn)
+/*
+	public static boolean hasCapability(EntityPlayer player)
 	{
-		return playerIn.hasCapability(DinocraftCapabilities.DINOCRAFT_PLAYER, null);
-	}
- 
-	/**
-	 * Gets this capability data's corresponding player
-	 */
-	@Override
-	public EntityPlayer getPlayer() 
-	{
-		return this.player;
+		return player.hasCapability(DinocraftCapabilities.DINOCRAFT_PLAYER, null);
 	}
  
 	/**
 	 * Gets this player's actions module
 	 */
-	public DinocraftPlayerActions getActions()
+/*
+	public DinocraftPlayerActions getActionsModule()
 	{
 		return this.actions;
 	}
 
 	/** Gets this player's ticks module */
-	private DinocraftPlayerTicks getTicks()
+/*
+	private DinocraftPlayerTicks getTicksModule()
 	{
 		return this.ticks;
 	}
 
 	/**
-	 * Returns if specified items are equipped on the player
+	 * Returns if specified items are equipped on this player. In this case, null means nothing OR any other item equipped.
 	 */
-	public boolean isWearingItems(@Nonnull Item helmetIn, @Nonnull Item chestplateIn, @Nonnull Item leggingsIn, @Nonnull Item bootsIn)
+/*
+	public boolean isWearingItems(@Nullable Item helmet, @Nullable Item chestplate, @Nullable Item leggings, @Nullable Item boots)
 	{
-		InventoryPlayer inv = this.getPlayer().inventory;
-		ItemStack helmet = inv.armorItemInSlot(3);
-		ItemStack chestplate = inv.armorItemInSlot(2);
-		ItemStack leggings = inv.armorItemInSlot(1);
-		ItemStack boots = inv.armorItemInSlot(0);
-		return (helmetIn != null ? helmet != null && helmet.getItem() == helmetIn : (helmet == null || helmet.getItem() != helmetIn))
-				&& (chestplateIn != null ? chestplate != null && chestplate.getItem() == chestplateIn : (chestplate == null || chestplate.getItem() != chestplateIn))
-				&& (leggingsIn != null ? leggings != null && leggings.getItem() == leggingsIn : (leggings == null || leggings.getItem() != leggingsIn))
-				&& (bootsIn != null ? boots != null && boots.getItem() == bootsIn : (boots == null || boots.getItem() != bootsIn));
+		EntityPlayer player = this.getPlayer();
+		ItemStack helmet2 = player.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+		ItemStack chestplate2 = player.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+		ItemStack leggings2 = player.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
+		ItemStack boots2 = player.getItemStackFromSlot(EntityEquipmentSlot.FEET);
+		return (helmet != null ? helmet2 != null && helmet2.getItem() == helmet : (helmet2 == null || helmet2.getItem() != helmet))
+				&& (chestplate != null ? chestplate2 != null && chestplate2.getItem() == chestplate : (chestplate2 == null || chestplate2.getItem() != chestplate))
+				&& (leggings != null ? leggings2 != null && leggings2.getItem() == leggings : (leggings2 == null || leggings2.getItem() != leggings))
+				&& (boots != null ? boots2 != null && boots2.getItem() == boots : (boots2 == null || boots2.getItem() != boots));
 	}
- 
+	
 	/**
 	 * Returns if this player is jumping 
 	 */
+/*
+	@SideOnly(Side.CLIENT)
 	public boolean isJumping()
 	{
 		return Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown();
@@ -159,6 +119,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/** 
 	 * The direction that this player is moving towards
 	 */
+/*
 	public enum Direction
 	{
 		LEFT, RIGHT, FORWARD, BACKWARD
@@ -167,20 +128,34 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Returns if this player is moving in specified direction 
 	 */
+/*
+	@SideOnly(Side.CLIENT)
 	public boolean isMoving(Direction direction)
 	{
 		GameSettings settings = Minecraft.getMinecraft().gameSettings;
  
 		switch (direction)
         {
-        	case LEFT: return settings.keyBindLeft.isKeyDown();
+        	case LEFT:
+        	{
+        		return settings.keyBindLeft.isKeyDown();
+        	}
  
-        	case RIGHT: return settings.keyBindRight.isKeyDown();
- 
-        	case FORWARD: return settings.keyBindForward.isKeyDown();
- 
-        	case BACKWARD: return settings.keyBindBack.isKeyDown();
- 
+        	case RIGHT: 
+        	{
+        		return settings.keyBindRight.isKeyDown();
+        	}
+        	
+        	case FORWARD: 
+        	{
+        		return settings.keyBindForward.isKeyDown();
+        	}
+        	
+        	case BACKWARD: 
+        	{
+        		return settings.keyBindBack.isKeyDown();
+        	}
+        	
         	default: return false;
         }
 	}
@@ -188,6 +163,8 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/** 
 	 * Returns if this player is moving to any direction
 	 */
+/*
+	@SideOnly(Side.CLIENT)
 	public boolean isMoving()
 	{
 		GameSettings settings = Minecraft.getMinecraft().gameSettings;
@@ -197,77 +174,99 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/** 
 	 * Returns if this player is strafing to any side
 	 */
+/*
+	@SideOnly(Side.CLIENT)
 	public boolean isStrafing()
 	{
 		GameSettings settings = Minecraft.getMinecraft().gameSettings;
 		return settings.keyBindLeft.isKeyDown() || settings.keyBindRight.isKeyDown();
 	}
  
+	/**
+	 * Spawns particles around this player
+	 */
+/*
+	public void spawnParticle(EnumParticleTypes particleType, double xCoord, double yCoord, double zCoord, double xSpeed, double ySpeed, double zSpeed, int parameters)
+	{
+		NetworkHandler.sendToAllAround(new PacketSpawnParticle(particleType, xCoord, yCoord, zCoord, xSpeed, ySpeed, zSpeed, parameters), this.getPlayer().world);
+	}
+	
 	/** Whether this player takes fall damage on their next fall or not */
+/*
 	private boolean fallDamage = true;
  
 	/** 
 	 * Sets if this player takes fall damage on their next fall.
 	 */
+/*
 	public void setFallDamage(boolean fallDamage)
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(this.getPlayer());	
-		if (!player.isFallDamageImmune()) this.fallDamage = fallDamage;
+		if (!DinocraftPlayer.getPlayer(this.getPlayer()).isFallDamageImmune())
+		{
+			this.fallDamage = fallDamage;
+		}
 	}
  
 	/** 
-	 * Returns if this player takes fall damage on their next fall.
+	 * Returns if this player takes fall damage on their next fall
 	 */
+/*
 	public boolean hasFallDamage()
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(this.getPlayer());
-		if (player.isFallDamageImmune() || player.isInvulnerable()) return false;
-		return this.fallDamage;
+		DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(this.getPlayer());
+		return (dinoPlayer.isFallDamageImmune() || dinoPlayer.isInvulnerable()) ? false : this.fallDamage;
 	}
  
 	/** Whether this player is immune to fall damage */
+/*
 	private boolean fallDamageImmune = false;
  
 	/** 
-	 * Sets if this player is immune to fall damage.
+	 * Sets if this player is immune to fall damage
 	 */
+/*
 	public void setFallDamageImmune(boolean immune)
 	{
 		this.fallDamageImmune = immune;
 	}
  
 	/** 
-	 * Returns if this player is immune to fall damage.
+	 * Returns if this player is immune to fall damage
 	 */
+/*
 	public boolean isFallDamageImmune()
 	{
-		if (DinocraftPlayer.getPlayer(this.getPlayer()).isInvulnerable()) return true;
-		return this.fallDamageImmune;
+		return (DinocraftPlayer.getPlayer(this.getPlayer()).isInvulnerable()) ? true : this.fallDamageImmune;
 	}
  
 	/** Whether this player has reduced fall damage */
+/*
 	private boolean reducedFallDamage = false;
  
 	/**
-	 * Returns if this player has reduced fall damage on their next fall.
+	 * Returns if this player has reduced fall damage on their next fall
 	 */
+/*
 	public boolean hasReducedFallDamage()
 	{
 		return this.reducedFallDamage;
 	}
  
-	/** Sets if this player has reduced fall damage on their next fall. */
+	/** Sets if this player has reduced fall damage on their next fall */
+/*
 	private void setReducedFallDamage(boolean reducedFallDamage)
 	{
 		this.reducedFallDamage = reducedFallDamage;
 	}
  
 	/** This player's fall damage reduction amount */
+/*
 	private float fallDamageReductionAmount = 0.0F;
  
 	/**
-	 * Sets this player's fall damage reduction amount on their next fall (param: amount of half-hearts).
+	 * Sets this player's fall damage reduction amount on their next fall (param: amount of half-hearts)
 	 */
+/*
 	public void setFallDamageReductionAmount(float fallDamageReductionAmount)
 	{
 		this.fallDamageReductionAmount = fallDamageReductionAmount;
@@ -277,17 +276,20 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Returns this player's fall damage reduction amount (amount of half-hearts).
 	 */
+/*
 	public float getFallDamageReductionAmount()
 	{
 		return this.fallDamageReductionAmount;
 	}
 	
 	/** Whether this player has permanent reduced fall damage */
+/*
     private boolean fallDamageReducer = false;
 	
     /**
-	 * Sets this player's permanent fall damage reduction amount (param: amount of half-hearts).
+	 * Sets this player's permanent fall damage reduction amount (param: amount of half-hearts)
 	 */
+/*
 	public void setFallDamageReducer(float fallDamageReductionAmount)
 	{
         this.fallDamageReductionAmount = fallDamageReductionAmount;
@@ -295,48 +297,61 @@ public class DinocraftPlayer implements IDinocraftPlayer
     }
 	
 	/** Sets if this player has permanent reduced fall damage. */
+/*
 	public boolean hasFallDamageReducer() 
 	{
         return this.fallDamageReducer;
 	}
 	   
 	/**
-	 * Sets this player's permanent fall damage reduction amount (param: amount of half-hearts).
+	 * Sets this player's permanent fall damage reduction amount (param: amount of half-hearts)
 	 */
+/*
     private void setFallDamageReducer(boolean reducedFallDamage) 
     {
         this.fallDamageReducer = reducedFallDamage;
     }
- 
 	
 	@SubscribeEvent
-    public static void onFall(LivingFallEvent event) 
+    public static void onLivingFall(LivingFallEvent event) 
 	{
         if (event.getEntity() instanceof EntityPlayer) 
         {
-            EntityPlayer playerIn = (EntityPlayer) event.getEntity();
-            DinocraftPlayer player = getPlayer(playerIn);
+            EntityPlayer player = (EntityPlayer) event.getEntity();
+            DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(player);
             
-            if (!player.hasFallDamage() || player.isFallDamageImmune()) 
+            if (!dinoPlayer.hasFallDamage() || dinoPlayer.isFallDamageImmune()) 
             {
-                if (playerIn.fallDistance < 5.0F) event.setCanceled(true);
-                if (playerIn.fallDistance >= 5.0F && !playerIn.world.isRemote) event.setCanceled(true);
-                if (!player.hasFallDamage()) player.setFallDamage(true);
+                if (player.fallDistance < 5.0F || (player.fallDistance >= 5.0F && !player.world.isRemote))
+                {
+                	event.setCanceled(true);
+                }
+                
+                if (!dinoPlayer.hasFallDamage())
+                {
+                	dinoPlayer.setFallDamage(true);
+                }
                 
                 return;
             }
-            if (player.hasReducedFallDamage() || player.hasFallDamageReducer())
+            
+            if (dinoPlayer.hasReducedFallDamage() || dinoPlayer.hasFallDamageReducer())
             {
-                if (playerIn.fallDistance < 5.0F) event.setCanceled(true);
-                if (playerIn.fallDistance >= 5.0F && !playerIn.world.isRemote) event.setCanceled(true);
+                if (player.fallDistance < 5.0F || (player.fallDistance >= 5.0F && !player.world.isRemote))
+                {
+                	event.setCanceled(true);
+                }
                 
-                PotionEffect effect = playerIn.getActivePotionEffect(MobEffects.JUMP_BOOST);
-				float modifier = effect == null ? 0.0F : (float) effect.getAmplifier() + 1.0F;
-				int damage = MathHelper.ceil((playerIn.fallDistance - 3.0F - modifier - player.getFallDamageReductionAmount()));
+                PotionEffect effect = player.getActivePotionEffect(MobEffects.JUMP_BOOST);
+				float modifier = effect == null ? 0.0F : effect.getAmplifier() + 1.0F;
+				float damage = MathHelper.ceil((player.fallDistance - 3.0F - modifier - dinoPlayer.getFallDamageReductionAmount()));
 				
-                if (damage > 0) playerIn.attackEntityFrom(DamageSource.FALL, (float) damage);
+                if (damage > 0.0F)
+                {
+                	player.attackEntityFrom(DamageSource.FALL, damage);
+                }
                 
-                player.setReducedFallDamage(false);
+                dinoPlayer.setReducedFallDamage(false);
             }
         }
     }
@@ -346,37 +361,40 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/** 
 	 * Sets this player's max health to specified amount 
 	 */
+/*
 	public void setMaxHealth(float amount)
     {
-		EntityPlayer playerIn = this.getPlayer();
-        IAttributeInstance maxHealthInstance = playerIn.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-        AttributeModifier modifier = maxHealthInstance.getModifier(MaxHealth.MAX_HEALTH_MODIFIER_ID);
+		EntityPlayer player = this.getPlayer();
+        IAttributeInstance instance = player.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
+        AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
         
         Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        modifier = new AttributeModifier(MaxHealth.MAX_HEALTH_MODIFIER_ID, "Max Health Setter", amount - 20D, 0);
+        modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Setter", amount - 20.0D, 0);
         multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-        playerIn.getAttributeMap().applyAttributeModifiers(multimap);
+        player.getAttributeMap().applyAttributeModifiers(multimap);
     }
  
 	/** 
 	 * Adds specified amount to this player's max health 
 	 */
+/*
 	public void addMaxHealth(float amount)
     {
-		EntityPlayer playerIn = this.getPlayer();
-        IAttributeInstance maxHealthInstance = playerIn.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-        AttributeModifier modifier = maxHealthInstance.getModifier(MaxHealth.MAX_HEALTH_MODIFIER_ID);
-        double existingHearts = modifier != null ? modifier.getAmount() : 0.0D;
+		EntityPlayer player = this.getPlayer();
+        IAttributeInstance instance = player.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
+        AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
+        double hearts = modifier != null ? modifier.getAmount() : 0.0D;
 
         Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        modifier = new AttributeModifier(MaxHealth.MAX_HEALTH_MODIFIER_ID, "Max Health Adder", existingHearts + amount, 0);
+        modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Adder", hearts + amount, 0);
         multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-        playerIn.getAttributeMap().applyAttributeModifiers(multimap);
+        player.getAttributeMap().applyAttributeModifiers(multimap);
     }
  
 	/**
 	 * Feeds this player to specified amounts
 	 */
+/*
 	public void feed(int amount, float saturation)
 	{
 		this.getPlayer().getFoodStats().addStats(amount, saturation);
@@ -385,51 +403,62 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Hurts this player (param: amount of half-hearts)
 	 */
+/*
 	public void hurt(float amount)
 	{
-		if (amount <= 0.0F) return;
+		if (amount <= 0.0F)
+		{
+			return;
+		}
 		
-		EntityPlayer playerIn = this.getPlayer();
-        float health = playerIn.getHealth();
+		EntityPlayer player = this.getPlayer();
+        float health = player.getHealth();
         
-        if (health > 0.0F) playerIn.setHealth(health - amount);
+        if (health > 0.0F)
+        {
+        	player.setHealth(health - amount);
+        }
 	}
  
 	/** 
 	 * Stops the specified sound for all players
 	 */
-	public void stopSound(SoundEvent soundIn)
+/*
+	public void stopSound(SoundEvent sound)
 	{
 		PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         buffer.writeString("");
-        buffer.writeString(soundIn.getRegistryName().toString());
+        buffer.writeString(sound.getRegistryName().toString());
         this.SERVER.getPlayerList().sendPacketToAllPlayers(new SPacketCustomPayload("MC|StopSound", buffer));
 	}
  
 	/** 
 	 * Stops the specified sound for the specified player
 	 */
-	public void stopSound(EntityPlayer playerIn, SoundEvent soundIn)
+/*
+	public void stopSound(EntityPlayer player, SoundEvent sound)
 	{
 		PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         buffer.writeString("");
-        buffer.writeString(soundIn.getRegistryName().toString());
-        ((EntityPlayerMP) playerIn).connection.sendPacket(new SPacketCustomPayload("MC|StopSound", buffer));
+        buffer.writeString(sound.getRegistryName().toString());
+        ((EntityPlayerMP) player).connection.sendPacket(new SPacketCustomPayload("MC|StopSound", buffer));
 	}
  
 	/**
-	 * Gets a RayTraceResult describing whatever the player's looking at within specified distance
+	 * Gets a RayTraceResult describing whatever block this player is looking at within specified distance. DOESN'T DETECT ENTITIES.
 	 */
+/*
 	public RayTraceResult getTrace(double distance) 
 	{
-		EntityPlayer playerIn = this.getPlayer();
-		Vec3d posVec = new Vec3d(playerIn.posX, playerIn.posY + playerIn.getEyeHeight(), playerIn.posZ);
-		return playerIn.world.rayTraceBlocks(posVec, posVec.add(playerIn.getLookVec().scale(distance)));
+		EntityPlayer player = this.getPlayer();
+		Vec3d vector = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+		return player.world.rayTraceBlocks(vector, vector.add(player.getLookVec().scale(distance)));
 	}
  
 	/**
 	 * Sets whether this player is allowed to fly when they double jump
 	 */
+/*
 	public void setAllowFlight(boolean allowFlight)
 	{
 		this.getPlayer().capabilities.allowFlying = allowFlight;
@@ -438,6 +467,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Returns if this player is allowed to fly when they double jump
 	 */
+/*
 	public boolean canFly()
 	{
 		return this.getPlayer().capabilities.allowFlying;
@@ -446,6 +476,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Sets whether this player is flying
 	 */
+/*
 	public void setFlight(boolean flight)
 	{
 		this.getPlayer().capabilities.isFlying = flight;
@@ -454,6 +485,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Returns whether this player is flying
 	 */
+/*
 	public boolean isFlying()
 	{
 		return this.getPlayer().capabilities.isFlying;
@@ -462,6 +494,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	/**
 	 * Gets the world that this player is in
 	 */
+/*
 	@Override
 	public World getWorld()
 	{
@@ -469,17 +502,20 @@ public class DinocraftPlayer implements IDinocraftPlayer
 	}
  
 	/** Whether this player is invulnerable or not */
+/*
 	private boolean invulnerable = false;
  
 	/** 
 	 * Returns if this player is currently invulnerable 
 	 */
+/*
     public boolean isInvulnerable()
     {
         return this.invulnerable;
     }
  
     /** Sets whether this player is invulnerable or not */
+/*
     private void setInvulnerable(boolean invulnerable)
     {
         this.invulnerable = invulnerable;
@@ -488,25 +524,29 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Sets this player invulnerable for the specified time (seconds)
      */
+/*
     public void setInvulnerable(int time)
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(this.getPlayer());
-		player.getTicks().setTicksInvulnerable(time * 20);
-		player.setInvulnerable(true);
+		DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(this.getPlayer());
+		dinoPlayer.getTicksModule().setTicksInvulnerable(time * 20);
+		dinoPlayer.setInvulnerable(true);
 	}
  
 	/** Whether this player is degenerating */
+/*
 	private boolean degenerating = false;
     
 	/** 
 	 * Returns if this player is degenerating
 	 */
+/*
     public boolean isDegenerating()
     {
         return this.degenerating;
     }
     
     /** Sets whether this player is degenerating or not */
+/*
     private void setDegenerating(boolean degenerating)
     {
         this.degenerating = degenerating;
@@ -514,33 +554,37 @@ public class DinocraftPlayer implements IDinocraftPlayer
 
     /**
      * Sets this player degenerating
-     * @param degenerationTicks the amount of ticks to degenerate
-     * @param degenerationLoopTicks the amount of ticks in between each degeneration loop
-     * @param heartsDegenerate the amount of half-hearts to hurt for each degeneration loop
+     * @param time the amount of time to degenerate for (seconds)
+     * @param loopTime the amount of time in between each degeneration loop (seconds)
+     * @param health the amount of health to degenerate for each loop (half-hearts)
      */
-    public void setDegenerating(int degenerationTicks, int degenerationLoopTicks, float heartsDegenerate)
+/*
+    public void setDegenerating(int time, double loopTime, float health)
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(this.getPlayer());
-		DinocraftPlayerTicks ticks = player.getTicks();
-		ticks.setDegenerationTicks(degenerationTicks);
-		ticks.setDegenerationLoopTicks(degenerationLoopTicks);
-		ticks.setDegenerationHearts(heartsDegenerate);
-		player.setDegenerating(true);
+		DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(this.getPlayer());
+		dinoPlayer.setDegenerating(true);
+
+		DinocraftPlayerTicks ticks = dinoPlayer.getTicksModule();
+		ticks.setDegenerationTicks(time * 20);
+		ticks.setDegenerationLoopTicks(loopTime * 20);
+		ticks.setDegenerationHearts(health);
 	}
     
     /** Whether this player is regenerating */
+/*
 	private boolean regenerating = false;
     
 	/** 
 	 * Returns if this player is regenerating
 	 */
+/*
     public boolean isRegenerating()
-    {
-    	if (this.getPlayer().getActivePotionEffect(MobEffects.REGENERATION) != null) return true;
-        return this.regenerating;
+    {   
+        return this.getPlayer().getActivePotionEffect(MobEffects.REGENERATION) != null ? true : this.regenerating;
     }
     
     /** Sets whether this player is regenerating or not */
+/*
     private void setRegenerating(boolean regenerating)
     {
         this.regenerating = regenerating;
@@ -550,34 +594,39 @@ public class DinocraftPlayer implements IDinocraftPlayer
      * Sets this player regenerating
      * @param time the amount of time to regenerate for (seconds)
      * @param loopTime the amount of time in between each regeneration loop (seconds)
-     * @param health the amount of health to heal for each loop (half-hearts)
+     * @param health the amount of health to regenerate for each loop (half-hearts)
      */
+/*
     public void setRegenerating(int time, double loopTime, float health)
 	{
-		DinocraftPlayer player = DinocraftPlayer.getPlayer(this.getPlayer());
-		DinocraftPlayerTicks ticks = player.getTicks();
+		DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(this.getPlayer());
+		dinoPlayer.setRegenerating(true);
+
+		DinocraftPlayerTicks ticks = dinoPlayer.getTicksModule();
 		ticks.setRegenerationTicks(time * 20);
 		ticks.setRegenerationLoopTicks(loopTime * 20);
 		ticks.setRegenerationHearts(health);
-		player.setRegenerating(true);
 	}
 	
 	@SubscribeEvent
-	public static void onTickingPlayer(PlayerTickEvent event)
+	public static void onPlayerTick(PlayerTickEvent event)
 	{
-		if (event.phase != Phase.END) return;
+		if (event.phase != Phase.END)
+		{
+			return;
+		}
 		
-		EntityPlayer playerIn = event.player;
-    	DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-    	DinocraftPlayerTicks ticks = player.getTicks();
+		EntityPlayer player = event.player;
+    	DinocraftPlayer dinoPlayer = DinocraftPlayer.getPlayer(player);
+    	DinocraftPlayerTicks ticks = dinoPlayer.getTicksModule();
     	
-    	if (!playerIn.world.isRemote)
+    	if (!player.world.isRemote)
     	{	
-    		if (player.isRegenerating())
+    		if (dinoPlayer.isRegenerating())
     		{
     			if (ticks.getRegenerationTicks() <= 0)
     			{
-    				player.setRegenerating(false);
+    				dinoPlayer.setRegenerating(false);
     				ticks.setRegenerationCount(0);
         		}
     	    	else
@@ -589,19 +638,26 @@ public class DinocraftPlayer implements IDinocraftPlayer
     	    		{
     		   			ticks.setRegenerationCount(0);
     		   			
-    		   			if (playerIn.getHealth() != playerIn.getMaxHealth()) 
+    		   			if (player.getHealth() != player.getMaxHealth()) 
     		   			{
-    		   				playerIn.heal(ticks.getRegenerationHearts());
+    		   				player.heal(ticks.getRegenerationHearts());
     		   			}
     	    		}
     	    	}
     		}
+    		else
+    		{
+    			ticks.setRegenerationLoopTicks(0);
+    			ticks.setRegenerationHearts(0);
+    			ticks.setRegenerationTicks(0);
+    			ticks.setRegenerationCount(0);
+    		}
     		
-    		if (player.isDegenerating())
+    		if (dinoPlayer.isDegenerating())
     		{
     			if (ticks.getDegenerationTicks() <= 0)
     			{
-    				player.setDegenerating(false);
+    				dinoPlayer.setDegenerating(false);
     				ticks.setDegenerationCount(0);
         		}
     	    	else
@@ -612,63 +668,58 @@ public class DinocraftPlayer implements IDinocraftPlayer
     		    	if (ticks.getDegenerationCount() == ticks.getDegenerationLoopTicks())
     	    		{
     		   			ticks.setDegenerationCount(0);
-    		   			player.hurt(ticks.getDegenerationHearts());
+    		   			dinoPlayer.hurt(ticks.getDegenerationHearts());
     	    		}
     	    	}
     		}
     		
-    		if (player.isInvulnerable())
+    		if (dinoPlayer.isInvulnerable())
     		{
     			if (ticks.getTicksInvulnerable() <= 0)
     			{
-    				player.setInvulnerable(false);
-    				playerIn.setEntityInvulnerable(false);
+    				dinoPlayer.setInvulnerable(false);
+    				player.setEntityInvulnerable(false);
     			}
     			else
     			{
     				ticks.setTicksInvulnerable(ticks.getTicksInvulnerable() - 1);
-    				playerIn.setEntityInvulnerable(true);
+    				player.setEntityInvulnerable(true);
     			}
     		}
     	}
 	}
 	
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPlayerClone(PlayerEvent.Clone event)
     {
 		if (event.getEntityPlayer() != null)
 		{
-			EntityPlayer playerIn = event.getEntityPlayer();
-			DinocraftPlayer player = DinocraftPlayer.getPlayer(playerIn);
-			
-			player.setInvulnerable(3);
-			player.setRegenerating(1000, .05, 1);
-			
-			IAttributeInstance oldMaxHealth = playerIn.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-	        AttributeModifier modifier = oldMaxHealth.getModifier(MaxHealth.MAX_HEALTH_MODIFIER_ID);
+			EntityPlayer player = event.getEntityPlayer();
+			//player.setInvulnerable(3);
+			//player.setRegenerating(1000, .05, 1);
+			IAttributeInstance oldMaxHealth = event.getOriginal().getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
+	        AttributeModifier modifier = oldMaxHealth.getModifier(MAX_HEALTH_MODIFIER_ID);
 	        
 	        if (modifier != null)
 	        {
 	            Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
 	            multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-	            playerIn.getAttributeMap().applyAttributeModifiers(multimap);
+	            player.getAttributeMap().applyAttributeModifiers(multimap);
 	        }
 	        
+			DinocraftPlayer newPlayer = DinocraftPlayer.getPlayer(player);
 	        DinocraftPlayer oldPlayer = DinocraftPlayer.getPlayer(event.getOriginal());			
-			DinocraftPlayer newPlayer = DinocraftPlayer.getPlayer(playerIn);
-			/*final IStorage<IDinocraftPlayer> storage = DinocraftCapabilities.DINOCRAFT_PLAYER.getStorage();
 
+			final IStorage<IDinocraftPlayer> storage = DinocraftCapabilities.DINOCRAFT_PLAYER.getStorage();
     		final NBTBase state = storage.writeNBT(DinocraftCapabilities.DINOCRAFT_PLAYER, oldPlayer, null);
-    		storage.readNBT(DinocraftCapabilities.DINOCRAFT_PLAYER, newPlayer, null, state);*/
-			newPlayer.setFallDamageImmune(oldPlayer.isFallDamageImmune());
-            newPlayer.setInvulnerable(oldPlayer.isInvulnerable());
-            newPlayer.getActions().setHasExtraMaxHealth(oldPlayer.getActions().hasExtraMaxHealth());
+    		storage.readNBT(DinocraftCapabilities.DINOCRAFT_PLAYER, newPlayer, null, state);
 		}
     }
     
     /**
      * Sends a raw chat message to this player
      */
+/*
     public void sendChatMessage(String msg)
     {
     	this.getPlayer().sendMessage(new TextComponentString(msg));
@@ -677,6 +728,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Sends a raw actionbar message to this player
      */
+/*
     public void sendActionbarMessage(String msg)
     {
     	((EntityPlayerMP) this.getPlayer()).connection.sendPacket(new SPacketTitle(SPacketTitle.Type.ACTIONBAR, new TextComponentString(msg)));
@@ -685,39 +737,44 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Forces this player to say specified message
      */
+/*
     public void say(String msg)
     {
     	this.SERVER.getPlayerList().sendMessage(new TextComponentString("<" + this.getPlayer().getName() + "> " + msg));
     }
     
     /**
-     * Kicks this player from the game
+     * Kicks this player from the game with specified message
      */
+/*
     public void kick(String msg)
     {
         ((EntityPlayerMP) this.getPlayer()).connection.disconnect(new TextComponentString(msg));
     }
     
     /**
-     * Returns if this player is an operator
+     * Returns if this player has the specified permission level or higher
      */
-    public boolean isOpped()
+/*
+    public boolean hasOpLevel(int level)
     {
-		return this.SERVER.getPlayerList().canSendCommands(this.getPlayer().getGameProfile());
+		return (this.getOpLevel() >= level) ? true : false;
     }
     
     /**
      * Gets the operator level of this player
      */
+/*
     public int getOpLevel()
     {
-    	EntityPlayer playerIn = this.getPlayer();
-    	return playerIn.canUseCommand(4, "/heal") ? 4 : playerIn.canUseCommand(3, "/jump") ? 3 : playerIn.canUseCommand(2, "/ban") ? 2 : playerIn.canUseCommand(1, "/say") ? 1 : 0;
+    	EntityPlayer player = this.getPlayer();
+    	return player.canUseCommand(4, "") ? 4 : player.canUseCommand(3, "") ? 3 : player.canUseCommand(2, "") ? 2 : player.canUseCommand(1, "") ? 1 : 0;
     }
     
     /**
      * Ops this player
      */
+/*
     public void op()
     {
 		this.SERVER.getPlayerList().addOp(((EntityPlayerMP) this.getPlayer()).getGameProfile());
@@ -726,6 +783,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Checks if this player has the specified ammunition
      */
+/*
     public boolean hasAmmo(Predicate<ItemStack> ammo)
     {
     	return PlayerHelper.hasAmmo(this.getPlayer(), ammo);
@@ -734,6 +792,7 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Consumes the specified ammunition from the player's inventory
      */
+/*
     public void consumeAmmo(Predicate<ItemStack> ammo)
     {
     	PlayerHelper.consumeAmmo(this.getPlayer(), ammo);
@@ -742,32 +801,37 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Adds the specified item to the player's inventory
      */
+/*
     public void addStack(Item item, int amount)
     {
     	ItemStack stack = new ItemStack(item, amount);
-    	EntityPlayer playerIn = this.getPlayer();
-		boolean flag = playerIn.inventory.addItemStackToInventory(stack);
+    	EntityPlayer player = this.getPlayer();
+		boolean flag = player.inventory.addItemStackToInventory(stack);
 		
         if (flag)
         {
-        	playerIn.world.playSound((EntityPlayer) null, playerIn.posX, playerIn.posY, playerIn.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((playerIn.getRNG().nextFloat() - playerIn.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-        	playerIn.inventoryContainer.detectAndSendChanges();
+        	player.world.playSound((EntityPlayer) null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
+        	player.inventoryContainer.detectAndSendChanges();
         }
 
         if (flag && stack.isEmpty())
         {
         	stack.setCount(1);
-            EntityItem entityitem = playerIn.dropItem(stack, false);
-            if (entityitem != null) entityitem.makeFakeItem();
+            EntityItem entityitem = player.dropItem(stack, false);
+            
+            if (entityitem != null)
+            {
+            	entityitem.makeFakeItem();
+            }
         }
         else
         {
-            EntityItem entityitem = playerIn.dropItem(stack, false);
+            EntityItem entityitem = player.dropItem(stack, false);
 
             if (entityitem != null)
             {
                 entityitem.setNoPickupDelay();
-                entityitem.setOwner(playerIn.getName());
+                entityitem.setOwner(player.getName());
             }
         }
     }
@@ -775,15 +839,53 @@ public class DinocraftPlayer implements IDinocraftPlayer
     /**
      * Removes the specified item from the player's inventory
      */
+/*
     public void removeStack(Item item, int amount)
     {
-    	EntityPlayer playerIn = this.getPlayer();
-    	InventoryPlayer inventory = playerIn.inventory;
+    	EntityPlayer player = this.getPlayer();
+    	InventoryPlayer inventory = player.inventory;
 
-    	for (ItemStack stack : playerIn.inventoryContainer.getInventory())
+    	for (ItemStack stack : player.inventoryContainer.getInventory())
     	{
-    		if (stack.getItem() == item) stack.setCount(stack.getCount() - amount);;
+    		if (stack.getItem() == item)
+    		{
+    			stack.setCount(stack.getCount() - amount);;
+    		}
     	}
+    }
+    
+    private double attackReach = 0.0F;
+    private boolean hasExtraReach = false;
+    
+    public void setAttackReach(double reach)
+    {
+    	this.setHasExtraReach(reach > 1.0D ? true : false);
+    	this.attackReach = reach;
+    }
+    
+    public boolean hasExtraReach()
+    {
+    	return this.hasExtraReach;
+    }
+    
+    public void setHasExtraReach(boolean reach)
+    {
+    	this.hasExtraReach = reach;
+    }
+    
+    public double getAttackReach()
+    {
+    	return this.attackReach;
+    }
+    
+    public double getBlockReach()
+    {
+    	return ((EntityPlayerMP) this.getPlayer()).interactionManager.getBlockReachDistance();
+    }
+    
+    public void setBlockReach(double reach)
+    {
+    	((EntityPlayerMP) this.getPlayer()).interactionManager.setBlockReachDistance(reach);
     }
     
 	public static class Storage implements IStorage<IDinocraftPlayer>
@@ -813,6 +915,28 @@ public class DinocraftPlayer implements IDinocraftPlayer
 		tag.setFloat("Fall Damage Reduction Amount", this.fallDamageReductionAmount);
 		tag.setBoolean("Invulnerable", this.invulnerable);
 		tag.setBoolean("Regenerating", this.regenerating);
+		tag.setBoolean("Extra Reach", this.hasExtraReach);
+		tag.setDouble("Reach", this.attackReach);
+		
+		DinocraftPlayerTicks ticks = DinocraftPlayer.getPlayer(this.getPlayer()).getTicksModule();
+		tag.setDouble("Regeneration Loop Ticks", ticks.regenerationLoopTicks);
+		tag.setInteger("Regeneration Ticks", ticks.regenerationTicks);
+		tag.setInteger("Regeneration Count", ticks.regenerationCount);
+		tag.setFloat("Regeneration Hearts", ticks.heartsRegenerate);
+		tag.setInteger("Ticks Invulnerable", ticks.ticksInvulnerable);
+		tag.setDouble("Degeneration Loop Ticks", ticks.degenerationLoopTicks);
+		tag.setInteger("Degeneration Ticks", ticks.degenerationTicks);
+		tag.setInteger("Degeneration Count", ticks.degenerationCount);
+		tag.setFloat("Degeneration Hearts", ticks.heartsDegenerate);
+		
+		DinocraftPlayerActions actions = DinocraftPlayer.getPlayer(this.getPlayer()).getActionsModule();
+		tag.setBoolean("doubleJump", actions.doubleJump);
+		tag.setBoolean("hasDoubleJumped", actions.hasDoubleJumped);
+		tag.setBoolean("jumpCooldown", actions.longJump);
+		tag.setBoolean("extraMaxHealth", actions.extraMaxHealth);
+		tag.setBoolean("extraMaxHealth2", actions.extraMaxHealth2);
+		tag.setInteger("chlorophyteTick", actions.chlorophyteTick);
+		tag.setFloat("chlorophyteAbsorptionAmount", actions.chlorophyteAbsorptionAmount);
 	}
  
 	@Override
@@ -824,5 +948,28 @@ public class DinocraftPlayer implements IDinocraftPlayer
 		this.fallDamageReductionAmount = tag.getFloat("Fall Damage Reduction Amount");
 		this.invulnerable = tag.getBoolean("Invulnerable");
 		this.regenerating = tag.getBoolean("Regenerating");
+		this.hasExtraReach = tag.getBoolean("Extra Reach");
+		this.attackReach = tag.getDouble("Reach");
+		
+		DinocraftPlayerTicks ticks = DinocraftPlayer.getPlayer(this.getPlayer()).getTicksModule();
+		ticks.regenerationTicks = tag.getInteger("Regeneration Ticks");
+		ticks.regenerationLoopTicks = tag.getInteger("Regeneration Loop Ticks");
+		ticks.regenerationCount = tag.getInteger("Regeneration Count");
+		ticks.heartsRegenerate = tag.getFloat("Regeneration Hearts");
+		ticks.ticksInvulnerable = tag.getInteger("Ticks Invulnerable");
+		ticks.degenerationTicks = tag.getInteger("Degeneration Ticks");
+		ticks.degenerationLoopTicks = tag.getDouble("Degeneration Loop Ticks");
+		ticks.degenerationCount = tag.getInteger("Degeneration Count");
+		ticks.heartsDegenerate = tag.getFloat("Degeneration Hearts");
+		
+		DinocraftPlayerActions actions = DinocraftPlayer.getPlayer(this.getPlayer()).getActionsModule();
+		actions.doubleJump = tag.getBoolean("doubleJump");
+		actions.hasDoubleJumped = tag.getBoolean("hasDoubleJumped");
+		actions.longJump = tag.getBoolean("jumpCooldown");
+		actions.extraMaxHealth = tag.getBoolean("extraMaxHealth");
+		actions.extraMaxHealth2 = tag.getBoolean("extraMaxHealth2");
+		actions.chlorophyteTick = tag.getInteger("chlorophyteTick");
+		actions.chlorophyteAbsorptionAmount = tag.getFloat("chlorophyteAbsorptionAmount");
 	}
 }
+*/

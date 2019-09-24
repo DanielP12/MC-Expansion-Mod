@@ -14,6 +14,6 @@ public class TabDinocraftBlocks extends CreativeTabs
 	@Override
 	public ItemStack getTabIconItem() 
 	{
-		return new ItemStack(DinocraftBlocks.CHLOROPHYTE_ORE);
+		return new ItemStack(DinocraftBlocks.PEBBLES_BLOCK);
 	}
 }

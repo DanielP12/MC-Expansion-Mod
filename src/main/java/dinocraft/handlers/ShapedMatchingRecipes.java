@@ -21,15 +21,15 @@ public class ShapedMatchingRecipes extends ShapedRecipes
 
 	@Override
 	@Nullable
-	public ItemStack getCraftingResult(InventoryCrafting inv) 
+	public ItemStack getCraftingResult(InventoryCrafting inventory) 
 	{
 		ItemStack result = this.recipeOutput.copy();
 		
-		for (int i = 0; i < inv.getHeight(); ++i)
+		for (int i = 0; i < inventory.getHeight(); ++i)
 		{
-			for (int j = 0; j < inv.getWidth(); ++j) 
+			for (int j = 0; j < inventory.getWidth(); ++j) 
 			{
-				ItemStack stack = inv.getStackInRowAndColumn(j, i);
+				ItemStack stack = inventory.getStackInRowAndColumn(j, i);
 				
 				if (stack != null && stack.getItem() instanceof ItemArmor) 
 				{

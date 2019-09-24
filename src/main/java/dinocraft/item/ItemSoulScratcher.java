@@ -27,12 +27,12 @@ public class ItemSoulScratcher extends ItemTool
 {
 	private static final Set<Block> EFFECTIVE_BLOCKS = Sets.newHashSet(new Block[] {});
 	
-	public ItemSoulScratcher(String unlocalizedName) 
+	public ItemSoulScratcher(String name) 
 	{
 		super(EnumHelper.addToolMaterial(Reference.MODID + ":soul_scratcher", 0, 65, 0, 0, 0), EFFECTIVE_BLOCKS);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setMaxDamage(64);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setMaxDamage(65);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
 	@Override
@@ -42,11 +42,12 @@ public class ItemSoulScratcher extends ItemTool
 		{
 			for (int i = 0; i < 10; ++i)
 			{
-				DinocraftServer.spawnParticle(EnumParticleTypes.SMOKE_LARGE, target.world, target.posX, target.posY, target.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, 1); //MODIFY
+				DinocraftServer.spawnParticle(EnumParticleTypes.SMOKE_LARGE, false, target.world, target.posX, target.posY, target.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, 1);
 			}
-				
+			
+			stack.damageItem(1, attacker);
 			target.dropItem(DinocraftItems.CHUNKY_FLESH, 1);
-			target.playSound(SoundEvents.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 1F, 0.5F);
+			target.playSound(SoundEvents.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 1.0F, 0.5F);
 		}
 		
 		return true;
@@ -54,9 +55,9 @@ public class ItemSoulScratcher extends ItemTool
 	
     @SideOnly(Side.CLIENT)
 	@Override
-	public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn)
+	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
 		tooltip.add(TextFormatting.DARK_GREEN + Utils.getLang().localize("soul_scratcher.tooltip"));
-		super.addInformation(stack, worldIn, tooltip, flagIn);
+		super.addInformation(stack, world, tooltip, flag);
 	}
 }

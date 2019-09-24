@@ -6,20 +6,17 @@ import org.apache.logging.log4j.Logger;
 import dinocraft.Reference;
 
 public class Utils
-{	
+{
 	private static Logger logger;
-	
+	private static Lang lang;
+
 	public static Logger getLogger()
 	{
-		if (logger == null) logger = LogManager.getFormatterLogger(Reference.MODID);
-		return logger;
+		return logger == null ? LogManager.getFormatterLogger(Reference.MODID) : logger;
 	}
-
-	private static Lang lang;
 
 	public static Lang getLang() 
 	{
-		if (lang == null) lang = new Lang(Reference.MODID);
-		return lang;
+		return lang == null ? new Lang(Reference.MODID) : lang;
 	}
 }

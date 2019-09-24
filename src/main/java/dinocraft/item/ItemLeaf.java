@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemLeaf extends Item
 {
-	public ItemLeaf(String unlocalizedName, String registryName)
+	public ItemLeaf(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

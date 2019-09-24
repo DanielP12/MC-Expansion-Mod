@@ -5,18 +5,15 @@ import java.util.List;
 import java.util.Random;
 
 import dinocraft.Reference;
-import dinocraft.init.DinocraftArmour;
 import dinocraft.init.DinocraftItems;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -24,12 +21,12 @@ import net.minecraft.world.World;
 
 public class BlockPebblesBlock extends Block 
 {
-    public BlockPebblesBlock(String unlocalizedName, String registryName) 
+    public BlockPebblesBlock(String name) 
     {
         super(Material.ROCK);
-        this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
-        this.setHardness(3.0F);
+        this.setUnlocalizedName(name);
+        this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+		this.setHardness(3.0F);
         this.setResistance(5.0F);
         this.setSoundType(SoundType.METAL);
         this.setHarvestLevel("pickaxe", 2);
@@ -45,33 +42,33 @@ public class BlockPebblesBlock extends Block
         
         if (i < 1)
         {
-            return DinocraftItems.TUSKERERS_CHARM;
+            return DinocraftItems.TUSKERERS_AMULET;
         }
-        else if (i < 4)
+        else if (i < 3)
         {
-            return DinocraftItems.TUSKERERS_GEM;
+            return DinocraftItems.TUSKERERS_GEMSTONE;
         } 
-        else if (i < 8)
+        else if (i < 7)
         {
             return DinocraftItems.BLEVENT_INGOT; 
         } 
-        else if (i < 10)
+        else if (i < 10) /* TODO: Remove; doesn't make any sense here. Replace with Tuskerer's Ruby */
         {
-            return DinocraftArmour.UMBRELLA_HAT;
-        } 
-        else if (i < 14)
+            return DinocraftItems.UMBRELLA_HAT;
+        }
+        else if (i < 13)
         {
             return DinocraftItems.LEAF;
         }
-        else if (i < 19)
+        else if (i < 18)
         {
             return DinocraftItems.RANIUM;
         } 
-        else if (i < 26)
+        else if (i < 24)
         {
             return Items.DIAMOND;
         } 
-        else if (i < 30)
+        else if (i < 39)
         {
             return DinocraftItems.SHEEPLITE_INGOT;
         } 
@@ -82,7 +79,7 @@ public class BlockPebblesBlock extends Block
         } 
         else if (i < 46)
         {
-            this.amount = rand.nextInt(16) + 1;
+        	this.amount = rand.nextInt(16) + 1;
             return Items.GOLD_NUGGET;
         } 
         else if (i < 53)
@@ -95,9 +92,9 @@ public class BlockPebblesBlock extends Block
         	this.amount = rand.nextInt(4) + 1;
         	return Items.LEATHER;
         }
-        else if (i < 80)
+        else if (i < 85)
         {
-        	return Items.POISONOUS_POTATO;
+        	return Items.COAL;
         }
         else if (i < 100)
         {
@@ -111,7 +108,7 @@ public class BlockPebblesBlock extends Block
         } 
         else if (i < 300)
         {
-        	return Items.STICK;
+        	return Item.getItemFromBlock(Blocks.DIRT);
         }
         else if (i < 480)
         {
@@ -140,30 +137,22 @@ public class BlockPebblesBlock extends Block
         
         return Item.getItemFromBlock(Blocks.COBBLESTONE);
     }
-    
-    @Override
-    public void harvestBlock(World worldIn, EntityPlayer playerIn, BlockPos pos, IBlockState stateIn, TileEntity tile, ItemStack stack) 
-    {
-        super.harvestBlock(worldIn, playerIn, pos, stateIn, tile, stack);
-        /*
-        if (!playerIn.hasAchievement(DinocraftAchievements.PEBBLES))
-		{
-        	playerIn.addStat(DinocraftAchievements.PEBBLES);
-		}
-		*/
-    }
-    
+
     @Override
     public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        Random rand = new Random();
+        Random rand = world instanceof World ? ((World) world).rand : new Random();
         int count = this.quantityDropped(state, fortune, rand);
         ArrayList<ItemStack> drops = new ArrayList<>();
 
-        for (int i = 0; i < count; i++) 
+        for (int i = 0; i < count; ++i) 
         {
             Item item = this.getItemDropped(state, rand, fortune);
-            if (item != null) drops.add(new ItemStack(item, this.amount, 0));
+            
+            if (item != null)
+            {
+            	drops.add(new ItemStack(item, this.amount, 0));
+            }
         }
         
         return drops;

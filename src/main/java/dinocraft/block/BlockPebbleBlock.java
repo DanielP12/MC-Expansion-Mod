@@ -12,18 +12,18 @@ import net.minecraft.util.ResourceLocation;
 
 public class BlockPebbleBlock extends Block
 {
-	public BlockPebbleBlock(String unlocalizedName, String registryName) 
+	public BlockPebbleBlock(String name) 
 	{
 		super(Material.ROCK);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
-		this.setHardness(2);
-		this.setResistance(30);
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+		this.setHardness(2.0F);
+		this.setResistance(30.0F);
         this.setSoundType(SoundType.METAL);
 	}
 	
 	@Override
-	public Item getItemDropped(IBlockState stateIn, Random rand, int fortune) 
+	public Item getItemDropped(IBlockState state, Random rand, int fortune) 
 	{
 		return Item.getItemFromBlock(this);
 	}

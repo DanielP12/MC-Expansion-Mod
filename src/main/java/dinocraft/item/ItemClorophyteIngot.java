@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemClorophyteIngot extends Item 
 {
-	public ItemClorophyteIngot(String unlocalizedName, String registryName) 
+	public ItemClorophyteIngot(String name) 
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

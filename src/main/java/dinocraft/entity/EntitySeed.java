@@ -2,12 +2,12 @@ package dinocraft.entity;
 
 import java.util.Random;
 
-import dinocraft.handlers.DinocraftSoundEvents;
+import dinocraft.init.DinocraftEntities;
 import dinocraft.init.DinocraftItems;
+import dinocraft.init.DinocraftSoundEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.BlockReed;
-import net.minecraft.block.BlockTallGrass;
 import net.minecraft.block.BlockVine;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -32,7 +32,7 @@ public class EntitySeed extends EntityThrowable
 	
 	public ResourceLocation getTexture()
 	{
-		return RenderEntities.SEED_TEXTURE;
+		return DinocraftEntities.SEED_TEXTURE;
 	}
 	
 	public EntitySeed(World worldIn) 

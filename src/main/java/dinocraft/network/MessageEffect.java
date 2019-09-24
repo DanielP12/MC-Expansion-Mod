@@ -7,24 +7,24 @@ import net.minecraft.potion.PotionEffect;
 
 public class MessageEffect extends AbstractPacket<MessageEffect> 
 {
-	private int potionID, duration, amplifier;
-
+	private int duration, amplifier;
+	private Potion effect;
+	
     public MessageEffect()
     {
     	
     }
 
-    public MessageEffect(int potionID, int duration, int amplifier) 
+    public MessageEffect(Potion effect, int duration, int amplifier) 
     {
-        this.potionID = potionID;
-        this.duration = duration;
+    	this.effect = effect;
+    	this.duration = duration;
         this.amplifier = amplifier;
     }
 	
 	@Override
 	public void toBytes(ByteBuf buffer) 
 	{
-        buffer.writeInt(this.potionID);
         buffer.writeInt(this.duration);
         buffer.writeInt(this.amplifier);
 	}
@@ -32,20 +32,21 @@ public class MessageEffect extends AbstractPacket<MessageEffect>
 	@Override
 	public void fromBytes(ByteBuf buffer) 
 	{
-		this.potionID = buffer.readInt();
 		this.duration = buffer.readInt();
 		this.amplifier = buffer.readInt();
 	}
 
 	@Override
-	public void handleClientSide(MessageEffect message, EntityPlayer playerIn) 
+	public void handleClientSide(MessageEffect message, EntityPlayer player) 
 	{
 		
 	}
 
 	@Override
-	public void handleServerSide(MessageEffect message, EntityPlayer playerIn)
+	public void handleServerSide(MessageEffect message, EntityPlayer player)
 	{
-		playerIn.addPotionEffect(new PotionEffect(Potion.getPotionById(message.potionID), message.duration, message.amplifier, false, false));
+		player.addPotionEffect(new PotionEffect(message.effect, message.duration, message.amplifier, false, false));
+
+		//player.addPotionEffect(new PotionEffect(Potion.getPotionById(message.potionID), message.duration, message.amplifier, false, false));
 	}
 }

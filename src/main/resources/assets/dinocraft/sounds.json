@@ -4,10 +4,10 @@
 		"subtitle": "item.grab",
 		"sounds": [ { "name": "dinocraft:grab", "stream": true } ]
 	},
-	"charm_used": {
+	"charm": {
 		"category": "random",
-		"subtitle": "charm_used",
-		"sounds": [ { "name": "dinocraft:charm_used", "stream": true } ]
+		"subtitle": "charm",
+		"sounds": [ { "name": "dinocraft:charm", "stream": true } ]
 	},
 	"harp": {
 		"category": "random",
@@ -24,10 +24,10 @@
 		"subtitle": "shot",
 		"sounds": [ { "name": "dinocraft:shot", "stream": true } ]
 	},
-	"shot_gun_shot": {
+	"shotgun_shot": {
 		"category": "random",
-		"subtitle": "shot_gun_shot",
-		"sounds": [ { "name": "dinocraft:shot_gun_shot", "stream": true } ]
+		"subtitle": "shotgun_shot",
+		"sounds": [ { "name": "dinocraft:shotgun_shot", "stream": true } ]
 	},
 	"ray_gun_shot": {
 		"category": "random",

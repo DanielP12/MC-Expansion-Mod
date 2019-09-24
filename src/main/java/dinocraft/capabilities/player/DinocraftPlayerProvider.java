@@ -1,3 +1,4 @@
+/*
 package dinocraft.capabilities.player;
 
 import dinocraft.capabilities.DinocraftCapabilities;
@@ -11,9 +12,9 @@ public class DinocraftPlayerProvider implements ICapabilitySerializable<NBTBase>
 	private final DinocraftPlayer.Storage storage = new DinocraftPlayer.Storage();
 	private final IDinocraftPlayer player;
 
-	public DinocraftPlayerProvider(IDinocraftPlayer playerIn)
+	public DinocraftPlayerProvider(IDinocraftPlayer player)
 	{
-		this.player = playerIn;
+		this.player = player;
 	}
 
 	@Override
@@ -25,8 +26,7 @@ public class DinocraftPlayerProvider implements ICapabilitySerializable<NBTBase>
 	@Override
 	public <T> T getCapability(Capability<T> capability, EnumFacing facing)
 	{
-		if (this.hasCapability(capability, facing)) return (T) this.player;
-		return null;
+		return this.hasCapability(capability, facing) ? (T) this.player : null;
 	}
 
 	@Override
@@ -41,3 +41,4 @@ public class DinocraftPlayerProvider implements ICapabilitySerializable<NBTBase>
 		this.storage.readNBT(DinocraftCapabilities.DINOCRAFT_PLAYER, this.player, null, nbt);
 	}
 }
+*/

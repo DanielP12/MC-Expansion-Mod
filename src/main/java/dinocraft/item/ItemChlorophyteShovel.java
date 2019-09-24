@@ -6,10 +6,10 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemChlorophyteShovel extends ItemSpade 
 {
-	public ItemChlorophyteShovel(ToolMaterial material, String unlocalizedName) 
+	public ItemChlorophyteShovel(ToolMaterial material, String name) 
 	{
 		super(material);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

@@ -16,27 +16,31 @@ import net.minecraft.world.World;
 
 public class ItemVineBall extends Item
 {
-	public ItemVineBall(String unlocalizedName)
+	public ItemVineBall(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
 	@Override
-	public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) 
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) 
 	{
-		ItemStack stack = playerIn.getHeldItem(handIn);	
-		if (!playerIn.isCreative()) stack.shrink(1);
-				
-		if (!worldIn.isRemote)
+		ItemStack stack = player.getHeldItem(hand);	
+		
+		if (!player.isCreative())
 		{
-			EntityVineBall ball = new EntityVineBall(playerIn, 0.1F);
-        	ball.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5F, 7.0F);
-        	worldIn.spawnEntity(ball);
+			stack.shrink(1);
+		}
+				
+		if (!world.isRemote)
+		{
+			EntityVineBall ball = new EntityVineBall(player, 0.1F);
+        	ball.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.5F, 7.0F);
+        	world.spawnEntity(ball);
 		}
 		
-		worldIn.playSound((EntityPlayer) null, playerIn.getPosition(), SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.NEUTRAL, 1F, 0.05F);
-		playerIn.addStat(StatList.getObjectUseStats(this));
+		world.playSound((EntityPlayer) null, player.getPosition(), SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.NEUTRAL, 1.0F, 0.05F);
+		player.addStat(StatList.getObjectUseStats(this));
 		return new ActionResult(EnumActionResult.SUCCESS, stack);
 	}
 }

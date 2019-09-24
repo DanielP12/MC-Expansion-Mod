@@ -17,18 +17,22 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemKatana extends ItemSword
 {
-	public ItemKatana(ToolMaterial material, String unlocalizedName)
+	public ItemKatana(ToolMaterial material, String name)
 	{
 		super(material);
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));		
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));		
 	}
 	
 	@Override	 
     public Multimap<String, AttributeModifier> getAttributeModifiers(EntityEquipmentSlot slot, ItemStack stack)
 	{
         final Multimap<String, AttributeModifier> modifiers = super.getAttributeModifiers(slot, stack); 
-        if (slot == EntityEquipmentSlot.MAINHAND) replaceModifier(modifiers, SharedMonsterAttributes.ATTACK_SPEED, ATTACK_SPEED_MODIFIER, 0.415);
+       
+        if (slot == EntityEquipmentSlot.MAINHAND)
+        {
+        	replaceModifier(modifiers, SharedMonsterAttributes.ATTACK_SPEED, ATTACK_SPEED_MODIFIER, 0.415);
+        }
         
         return modifiers;
     }

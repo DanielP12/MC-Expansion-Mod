@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 
 public class ItemTusk extends Item 
 {
-	public ItemTusk(String unlocalizedName, String registryName)
+	public ItemTusk(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+		this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 }

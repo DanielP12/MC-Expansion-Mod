@@ -16,15 +16,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockPebbeloneumOre extends Block 
 {
-    public BlockPebbeloneumOre(String unlocalizedName, String registryName) 
+    public BlockPebbeloneumOre(String name) 
     {
         super(Material.ROCK);
-        this.setUnlocalizedName(unlocalizedName);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, registryName));
+        this.setUnlocalizedName(name);
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
         this.setHardness(3.25F);
         this.setResistance(10.0F);
         this.setSoundType(SoundType.METAL);
@@ -36,36 +37,20 @@ public class BlockPebbeloneumOre extends Block
     {
         return DinocraftItems.PEBBELONEUM;
     }
-
-    public int quantityDroppedWithBonus(int fortune, Random rand)
-    {
-        if (fortune > 0 && Item.getItemFromBlock(this) != this.getItemDropped((IBlockState)this.getBlockState().getValidStates().iterator().next(), rand, fortune))
-        {
-            int i = rand.nextInt(fortune + 2) - 1;
-			if (i < 0) i = 0;
-			
-            return this.quantityDropped(rand) * (i + 1);
-        }
-        else
-        {
-            return this.quantityDropped(rand);
-        }
-    }
-
-    public void dropBlockAsItemWithChance(World worldIn, BlockPos pos, IBlockState stateIn, float chance, int fortune)
-    {
-        super.dropBlockAsItemWithChance(worldIn, pos, stateIn, chance, fortune);
-    }
     
     @Override
-    public int getExpDrop(IBlockState stateIn, net.minecraft.world.IBlockAccess worldIn, BlockPos pos, int fortune)
+    public int getExpDrop(IBlockState state, IBlockAccess world, BlockPos pos, int fortune)
     {
-        Random rand = worldIn instanceof World ? ((World) worldIn).rand : new Random();
+        Random rand = world instanceof World ? ((World) world).rand : new Random();
         
-        if (this.getItemDropped(stateIn, rand, fortune) != Item.getItemFromBlock(this))
+        if (this.getItemDropped(state, rand, fortune) != Item.getItemFromBlock(this))
         {
             int i = 0;
-            if (this == DinocraftBlocks.PEBBELONEUM_ORE) i = MathHelper.getInt(rand, 3, 7);
+            
+            if (this == DinocraftBlocks.PEBBELONEUM_ORE)
+            {
+            	i = MathHelper.getInt(rand, 3, 7);
+            }
 
             return i;
         }
@@ -73,7 +58,7 @@ public class BlockPebbeloneumOre extends Block
         return 0;
     }
 
-    public ItemStack getItem(World worldIn, BlockPos pos, IBlockState stateIn)
+    public ItemStack getItem(World world, BlockPos pos, IBlockState state)
     {
         return new ItemStack(this);
     }

@@ -2,22 +2,23 @@ package dinocraft.command;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
-import dinocraft.util.DinocraftServer;
+import dinocraft.capabilities.entity.DinocraftEntity;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.MobEffects;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
+/**
+ * Heals the specified living entity. Gets rid of poison, wither, or fire effects if present on the player.
+ * <br><br>
+ * <b> Copyright © Danfinite 2019 </b>
+ */
 public class CommandHeal extends CommandBase
 {
 	@Override
@@ -33,10 +34,10 @@ public class CommandHeal extends CommandBase
 	}
 	
 	@Override
-    public int getRequiredPermissionLevel()
-    {
-        return 4;
-    }
+	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
+	{		
+		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(3) : true;
+	}
 
 	@Override
 	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
@@ -45,23 +46,37 @@ public class CommandHeal extends CommandBase
 
 		if (entity instanceof EntityLivingBase)
 		{
-			EntityLivingBase entityLiving = (EntityLivingBase) entity;
-			entityLiving.heal(entityLiving.getMaxHealth());
-			notifyCommandListener(sender, this, "commands.heal.success", new Object[] {entityLiving.getName()});
-		
-			World worldIn = entityLiving.world;
-			worldIn.playSound((EntityPlayer) null, entityLiving.getPosition(), SoundEvents.BLOCK_CLOTH_BREAK, SoundCategory.PLAYERS, 0.75F, 1.0F);
-			Random rand = worldIn.rand;	
-        
+			EntityLivingBase entityliving = (EntityLivingBase) entity;
+			entityliving.heal(entityliving.getMaxHealth());
+			
+			if (entityliving.isBurning())
+			{
+				entityliving.extinguish();
+			}
+			
+			if (entityliving.isPotionActive(MobEffects.POISON))
+			{
+				entityliving.removePotionEffect(MobEffects.POISON);
+			}
+			
+			if (entityliving.isPotionActive(MobEffects.WITHER))
+			{
+				entityliving.removePotionEffect(MobEffects.WITHER);
+			}
+			
+			/*
+			Random rand = entityliving.world.rand;	
+			
 			for (int i = 0; i < 25; ++i)
 			{
-				DinocraftServer.spawnParticle(EnumParticleTypes.END_ROD, worldIn, 
-					  entityLiving.posX + (double)(rand.nextFloat() * entityLiving.width * 2.0F) - (double)entityLiving.width, 
-					  entityLiving.posY + 0.5D + (double)(rand.nextFloat() * entityLiving.height), 
-					  entityLiving.posZ + (double)(rand.nextFloat() * entityLiving.width * 2.0F) - (double)entityLiving.width, 
-					  rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, 1
-				  );
+				DinocraftServer.spawnParticle(EnumParticleTypes.END_ROD, false, entityliving.world, entityliving.posX + (rand.nextFloat() * entityliving.width * 2.0F) - entityliving.width,
+						entityliving.posY + 0.5D + (rand.nextFloat() * entityliving.height), entityliving.posZ + (rand.nextFloat() * entityliving.width * 2.0F) - entityliving.width,
+						rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, 1);
 			}
+			
+			entityliving.world.playSound(null, entityliving.getPosition(), SoundEvents.BLOCK_CLOTH_BREAK, SoundCategory.NEUTRAL, 0.75F, 1.0F);
+			*/
+			notifyCommandListener(sender, this, "commands.heal.success", new Object[] {entityliving.getName()});
 		}
 	}
 
@@ -70,12 +85,10 @@ public class CommandHeal extends CommandBase
 	{
         return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.<String>emptyList();
 	}
-
+	
 	@Override
 	public boolean isUsernameIndex(String[] args, int index) 
 	{
         return index == 0;
 	}
 }
-
-

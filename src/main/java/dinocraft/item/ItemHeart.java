@@ -1,12 +1,11 @@
 package dinocraft.item;
 
 import dinocraft.Reference;
-import dinocraft.handlers.DinocraftSoundEvents;
 import dinocraft.init.DinocraftItems;
+import dinocraft.init.DinocraftSoundEvents;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraftforge.common.MinecraftForge;
@@ -15,29 +14,27 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ItemHeart extends Item
 {
-	public ItemHeart(String unlocalizedName)
+	public ItemHeart(String name)
 	{
-		this.setUnlocalizedName(unlocalizedName);
+		this.setUnlocalizedName(name);
 		this.setMaxStackSize(1);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, unlocalizedName));
-		
+		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
-	/* Event fired when an item is picked up */
 	@SubscribeEvent
-	public void onItemPickup(EntityItemPickupEvent event)
+	public void onEntityItemPickup(EntityItemPickupEvent event)
 	{
+    	EntityPlayer player = event.getEntityPlayer();  
 		EntityItem entityitem = event.getItem();
-	    ItemStack stack = entityitem.getItem();
-	    Item item = stack.getItem();
+	    String owner = entityitem.getOwner();
 	    
-	    if (entityitem != null && stack != null && item != null && item == DinocraftItems.HEART) 
+	    if (entityitem.getItem().getItem() == DinocraftItems.HEART && owner != null && owner.equals(player.getUniqueID().toString()))
 	    {
-	        EntityPlayer playerIn = event.getEntityPlayer();  
-	        playerIn.heal(2.0F);
-	        stack.shrink(1);
-    		playerIn.world.playSound((EntityPlayer) null, playerIn.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.PLAYERS, 1.0F, 1.0F);
-		}
+	    	player.heal(2.0F);
+	    	player.world.playSound(null, player.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 0.5F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
+	    	entityitem.setDead();
+	    }
 	}
 }
