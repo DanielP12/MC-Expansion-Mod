@@ -1,40 +1,37 @@
 package dinocraft.item;
 
-import dinocraft.Reference;
-import dinocraft.init.DinocraftItems;
 import dinocraft.init.DinocraftSoundEvents;
+import dinocraft.network.PacketHandler;
+import dinocraft.network.server.SPacketItemPickupEffect;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 
 public class ItemHeart extends Item
 {
-	public ItemHeart(String name)
+	public ItemHeart()
 	{
-		this.setUnlocalizedName(name);
 		this.setMaxStackSize(1);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
-
 		MinecraftForge.EVENT_BUS.register(this);
 	}
-	
+
 	@SubscribeEvent
 	public void onEntityItemPickup(EntityItemPickupEvent event)
 	{
-    	EntityPlayer player = event.getEntityPlayer();  
-		EntityItem entityitem = event.getItem();
-	    String owner = entityitem.getOwner();
-	    
-	    if (entityitem.getItem().getItem() == DinocraftItems.HEART && owner != null && owner.equals(player.getUniqueID().toString()))
-	    {
-	    	player.heal(2.0F);
-	    	player.world.playSound(null, player.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 0.5F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-	    	entityitem.setDead();
-	    }
+		EntityPlayer player = event.getEntityPlayer();
+		EntityItem item = event.getItem();
+
+		if (item.getItem().getItem() == this && player.getUniqueID().toString().equals(item.getOwner()))
+		{
+			PacketHandler.sendToAllAround(new SPacketItemPickupEffect(item, player), new TargetPoint(player.world.provider.getDimension(), player.posX, player.posY, player.posZ, 64.0D));
+			player.heal(2.0F);
+			player.world.playSound(null, player.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.AMBIENT, 1.0F, ((player.world.rand.nextFloat() - player.world.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+			item.setDead();
+		}
 	}
 }

@@ -8,121 +8,32 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 	{
 		super(entity);
 	}
-		
+	
 	protected int regenerationTicks = 0;
-	protected double regenerationLoopTicks = 0.0D;
-	protected float heartsRegenerate = 0.0F;
-		
-	protected int getRegenerationTicks()
-	{
-		return this.regenerationTicks;
-	}
-	
-	protected double getRegenerationLoopTicks()
-	{
-		return this.regenerationLoopTicks;
-	}
-	
-	protected float getRegenerationHearts()
-	{
-		return this.heartsRegenerate;
-	}
-	
-	protected void setRegenerationTicks(int regenerationTicks)
-	{
-		this.regenerationTicks = regenerationTicks;
-	}
-	
-	protected void setRegenerationLoopTicks(double regenerationLoopTicks)
-	{
-		this.regenerationLoopTicks = regenerationLoopTicks;
-	}
-	
-	protected void setRegenerationHearts(float heartsRegenerate)
-	{
-		this.heartsRegenerate = heartsRegenerate;
-	}
-	
+	protected float regenerationLoopTicks = 0.0F;
+	protected float healthToRegenerate = 0.0F;
 	protected int regenerationCount = 0;
-	
-	protected int getRegenerationCount()
+	protected int ticksInvulnerable = 0;
+	protected int jesterizedTicks = 0;
+	protected int mesmerizedTicks = 0;
+	protected int electrifiedTicks = 0;
+	protected int fallingCrystalsTicks = 0;
+	protected int ticksStandingStill = 0;
+	public int jesterSpeedingTicks = 0;
+
+	public int getTicksStandingStill()
 	{
-		return this.regenerationCount;
+		return this.ticksStandingStill;
 	}
-	
-	protected void setRegenerationCount(int count)
+
+	public void incrementTicksStandingStill()
 	{
-		this.regenerationCount = count;
+		this.ticksStandingStill++;
 	}
-	
-	protected int degenerationTicks = 0;
-	protected double degenerationLoopTicks = 0.0D;
-	protected float heartsDegenerate = 0.0F;
-		
-	protected int getDegenerationTicks()
+
+	public void resetTicksStandingStill()
 	{
-		return this.degenerationTicks;
-	}
-	
-	protected double getDegenerationLoopTicks()
-	{
-		return this.degenerationLoopTicks;
-	}
-	
-	protected float getDegenerationHearts()
-	{
-		return this.heartsDegenerate;
-	}
-	
-	protected void setDegenerationTicks(int degenerationTicks)
-	{
-		this.degenerationTicks = degenerationTicks;
-	}
-	
-	protected void setDegenerationLoopTicks(double degenerationLoopTicks)
-	{
-		this.degenerationLoopTicks = degenerationLoopTicks;
-	}
-	
-	protected void setDegenerationHearts(float heartsDegenerate)
-	{
-		this.heartsDegenerate = heartsDegenerate;
-	}
-	
-	protected int degenerationCount = 0;
-	
-	protected int getDegenerationCount()
-	{
-		return this.degenerationCount;
-	}
-	
-	protected void setDegenerationCount(int count)
-	{
-		this.degenerationCount = count;
-	}
-	
-	protected int ticksInvulnerable;
-	
-	protected int getTicksInvulnerable()
-	{
-		return this.ticksInvulnerable;
-	}
- 
-	protected void setTicksInvulnerable(int ticksInvulnerable)
-	{
-		this.ticksInvulnerable = ticksInvulnerable;
-	}
-	
-	public static int regenTick;
-	
-	public static int getRegenTick()
-	{
-		return regenTick;
-	}
- 
-	public static void setRegenTick(int amount)
-	{
-		regenTick = amount;
+		this.ticksStandingStill = 0;
 	}
 	
 	@Override
@@ -130,33 +41,37 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 	{
 		NBTTagCompound root = new NBTTagCompound();
 		tag.setTag("Ticks", root);
+		root.setInteger("RegenTicks", this.regenerationTicks);
+		root.setFloat("RegenLoopTicks", this.regenerationLoopTicks);
+		root.setInteger("RegenCount", this.regenerationCount);
+		root.setFloat("RegenHealth", this.healthToRegenerate);
+		root.setInteger("TicksInvulnerable", this.ticksInvulnerable);
+		
+		root.setInteger("TicksStandingStill", this.ticksStandingStill);
+		root.setInteger("MesmerizedTicks", this.mesmerizedTicks);
+		root.setInteger("ElectrifiedTicks", this.electrifiedTicks);
+		root.setInteger("JesterizedTicks", this.jesterizedTicks);
+		root.setInteger("FallingCrystalsTicks", this.fallingCrystalsTicks);
 
-		tag.setDouble("Regeneration Loop Ticks", this.regenerationLoopTicks);
-		tag.setInteger("Regeneration Ticks", this.regenerationTicks);
-		tag.setInteger("Regeneration Count", this.regenerationCount);
-		tag.setFloat("Regeneration Hearts", this.heartsRegenerate);
-		tag.setInteger("Ticks Invulnerable", this.ticksInvulnerable);
-		tag.setDouble("Degeneration Loop Ticks", this.degenerationLoopTicks);
-		tag.setInteger("Degeneration Ticks", this.degenerationTicks);
-		tag.setInteger("Degeneration Count", this.degenerationCount);
-		tag.setFloat("Degeneration Hearts", this.heartsDegenerate);
-		tag.setInteger("RegenTick", regenTick);
+		root.setInteger("JesterSpeedingTicks", this.jesterSpeedingTicks);
 	}
 
 	@Override
 	public void read(NBTTagCompound tag)
 	{
 		NBTTagCompound root = tag.getCompoundTag("Ticks");
+		this.regenerationTicks = root.getInteger("RegenTicks");
+		this.regenerationLoopTicks = root.getFloat("RegenLoopTicks");
+		this.regenerationCount = root.getInteger("RegenCount");
+		this.healthToRegenerate = root.getFloat("RegenHealth");
+		this.ticksInvulnerable = root.getInteger("TicksInvulnerable");
 
-		this.regenerationTicks = root.getInteger("Regeneration Ticks");
-		this.regenerationLoopTicks = root.getInteger("Regeneration Loop Ticks");
-		this.regenerationCount = root.getInteger("Regeneration Count");
-		this.heartsRegenerate = root.getFloat("Regeneration Hearts");
-		this.ticksInvulnerable = root.getInteger("Ticks Invulnerable");
-		this.degenerationTicks = root.getInteger("Degeneration Ticks");
-		this.degenerationLoopTicks = root.getDouble("Degeneration Loop Ticks");
-		this.degenerationCount = root.getInteger("Degeneration Count");
-		this.heartsDegenerate = root.getFloat("Degeneration Hearts");
-		regenTick = root.getInteger("RegenTick");
+		this.ticksStandingStill = root.getInteger("TicksStandingStill");
+		this.mesmerizedTicks = root.getInteger("MesmerizedTicks");
+		this.electrifiedTicks = root.getInteger("ElectrifiedTicks");
+		this.jesterizedTicks = root.getInteger("JesterizedTicks");
+		this.fallingCrystalsTicks = root.getInteger("FallingCrystalsTicks");
+
+		this.jesterSpeedingTicks = root.getInteger("JesterSpeedingTicks");
 	}
 }

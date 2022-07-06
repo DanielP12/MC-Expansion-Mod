@@ -1,0 +1,6 @@
+{
+    "variants": {
+        "half=bottom": { "model": "dinocraft:pebble_block" },
+        "half=top": { "model": "dinocraft:pebble_block" }
+    }
+}

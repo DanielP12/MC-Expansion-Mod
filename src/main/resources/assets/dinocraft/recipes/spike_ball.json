@@ -1,0 +1,24 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "VCV",
+    "CTC",
+    "VCV"
+  ],
+  "key": {
+    "V": {
+      "item": "minecraft:vine"
+    },
+    "C": {
+      "item": "minecraft:dye",
+      "data": 2
+    },
+    "T": {
+      "item": "dinocraft:tusk"
+    }
+  },
+  "result": {
+    "item": "dinocraft:spike_ball",
+    "count": 4
+  }
+}

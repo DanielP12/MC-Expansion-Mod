@@ -1,0 +1,22 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "TLT",
+    "V V",
+    "TLT"
+  ],
+  "key": {
+    "V": {
+      "item": "minecraft:vine"
+    },
+    "L": {
+      "item": "dinocraft:leaf"
+    },
+    "T": {
+      "item": "dinocraft:tusk"
+    }
+  },
+  "result": {
+    "item": "dinocraft:leaferang"
+  }
+}

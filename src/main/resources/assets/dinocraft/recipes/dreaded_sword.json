@@ -1,0 +1,22 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "D",
+    "B",
+    "S"
+  ],
+  "key": {
+    "D": {
+      "item": "dinocraft:dreaded_ingot"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "B": {
+      "item": "dinocraft:blevent_ingot"
+    }
+  },
+  "result": {
+    "item": "dinocraft:dreaded_sword"
+  }
+}

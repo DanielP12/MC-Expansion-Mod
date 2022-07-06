@@ -6,13 +6,13 @@ import net.minecraft.item.ItemStack;
 
 public class TabDinocraftBlocks extends CreativeTabs
 {
-	public TabDinocraftBlocks() 
+	public TabDinocraftBlocks()
 	{
 		super("dinocraftblocks");
 	}
 
 	@Override
-	public ItemStack getTabIconItem() 
+	public ItemStack getTabIconItem()
 	{
 		return new ItemStack(DinocraftBlocks.PEBBLES_BLOCK);
 	}

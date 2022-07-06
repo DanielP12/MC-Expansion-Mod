@@ -1,27 +1,55 @@
 package dinocraft.capabilities.entity;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.mojang.authlib.GameProfile;
 
 import dinocraft.capabilities.DinocraftCapabilities;
-import dinocraft.network.NetworkHandler;
-import dinocraft.network.PacketSpawnParticle;
+import dinocraft.command.CommandJump;
+import dinocraft.command.CommandTPHere;
+import dinocraft.command.CommandTPTo;
+import dinocraft.entity.EntityFallingCrystal;
+import dinocraft.entity.EntityMagatiumBolt;
+import dinocraft.init.DinocraftItems;
+import dinocraft.network.PacketHandler;
+import dinocraft.network.server.SPacketAllowFlying;
+import dinocraft.network.server.SPacketChangeCapability;
+import dinocraft.network.server.SPacketFlySpeed;
+import dinocraft.network.server.SPacketTag;
+import dinocraft.network.server.SPacketTag.Action;
+import dinocraft.util.DinocraftConfig;
+import dinocraft.util.server.DinocraftServer;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.CommandTP;
+import net.minecraft.command.EntityNotFoundException;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -31,47 +59,56 @@ import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SPacketCustomPayload;
-import net.minecraft.network.play.server.SPacketEntityStatus;
+import net.minecraft.network.play.server.SPacketEntityVelocity;
 import net.minecraft.network.play.server.SPacketTitle;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.UserListOps;
-import net.minecraft.server.management.UserListOpsEntry;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.Capability.IStorage;
+import net.minecraftforge.event.CommandEvent;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.Clone;
-import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerChangedDimensionEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-/** The ultimate EntityLivingBase class extension */
 @EventBusSubscriber
 public class DinocraftEntity implements IDinocraftEntity
 {
 	private static MinecraftServer SERVER;
-    public static final UUID MAX_HEALTH_MODIFIER_ID = UUID.fromString("B04DB08B-ED8A-4B82-B1EF-ADB425174925");
-    public static final UUID MOVEMENT_SPEED_MODIFIER_ID = UUID.fromString("FFAB9AA7-2B58-4DCD-BE62-2FEA1A13FBA6");
-    public static final UUID FLYING_SPEED_MODIFIER_ID = UUID.fromString("FFAB9AA7-2B58-4DCD-BE62-2FEA1A13FBA7");
+	public static final UUID MAX_HEALTH_MODIFIER_ID = UUID.fromString("B04DB08B-ED8A-4B82-B1EF-ADB425174925");
+	public static final UUID MOVEMENT_SPEED_MODIFIER_ID = UUID.fromString("FFAB9AA7-2B58-4DCD-BE62-2FEA1A13FBA6");
 	private final EntityLivingBase entity;
-	private final DinocraftEntityActions actions;
-	private final DinocraftEntityTicks ticks;
+	protected DinocraftEntityActions actions;
+	protected DinocraftEntityTicks ticks;
 	/** Whether this entity takes fall damage on their next fall or not */
 	private boolean fallDamage = true;
 	/** Whether this entity is immune to fall damage */
@@ -81,18 +118,31 @@ public class DinocraftEntity implements IDinocraftEntity
 	/** This entity's fall damage reduction amount */
 	private float fallDamageReductionAmount = 0.0F;
 	/** Whether this entity has permanent reduced fall damage */
-    private boolean fallDamageReducer = false;
-	/** Whether this entity is invulnerable or not */
+	private boolean fallDamageReducer = false;
+	/** Whether this entity is invulnerable */
 	private boolean invulnerable = false;
-	/** Whether this entity is degenerating */
-	private boolean degenerating = false;
-    /** Whether this entity is regenerating */
+	/** Whether this entity is regenerating */
 	private boolean regenerating = false;
 	/** Whether this entity is muted */
-	private boolean isMuted = false;
-	/** Whether this entity is frozen */
-	private boolean isFrozen = false;
-	
+	private boolean muted = false;
+	/** Whether this entity is frozen in place */
+	private boolean frozen = false;
+	/** Whether this entity is allowed to fly */
+	private boolean allowFlight = false;
+	/** Whether this entity is flying */
+	private boolean flying = false;
+	/** The position this entity was in right before it last teleported */
+	private @Nullable BlockPos lastTeleportPos;
+	/** The position this entity was in right before it last died */
+	private @Nullable BlockPos lastDeathPos;
+	public double lastTickPosX;
+	public double lastTickPosY;
+	public double lastTickPosZ;
+	public double posX;
+	public double posY;
+	public double posZ;
+	private Random rand = new Random();
+
 	public DinocraftEntity(EntityLivingBase entity)
 	{
 		this.actions = new DinocraftEntityActions(this);
@@ -100,17 +150,17 @@ public class DinocraftEntity implements IDinocraftEntity
 		this.entity = entity;
 		SERVER = entity.getServer() != null ? entity.getServer() : FMLCommonHandler.instance().getMinecraftServerInstance();
 	}
- 
-	public MinecraftServer getServer()
+
+	public DinocraftEntity()
 	{
-		return this.getEntity().getServer();
+		this.entity = null;
 	}
-	
+
 	/**
 	 * Gets this capability data's corresponding entity
 	 */
 	@Override
-	public EntityLivingBase getEntity() 
+	public EntityLivingBase getEntity()
 	{
 		return this.entity;
 	}
@@ -122,7 +172,7 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		return SERVER.getPlayerList().getPlayerByUsername(name);
 	}
-	
+
 	/**
 	 * If this entity is a player, gets the capability data for the entity by their name
 	 */
@@ -130,23 +180,23 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		return DinocraftEntity.getEntity(DinocraftEntity.getEntityPlayerByName(name));
 	}
-	
+
 	/**
 	 * Gets the capability data for specified entity
 	 */
 	public static DinocraftEntity getEntity(EntityLivingBase entity)
-	{	
+	{
 		return !DinocraftEntity.hasCapability(entity) ? null : (DinocraftEntity) entity.getCapability(DinocraftCapabilities.DINOCRAFT_ENTITY, null);
 	}
- 
-	/** 
+
+	/**
 	 * Returns if this entity has this capability
 	 */
 	public static boolean hasCapability(EntityLivingBase entity)
 	{
 		return entity.hasCapability(DinocraftCapabilities.DINOCRAFT_ENTITY, null);
 	}
- 
+
 	/**
 	 * Gets this entity's actions module
 	 */
@@ -154,8 +204,8 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		return this.actions;
 	}
-
-	/** 
+	
+	/**
 	 * Gets this entity's ticks module
 	 */
 	public DinocraftEntityTicks getTicksModule()
@@ -164,136 +214,49 @@ public class DinocraftEntity implements IDinocraftEntity
 	}
 
 	/**
-	 * Returns if specified items are equipped on this entity. In this case, null means nothing OR any other item equipped.
-	 */
-	public boolean isWearing(@Nullable Item helmet, @Nullable Item chestplate, @Nullable Item leggings, @Nullable Item boots)
-	{
-		EntityLivingBase entity = this.getEntity();
-		ItemStack helmet2 = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
-		ItemStack chestplate2 = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-		ItemStack leggings2 = entity.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
-		ItemStack boots2 = entity.getItemStackFromSlot(EntityEquipmentSlot.FEET);
-		return (helmet != null ? helmet2 != null && helmet2.getItem() == helmet : (helmet2 == null || helmet2.getItem() != helmet))
-				&& (chestplate != null ? chestplate2 != null && chestplate2.getItem() == chestplate : (chestplate2 == null || chestplate2.getItem() != chestplate))
-				&& (leggings != null ? leggings2 != null && leggings2.getItem() == leggings : (leggings2 == null || leggings2.getItem() != leggings))
-				&& (boots != null ? boots2 != null && boots2.getItem() == boots : (boots2 == null || boots2.getItem() != boots));
-	}
- 
-	/**
-	 * Returns if this entity is jumping 
+	 * Returns if this entity is jumping
 	 */
 	@SideOnly(Side.CLIENT)
 	public boolean isJumping()
 	{
 		return Minecraft.getMinecraft().gameSettings.keyBindJump.isKeyDown();
 	}
- 
-	/** 
-	 * The direction that this entity is moving towards
-	 */
-	public enum Direction
-	{
-		LEFT, RIGHT, FORWARD, BACKWARD
-	}
- 
+
 	/**
-	 * Returns if this entity is moving in specified direction 
-	 */
-	@SideOnly(Side.CLIENT)
-	public boolean isMoving(Direction direction)
-	{
-		GameSettings settings = Minecraft.getMinecraft().gameSettings;
- 
-		switch (direction)
-        {
-        	case LEFT:
-        	{
-        		return settings.keyBindLeft.isKeyDown();
-        	}
- 
-        	case RIGHT: 
-        	{
-        		return settings.keyBindRight.isKeyDown();
-        	}
-        	
-        	case FORWARD: 
-        	{
-        		return settings.keyBindForward.isKeyDown();
-        	}
-        	
-        	case BACKWARD: 
-        	{
-        		return settings.keyBindBack.isKeyDown();
-        	}
-        	
-        	default: return false;
-        }
-	}
- 
-	/**
-	 * Returns if this entity is moving to any direction
-	 */
-	@SideOnly(Side.CLIENT)
-	public boolean isMoving()
-	{
-		GameSettings settings = Minecraft.getMinecraft().gameSettings;
-        return DinocraftEntity.getEntity(this.getEntity()).isStrafing() || settings.keyBindForward.isKeyDown() || settings.keyBindBack.isKeyDown();
-	}
- 
-	/** 
-	 * Returns if this entity is strafing to any side
-	 */
-	@SideOnly(Side.CLIENT)
-	public boolean isStrafing()
-	{
-		GameSettings settings = Minecraft.getMinecraft().gameSettings;
-		return settings.keyBindLeft.isKeyDown() || settings.keyBindRight.isKeyDown();
-	}
- 
-	/**
-	 * Spawns particles around this entity
-	 */
-	public void spawnParticle(EnumParticleTypes particleType, boolean ignoreRange, double xCoord, double yCoord, double zCoord, double xSpeed, double ySpeed, double zSpeed, int parameters)
-	{
-		NetworkHandler.sendToAllAround(new PacketSpawnParticle(particleType, ignoreRange, xCoord, yCoord, zCoord, xSpeed, ySpeed, zSpeed, parameters), this.getEntity().world);
-	}
- 
-	/** 
 	 * Sets if this entity takes fall damage on their next fall
 	 */
 	public void setFallDamage(boolean fallDamage)
 	{
-		if (!DinocraftEntity.getEntity(this.getEntity()).isFallDamageImmune())
+		if (!this.isFallDamageImmune())
 		{
 			this.fallDamage = fallDamage;
 		}
 	}
- 
-	/** 
+
+	/**
 	 * Returns if this entity takes fall damage on their next fall
 	 */
 	public boolean hasFallDamage()
 	{
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(this.getEntity());
-		return (dinoEntity.isFallDamageImmune() || dinoEntity.isInvulnerable()) ? false : this.fallDamage;
+		return this.isFallDamageImmune() || this.isInvulnerable() ? false : this.fallDamage;
 	}
- 
-	/** 
+
+	/**
 	 * Sets if this entity is immune to fall damage
 	 */
-	public void setFallDamageImmune(boolean immune)
+	public void setFallDamageImmune(boolean fallDamageImmune)
 	{
-		this.fallDamageImmune = immune;
+		this.fallDamageImmune = fallDamageImmune;
 	}
- 
-	/** 
+
+	/**
 	 * Returns if this entity is immune to fall damage
 	 */
 	public boolean isFallDamageImmune()
 	{
-		return (DinocraftEntity.getEntity(this.getEntity()).isInvulnerable()) ? true : this.fallDamageImmune;
+		return this.isInvulnerable() ? true : this.fallDamageImmune;
 	}
- 
+
 	/**
 	 * Returns if this entity has reduced fall damage on their next fall
 	 */
@@ -301,22 +264,16 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		return this.reducedFallDamage;
 	}
- 
-	/** Sets if this entity has reduced fall damage on their next fall */
-	private void setReducedFallDamage(boolean reducedFallDamage)
-	{
-		this.reducedFallDamage = reducedFallDamage;
-	}
- 
+
 	/**
 	 * Sets this entity's fall damage reduction amount on their next fall (param: amount of half-hearts)
 	 */
 	public void setFallDamageReductionAmount(float amount)
 	{
 		this.fallDamageReductionAmount = amount;
-		DinocraftEntity.getEntity(this.getEntity()).setReducedFallDamage(true);
+		this.reducedFallDamage = true;
 	}
- 
+
 	/**
 	 * Returns this entity's fall damage reduction amount (amount of half-hearts)
 	 */
@@ -324,627 +281,897 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		return this.fallDamageReductionAmount;
 	}
-	
-    /**
+
+	/**
 	 * Sets this entity's permanent fall damage reduction amount (param: amount of half-hearts)
 	 */
 	public void setFallDamageReducer(float amount)
 	{
-        this.fallDamageReductionAmount = amount;
-        DinocraftEntity.getEntity(this.getEntity()).setFallDamageReducer(true);
-    }
-	
-	/** 
-	 * Returns if this entity has permanent reduced fall damage 
-	 */
-	public boolean hasFallDamageReducer() 
-	{
-        return this.fallDamageReducer;
+		this.fallDamageReductionAmount = amount;
+		this.fallDamageReducer = true;
 	}
-	   
-	/** Sets whether this entity has permanent reduced fall damage */
-    private void setFallDamageReducer(boolean reducedFallDamage) 
-    {
-        this.fallDamageReducer = reducedFallDamage;
-    }
+	
+	/**
+	 * Returns if this entity has permanent reduced fall damage
+	 */
+	public boolean hasFallDamageReducer()
+	{
+		return this.fallDamageReducer;
+	}
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onLivingFall(LivingFallEvent event) 
+	public static void onLivingFall(LivingFallEvent event)
 	{
 		EntityLivingBase entity = event.getEntityLiving();
-        DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
-
-        if (!dinoEntity.hasFallDamage() || dinoEntity.isFallDamageImmune()) 
-        {
-            if (entity.fallDistance < 4.0F || (entity.fallDistance >= 4.0F && !entity.world.isRemote))
-            {
-            	event.setCanceled(true);
-            }
-            
-            if (!dinoEntity.hasFallDamage())
-            {
-            	dinoEntity.setFallDamage(true);
-            }
-            
-            return;
-        }
-        
-        if (dinoEntity.hasReducedFallDamage() || dinoEntity.hasFallDamageReducer())
-        {
-            if (entity.fallDistance < 4.0F || (entity.fallDistance >= 4.0F && !entity.world.isRemote))
-            {
-            	event.setCanceled(true);
-            }
-            
-            PotionEffect effect = entity.getActivePotionEffect(MobEffects.JUMP_BOOST);
-			float modifier = effect == null ? 0.0F : effect.getAmplifier() + 1.0F;
-			float damage = MathHelper.ceil((entity.fallDistance - 3.0F - modifier - dinoEntity.getFallDamageReductionAmount()));
-			
-            if (damage > 0.0F)
-            {
-            	entity.attackEntityFrom(DamageSource.FALL, damage);
-            }
-            
-            dinoEntity.setReducedFallDamage(false);
-        }
-    }
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
 		
-	/** 
-	 * Sets this entity's max health to specified amount 
-	 */
-	public void setMaxHealth(float amount)
-    {
-		EntityLivingBase entity = this.getEntity();
-        IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-        AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
-        
-        Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Setter", amount - 20.0F, 0);
-        multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-        entity.getAttributeMap().applyAttributeModifiers(multimap);
-    }
-	
-	/** 
-	 * Sets this entity's movement speed to specified amount 
-	 */
-	public void setMovementSpeed(double amount)
-    {
-		EntityLivingBase entity = this.getEntity();
-        IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MOVEMENT_SPEED);
-        AttributeModifier modifier = instance.getModifier(MOVEMENT_SPEED_MODIFIER_ID);
-        
-        Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        modifier = new AttributeModifier(MOVEMENT_SPEED_MODIFIER_ID, "Movement Speed Setter", amount, 0);
-        multimap.put(SharedMonsterAttributes.MOVEMENT_SPEED.getName(), modifier);
-        entity.getAttributeMap().applyAttributeModifiers(multimap);
-    }
-	
-	/** 
-	 * Sets this entity's fly speed to specified amount 
-	 */
-	public void setFlySpeed(double amount)
-    {
-		EntityLivingBase entity = this.getEntity();
-        IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.FLYING_SPEED);
-        //AttributeModifier modifier = instance.getModifier(FLYING_SPEED_MODIFIER_ID);
-        
-        Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        AttributeModifier modifier = new AttributeModifier(FLYING_SPEED_MODIFIER_ID, "Flying Speed Setter", amount, 0);
-        multimap.put(SharedMonsterAttributes.FLYING_SPEED.getName(), modifier);
-        entity.getAttributeMap().applyAttributeModifiers(multimap);
-    }
- 
-	/** 
-	 * Adds specified amount to this entity's max health 
-	 */
-	public void addMaxHealth(float amount)
-    {
-		EntityLivingBase entity = this.getEntity();
-        IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-        AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
-        double hearts = modifier != null ? modifier.getAmount() : 0.0D;
-
-        Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-        modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Adder", hearts + amount, 0);
-        multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-        entity.getAttributeMap().applyAttributeModifiers(multimap);
-    }
- 
-	/**
-	 * If this entity is a player, feeds this entity to specified amounts
-	 */
-	public void feed(int amount, float saturation)
-	{
-		if (this.getEntity() instanceof EntityPlayer)
+		if (!dinoEntity.hasFallDamage() || dinoEntity.isFallDamageImmune())
 		{
-			((EntityPlayer) this.getEntity()).getFoodStats().addStats(amount, saturation);
-		}
-	}
-	
-	/**
-	 * Hurts this entity (param: amount of half-hearts)
-	 */
-	public void hurt(float amount)
-	{
-		if (amount <= 0.0F)
-		{
+			if (entity.fallDistance < 4.0F || entity.fallDistance >= 4.0F && !entity.world.isRemote)
+			{
+				event.setCanceled(true);
+			}
+			
+			if (!dinoEntity.hasFallDamage())
+			{
+				dinoEntity.setFallDamage(true);
+			}
+			
 			return;
 		}
 		
-		EntityLivingBase entity = this.getEntity();
-        float health = entity.getHealth();
-        
-        if (health > 0.0F)
-        {
-        	entity.setHealth(health - amount);
-        }
-	}
- 
-	/** 
-	 * Stops the specified sound for all players
-	 */
-	public void stopSoundForAll(SoundEvent sound)
-	{
-		PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
-        buffer.writeString("");
-        buffer.writeString(sound.getRegistryName().toString());
-        this.SERVER.getPlayerList().sendPacketToAllPlayers(new SPacketCustomPayload("MC|StopSound", buffer));
-	}
-
-	/** 
-	 * If this entity is a player, stops the specified sound for this entity
-	 */
-	public void stopSound(SoundEvent sound)
-	{
-		if (this.getEntity() instanceof EntityPlayerMP)
+		if (dinoEntity.hasReducedFallDamage() || dinoEntity.hasFallDamageReducer())
 		{
-			PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
-			buffer.writeString("");
-			buffer.writeString(sound.getRegistryName().toString());
-			((EntityPlayerMP) this.getEntity()).connection.sendPacket(new SPacketCustomPayload("MC|StopSound", buffer));
+			if (entity.fallDistance < 4.0F || entity.fallDistance >= 4.0F && !entity.world.isRemote)
+			{
+				event.setCanceled(true);
+			}
+			
+			PotionEffect effect = entity.getActivePotionEffect(MobEffects.JUMP_BOOST);
+			float modifier = effect == null ? 0.0F : effect.getAmplifier() + 1.0F;
+			float damage = MathHelper.ceil(entity.fallDistance - 3.0F - modifier - dinoEntity.getFallDamageReductionAmount());
+			
+			if (damage > 0.0F)
+			{
+				entity.attackEntityFrom(DamageSource.FALL, damage);
+			}
+			
+			dinoEntity.reducedFallDamage = false;
 		}
 	}
- 
+
+	/**
+	 * Returns if specified items are equipped on this entity. In this case, null means nothing OR any other item equipped.
+	 */
+	public static boolean isWearing(EntityLivingBase entity, @Nullable Item helmet, @Nullable Item chestplate, @Nullable Item leggings, @Nullable Item boots)
+	{
+		ItemStack helmet2 = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
+		ItemStack chestplate2 = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
+		ItemStack leggings2 = entity.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
+		ItemStack boots2 = entity.getItemStackFromSlot(EntityEquipmentSlot.FEET);
+		return (helmet != null ? helmet2.getItem() == helmet : helmet2.getItem() != helmet)
+				&& (chestplate != null ? chestplate2.getItem() == chestplate : chestplate2.getItem() != chestplate)
+				&& (leggings != null ? leggings2.getItem() == leggings : leggings2.getItem() != leggings)
+				&& (boots != null ? boots2.getItem() == boots : boots2.getItem() != boots);
+	}
+	
+	/**
+	 * Sets this entity's max health to specified amount
+	 */
+	public static void setMaxHealth(EntityLivingBase entity, float amount)
+	{
+		IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
+		AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
+		Multimap<String, AttributeModifier> multimap = HashMultimap.create();
+		modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Setter", amount - 20.0F, 0);
+		multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
+		entity.getAttributeMap().applyAttributeModifiers(multimap);
+	}
+	
+	/**
+	 * Sets this entity's movement speed to specified amount
+	 */
+	public static void setMovementSpeed(EntityLivingBase entity, double amount)
+	{
+		IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MOVEMENT_SPEED);
+		AttributeModifier modifier = instance.getModifier(MOVEMENT_SPEED_MODIFIER_ID);
+		Multimap<String, AttributeModifier> multimap = HashMultimap.create();
+		modifier = new AttributeModifier(MOVEMENT_SPEED_MODIFIER_ID, "Movement Speed Setter", amount, 0);
+		multimap.put(SharedMonsterAttributes.MOVEMENT_SPEED.getName(), modifier);
+		entity.getAttributeMap().applyAttributeModifiers(multimap);
+	}
+	
+	/**
+	 * Sets this entity's fly speed to specified amount
+	 */
+	public static void setFlySpeed(EntityPlayer player, double amount)
+	{
+		PacketHandler.sendTo(new SPacketFlySpeed(amount), (EntityPlayerMP) player);
+	}
+	
+	/**
+	 * Adds specified amount to this entity's max health
+	 */
+	public static void addMaxHealth(EntityLivingBase entity, float amount)
+	{
+		IAttributeInstance instance = entity.getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
+		AttributeModifier modifier = instance.getModifier(MAX_HEALTH_MODIFIER_ID);
+		double hearts = modifier != null ? modifier.getAmount() : 0.0D;
+		Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
+		modifier = new AttributeModifier(MAX_HEALTH_MODIFIER_ID, "Max Health Adder", hearts + amount, 0);
+		multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
+		entity.getAttributeMap().applyAttributeModifiers(multimap);
+	}
+	
+	/**
+	 * If this entity is a player, stops the specified sound for this entity
+	 */
+	public static void stopSound(EntityPlayer player, SoundEvent sound)
+	{
+		PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
+		buffer.writeString("");
+		buffer.writeString(sound.getRegistryName().toString());
+		((EntityPlayerMP) player).connection.sendPacket(new SPacketCustomPayload("MC|StopSound", buffer));
+	}
+	
 	/**
 	 * Gets a RayTraceResult describing whatever block this entity is looking at within specified distance. DOESN'T DETECT ENTITIES.
 	 */
-	public RayTraceResult getTrace(double distance) 
+	public static RayTraceResult getBlockTrace(EntityLivingBase entity, double distance)
 	{
-		EntityLivingBase entity = this.getEntity();
 		Vec3d vector = new Vec3d(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
 		return entity.world.rayTraceBlocks(vector, vector.add(entity.getLookVec().scale(distance)));
 	}
- 
+	
+	/**
+	 * Gets a RayTraceResult describing whatever block this entity is looking at within specified distance. DOESN'T DETECT ENTITIES.
+	 */
+	public static RayTraceResult getBlockTraceNearest(EntityLivingBase entity, double distance)
+	{
+		Vec3d vector = new Vec3d(entity.posX, entity.posY + entity.getEyeHeight(), entity.posZ);
+		return entity.world.rayTraceBlocks(vector, vector.add(entity.getLookVec().scale(distance)), false, true, false);
+	}
+	
 	/**
 	 * If this entity is a player, sets whether this entity is allowed to fly when they double jump
 	 */
 	public void setAllowFlight(boolean allowFlight)
 	{
-		if (this.getEntity() instanceof EntityPlayer)
+		if (this.entity instanceof EntityPlayer)
 		{
-			((EntityPlayer) this.getEntity()).capabilities.allowFlying = allowFlight;
+			((EntityPlayer) this.entity).capabilities.allowFlying = allowFlight;
+			this.allowFlight = allowFlight;
 		}
 	}
-
+	
 	/**
 	 * If this entity is a player, returns if this entity is allowed to fly when they double jump
 	 */
 	public boolean canFly()
 	{
-		return this.getEntity() instanceof EntityPlayer ? ((EntityPlayer) this.getEntity()).capabilities.allowFlying : null;
+		return this.entity instanceof EntityPlayer ? this.allowFlight : false;
+		//return this.entity instanceof EntityPlayer ? ((EntityPlayer) this.entity).capabilities.allowFlying : false;
 	}
-
+	
 	/**
 	 * If this entity is a player, sets whether this entity is flying
 	 */
 	public void setFlight(boolean flight)
 	{
-		if (this.getEntity() instanceof EntityPlayer)
+		if (this.entity instanceof EntityPlayer)
 		{
-			((EntityPlayer) this.getEntity()).capabilities.isFlying = flight;
+			((EntityPlayer) this.entity).capabilities.isFlying = flight;
+			this.flying = flight;
 		}
 	}
-
+	
 	/**
 	 * If this entity is a player, returns whether this entity is flying
 	 */
 	public boolean isFlying()
 	{
-		return this.getEntity() instanceof EntityPlayer ? ((EntityPlayer) this.getEntity()).capabilities.isFlying : null;
+		return this.entity instanceof EntityPlayer ? ((EntityPlayer) this.entity).capabilities.isFlying : false;
+		//return this.entity instanceof EntityPlayer ? this.isFlying : false;
+	}
+	
+	/**
+	 * Returns if this entity is currently invulnerable
+	 */
+	public boolean isInvulnerable()
+	{
+		return this.invulnerable;
+	}
+	
+	/**
+	 * Sets this entity invulnerable for the specified time (seconds)
+	 */
+	public void setInvulnerable(int time)
+	{
+		this.ticks.ticksInvulnerable = time * 20;
+		this.invulnerable = true;
 	}
 
 	/**
-	 * Gets the world that this entity is in
+	 * Freezes this entity in place until unfrozen
 	 */
-	@Override
-	public World getWorld()
+	public void freeze()
 	{
-		return this.getEntity().world;
-	}
- 
-	/** 
-	 * Returns if this entity is currently invulnerable 
-	 */
-    public boolean isInvulnerable()
-    {
-        return this.invulnerable;
-    }
- 
-    /** Sets whether this entity is invulnerable or not */
-    private void setInvulnerable(boolean invulnerable)
-    {
-        this.invulnerable = invulnerable;
-    }
- 
-    /**
-     * Sets this entity invulnerable for the specified time (seconds)
-     */
-    public void setInvulnerable(int time)
-	{
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(this.getEntity());
-		dinoEntity.getTicksModule().setTicksInvulnerable(time * 20);
-		dinoEntity.setInvulnerable(true);
-	}
-    
-	/** 
-	 * Returns if this entity is degenerating
-	 */
-    public boolean isDegenerating()
-    {
-        return this.degenerating;
-    }
-    
-    /** Sets whether this entity is degenerating or not */
-    private void setDegenerating(boolean degenerating)
-    {
-        this.degenerating = degenerating;
-    }
-
-    /**
-     * Sets this entity degenerating
-     * @param time the amount of time to degenerate for (seconds)
-     * @param loopTime the amount of time in between each degeneration loop (seconds)
-     * @param health the amount of health to degenerate for each loop (half-hearts)
-     */
-    public void setDegenerating(int time, float loopTime, float health)
-	{
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(this.getEntity());
-		dinoEntity.setDegenerating(true);
-
-		DinocraftEntityTicks ticks = dinoEntity.getTicksModule();
-		ticks.setDegenerationTicks(time * 20);
-		ticks.setDegenerationLoopTicks(loopTime * 20);
-		ticks.setDegenerationHearts(health);
-	}
-    
-	/** 
-	 * Returns if this entity is regenerating
-	 */
-    public boolean isRegenerating()
-    {
-        return this.getEntity().getActivePotionEffect(MobEffects.REGENERATION) != null ? true : this.regenerating;
-    }
-    
-    /** Sets whether this entity is regenerating or not */
-    private void setRegenerating(boolean regenerating)
-    {
-        this.regenerating = regenerating;
-    }
-
-    /**
-     * Sets this entity regenerating
-     * @param time the amount of time to regenerate for (seconds)
-     * @param loopTime the amount of time in between each regeneration loop (seconds)
-     * @param health the amount of health to regenerate for each loop (half-hearts)
-     */
-    public void setRegenerating(int time, float loopTime, float health)
-	{
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(this.getEntity());
-		dinoEntity.setRegenerating(true);
-
-		DinocraftEntityTicks ticks = dinoEntity.getTicksModule();
-		ticks.setRegenerationTicks(time * 20);
-		ticks.setRegenerationLoopTicks(loopTime * 20);
-		ticks.setRegenerationHearts(health);
+		this.frozen = true;
 	}
 	
-    @SubscribeEvent
-    public static void onBreak(BreakEvent event)
-    {
-    	if (DinocraftEntity.getEntity(event.getPlayer()).isFrozen())
-    	{
-    		event.setCanceled(true);
-    	}
-    }
-    
+	/**
+	 * Unfreezes this entity
+	 */
+	public void unfreeze()
+	{
+		this.frozen = false;
+	}
+	
+	/**
+	 * Returns if this entity is frozen in place
+	 */
+	public boolean isFrozen()
+	{
+		return this.frozen;
+	}
+	
+	/**
+	 * Returns if this entity is regenerating
+	 */
+	public boolean isRegenerating()
+	{
+		return this.entity.getActivePotionEffect(MobEffects.REGENERATION) != null || this.regenerating;
+	}
+	
+	/**
+	 * Sets whether this entity is regenerating or not
+	 */
+	public void setRegenerating(boolean regenerating)
+	{
+		this.regenerating = regenerating;
+	}
+	
+	/**
+	 * Sets this entity regenerating
+	 * @param time the amount of time to regenerate for (seconds)
+	 * @param loopTime the amount of time in between each regeneration loop (seconds)
+	 * @param health the amount of health to regenerate for each loop (half-hearts)
+	 */
+	public void setRegenerating(int time, float loopTime, float health)
+	{
+		this.regenerating = true;
+		this.ticks.regenerationTicks = time * 20;
+		this.ticks.regenerationLoopTicks = loopTime * 20;
+		this.ticks.healthToRegenerate = health;
+	}
+	
 	@SubscribeEvent
+	public static void onPlayerTick(PlayerTickEvent event)
+	{
+		if (event.phase == Phase.END)
+		{
+			return;
+		}
+		
+		if (event.player.world.isRemote)
+		{
+			if (event.player.getTags().contains("frozen"))
+			{
+				KeyBinding.unPressAllKeys();
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public static void onLivingAttack(LivingAttackEvent event)
+	{
+		if (event.getSource() == DamageSource.OUT_OF_WORLD)
+		{
+			return;
+		}
+		
+		if (event.getEntityLiving().getTags().contains("frozen"))
+		{
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onPlayerChangedDimension(PlayerChangedDimensionEvent event)
+	{
+		if (!event.player.world.isRemote && event.player.getTags().contains("frozen"))
+		{
+			PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onPlayerRespawn(PlayerRespawnEvent event)
+	{
+		if (!event.player.world.isRemote)
+		{
+			if (event.player.getTags().contains("frozen"))
+			{
+				PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+			}
+			
+			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
+			boolean canFly = !event.player.isCreative() && dinoEntity.canFly();
+			PacketHandler.sendTo(new SPacketAllowFlying(canFly, false), (EntityPlayerMP) event.player);
+			event.player.capabilities.allowFlying = canFly;
+		}
+	}
+
+	@SideOnly(Side.CLIENT)
+	@SubscribeEvent
+	public static void onMouse(MouseEvent event)
+	{
+		if (Minecraft.getMinecraft().player.getTags().contains("frozen"))
+		{
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onPlayerLoggedIn(PlayerLoggedInEvent event)
+	{
+		Set<String> tags = event.player.getTags();
+
+		if (tags.contains("frozen"))
+		{
+			PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+		}
+		
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
+		boolean canFly = event.player.isCreative() || dinoEntity.canFly();
+		boolean isFlying = dinoEntity.isFlying();
+		PacketHandler.sendTo(new SPacketAllowFlying(canFly, dinoEntity.flying), (EntityPlayerMP) event.player);
+		event.player.capabilities.allowFlying = canFly;
+		event.player.capabilities.isFlying = dinoEntity.flying;
+		PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DA_DREADED_FLYING, dinoEntity.actions.isDreadedFlying()), (EntityPlayerMP) event.player);
+	}
+
+	@SubscribeEvent
+	public static void onLivingJoinWorld(EntityJoinWorldEvent event)
+	{
+		//		if (event.getEntity() instanceof EntityCreeper)
+		//		{
+		//			((EntityCreeper) event.getEntity()).tasks.addTask(1, new EntityAIAvoidEntity<>((EntityCreature) event.getEntity(), EntityPlayer.class, 20.0F, 1.0D, 2.0D));
+		//			EntityCreeper creeper = (EntityCreeper) event.getEntity();
+		//
+		//			for(Object task : creeper.targetTasks.taskEntries.toArray())
+		//			{
+		//				EntityAIBase ai = ((EntityAITaskEntry) task).action;
+		
+		//				if (ai instanceof EntityAINearestAttackableTarget)
+		//				{
+		//					creeper.targetTasks.removeTask(ai);
+		//				}
+		//			}
+		
+		//			creeper.targetTasks.addTask(0, new EntityAIPanic(creeper, 2.0D));
+
+		//		}
+	}
+	
+	public double getLastTickPosX()
+	{
+		return this.lastTickPosX;
+	}
+	
+	public double getLastTickPosY()
+	{
+		return this.lastTickPosY;
+	}
+	
+	public double getLastTickPosZ()
+	{
+		return this.lastTickPosZ;
+	}
+
+	private static Method getExperiencePoints()
+	{
+		Method method = null;
+
+		try
+		{
+			method = EntityLivingBase.class.getDeclaredMethod("getExperiencePoints", EntityPlayer.class);
+			method.setAccessible(true);
+		}
+		catch (Exception exception)
+		{
+
+		}
+
+		return method;
+	}
+	
+	private static Field isRecentlyHit()
+	{
+		Field field = null;
+		
+		try
+		{
+			field = EntityLivingBase.class.getDeclaredField("recentlyHit");
+			field.setAccessible(true);
+		}
+		catch (Exception exception)
+		{
+
+		}
+
+		return field;
+	}
+	
+	private static final Method EXP = getExperiencePoints();
+	private static final Field HIT = isRecentlyHit();
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void onLivingUpdate(LivingUpdateEvent event)
 	{
 		EntityLivingBase entity = event.getEntityLiving();
-    	DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
-    	DinocraftEntityTicks ticks = dinoEntity.getTicksModule();
-    	
-    	if (dinoEntity.isFrozen())
-    	{
-    		entity.setPositionAndRotation(entity.lastTickPosX, entity.lastTickPosY, entity.lastTickPosZ, entity.rotationYaw, entity.rotationPitch);
-    		entity.setPositionAndUpdate(entity.lastTickPosX, entity.lastTickPosY, entity.lastTickPosZ);
-    	}
-    	
-    	if (!entity.world.isRemote)
-    	{
-    		if (dinoEntity.isRegenerating())
-    		{
-    			if (ticks.getRegenerationTicks() <= 0)
-    			{
-    				dinoEntity.setRegenerating(false);
-    				ticks.setRegenerationCount(0);
-        		}
-    	    	else
-    	    	{
-    	    		ticks.setRegenerationTicks(ticks.getRegenerationTicks() - 1);
-    	    		ticks.setRegenerationCount(ticks.getRegenerationCount() + 1);
-        		
-    		    	if (ticks.getRegenerationCount() == ticks.getRegenerationLoopTicks())
-    	    		{
-    		   			ticks.setRegenerationCount(0);
-    		   			
-    		   			if (entity.getHealth() != entity.getMaxHealth()) 
-    		   			{
-    		   				entity.heal(ticks.getRegenerationHearts());
-    		   			}
-    	    		}
-    	    	}
-    		}
-    		else
-    		{
-    			ticks.setRegenerationLoopTicks(0);
-    			ticks.setRegenerationHearts(0);
-    			ticks.setRegenerationTicks(0);
-    			ticks.setRegenerationCount(0);
-    		}
-    		
-    		if (dinoEntity.isDegenerating())
-    		{
-    			if (ticks.getDegenerationTicks() <= 0)
-    			{
-    				dinoEntity.setDegenerating(false);
-    				ticks.setDegenerationCount(0);
-        		}
-    	    	else
-    	    	{
-    	    		ticks.setDegenerationTicks(ticks.getDegenerationTicks() - 1);
-    	    		ticks.setDegenerationCount(ticks.getDegenerationCount() + 1);
-        		
-    		    	if (ticks.getDegenerationCount() == ticks.getDegenerationLoopTicks())
-    	    		{
-    		   			ticks.setDegenerationCount(0);
-    		   			dinoEntity.hurt(ticks.getDegenerationHearts());
-    	    		}
-    	    	}
-    		}
-    		
-    		if (dinoEntity.isInvulnerable())
-    		{
-    			if (ticks.getTicksInvulnerable() <= 0)
-    			{
-    				dinoEntity.setInvulnerable(false);
-    				entity.setEntityInvulnerable(false);
-    			}
-    			else
-    			{
-    				ticks.setTicksInvulnerable(ticks.getTicksInvulnerable() - 1);
-    				entity.setEntityInvulnerable(true);
-    			}
-    		}
-    	}
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
+		
+		if (!entity.world.isRemote)
+		{
+			dinoEntity.lastTickPosX = dinoEntity.posX;
+			dinoEntity.lastTickPosY = dinoEntity.posY;
+			dinoEntity.lastTickPosZ = dinoEntity.posZ;
+			dinoEntity.posX = entity.posX;
+			dinoEntity.posY = entity.posY;
+			dinoEntity.posZ = entity.posZ;
+			
+			try
+			{
+				if (entity.world.getGameRules().getBoolean("doMobLoot") && entity.deathTime == 19 && HIT.getInt(entity) <= 0)
+				{
+					if (dinoEntity.actions.jesterized && dinoEntity.actions.jesterizingEntity instanceof EntityPlayer)
+					{
+						int i = (Integer) EXP.invoke(entity, (EntityPlayer) dinoEntity.actions.jesterizingEntity);
+						i = ForgeEventFactory.getExperienceDrop(entity, (EntityPlayer) dinoEntity.actions.jesterizingEntity, i);
+
+						while (i > 0)
+						{
+							int j = EntityXPOrb.getXPSplit(i);
+							i -= j;
+							entity.world.spawnEntity(new EntityXPOrb(entity.world, entity.posX, entity.posY, entity.posZ, j));
+						}
+					}
+				}
+			}
+			catch (Exception exception)
+			{
+
+			}
+
+			if (dinoEntity.isFrozen())
+			{
+				if (entity instanceof EntityPlayerMP && !entity.getTags().contains("frozen"))
+				{
+					entity.addTag("frozen");
+					PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) entity);
+				}
+			}
+			else if (entity instanceof EntityPlayerMP && entity.getTags().contains("frozen"))
+			{
+				entity.removeTag("frozen");
+				PacketHandler.sendTo(new SPacketTag("frozen", Action.REMOVE), (EntityPlayerMP) entity);
+			}
+
+			if (entity.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.DREMONITE_BOOTS && dinoEntity.actions.dreadedFlying)
+			{
+				if (entity.ticksExisted % 2 == 0)
+				{
+					float f0 = entity.width * 1.5F;
+					float f1 = entity.height / 4.0F;
+					float f2 = 0.0005F;
+					DinocraftServer.spawnParticles(EnumParticleTypes.SMOKE_LARGE, entity.world, 16, entity.posX, entity.posY + entity.height / 2.0F, entity.posZ, f0, f1, f0, f2, f2, f2);
+				}
+
+				entity.fallDistance = 0.0F;
+
+				if (entity.ticksExisted % 6 == 0)
+				{
+					entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.PLAYERS, 1.0F, entity.world.rand.nextFloat() + 0.25F);
+				}
+
+				entity.addPotionEffect(new PotionEffect(MobEffects.INVISIBILITY, 2, 0, true, false));
+				entity.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, 18, 0, true, false));
+			}
+
+			if (dinoEntity.actions.boltCount > 0)
+			{
+				if (entity.getHeldItemMainhand().getItem() != DinocraftItems.MAGATIUM_STAFF && entity.getHeldItemOffhand().getItem() != DinocraftItems.MAGATIUM_STAFF)
+				{
+					dinoEntity.actions.boltCount = 0;
+				}
+				
+				if (dinoEntity.actions.shootingCount <= 0)
+				{
+					dinoEntity.actions.shootingCount = 10;
+					EntityMagatiumBolt bolt = new EntityMagatiumBolt(entity.world, entity);
+					bolt.shoot(entity, entity.rotationPitch, entity.rotationYaw, 0.0F, 1.33F, 0.33F);
+					entity.world.spawnEntity(bolt);
+					entity.world.playSound(null, entity.getPosition(), SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.NEUTRAL, 1.0F, entity.world.rand.nextFloat() * 0.5F + 0.5F);
+					dinoEntity.actions.boltCount--;
+				}
+				
+				dinoEntity.actions.shootingCount--;
+			}
+			
+			if (dinoEntity.actions.jesterized)
+			{
+				if (entity.ticksExisted % 2 == 0)
+				{
+					float f0 = entity.height / 3.0F;
+					DinocraftServer.spawnJesterParticles(entity.world, 2, 2, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
+				}
+
+				if (entity.onGround)
+				{
+					int j = entity.world.rand.nextInt(4);
+
+					if (j == 0)
+					{
+						entity.addPotionEffect(new PotionEffect(MobEffects.LEVITATION, 40, 2, true, false));
+					}
+					else
+					{
+						double x = entity.world.rand.nextDouble() - 0.5D;
+						double y = entity.world.rand.nextDouble() * 0.2D + 0.7D;
+						double z = entity.world.rand.nextDouble() - 0.5D;
+
+						if (entity instanceof EntityPlayer)
+						{
+							((EntityPlayerMP) entity).connection.sendPacket(new SPacketEntityVelocity(entity.getEntityId(), x, y, z));
+						}
+
+						entity.addVelocity(x, y, z);
+					}
+				}
+				
+				dinoEntity.ticks.jesterizedTicks--;
+				
+				if (dinoEntity.ticks.jesterizedTicks <= 0)
+				{
+					dinoEntity.ticks.jesterizedTicks = 0;
+					dinoEntity.actions.jesterized = false;
+				}
+			}
+			
+			if (dinoEntity.actions.electrified)
+			{
+				if (entity.ticksExisted % 2 == 0)
+				{
+					float f0 = entity.height / 2.0F;
+					DinocraftServer.spawnElectricParticles(entity.world, 2, 2, 20, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
+				}
+				
+				dinoEntity.ticks.electrifiedTicks--;
+				
+				if (dinoEntity.ticks.electrifiedTicks <= 0)
+				{
+					dinoEntity.ticks.electrifiedTicks = 0;
+					dinoEntity.actions.electrified = false;
+				}
+			}
+			
+			if (dinoEntity.actions.fallingCrystals)
+			{
+				if (dinoEntity.ticks.fallingCrystalsTicks % 8 == 0)
+				{
+					EntityFallingCrystal fallingCrystal = new EntityFallingCrystal(dinoEntity.actions.fallingCrystalsShooter == null ? entity : dinoEntity.actions.fallingCrystalsShooter, 0.075F);
+					AxisAlignedBB aabb = entity.getEntityBoundingBox();
+					double posX = entity.world.rand.nextDouble() * (aabb.maxX - aabb.minX) + aabb.minX;
+					double posZ = entity.world.rand.nextDouble() * (aabb.maxZ - aabb.minZ) + aabb.minZ;
+					double topOfEntity = entity.posY + entity.height;
+
+					if (entity.world.getBlockState(new BlockPos(posX, topOfEntity, posZ)).getBlock() == Blocks.AIR &&
+							entity.world.getBlockState(new BlockPos(posX, topOfEntity + 1.0D, posZ)).getBlock() == Blocks.AIR)
+					{
+						double posY = topOfEntity + 2.0D;
+
+						while (posY < topOfEntity + 5.0D)
+						{
+							if (entity.world.getBlockState(new BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR)
+							{
+								posY--;
+								break;
+							}
+
+							posY++;
+						}
+
+						float a = 7.5F;
+						double d = posY - topOfEntity;
+						double t = Math.sqrt(2.0D * a * d) / a;
+						
+						if (entity.hurtResistantTime < 5)
+						{
+							t *= 20.0D;
+						}
+						
+						fallingCrystal.setPositionAndUpdate(posX + t * entity.motionX, posY, posZ + t * entity.motionZ);
+						entity.world.spawnEntity(fallingCrystal);
+						entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_THROW, SoundCategory.AMBIENT, 0.3F, entity.world.rand.nextFloat() * 0.25F + 0.5F);
+					}
+				}
+				
+				dinoEntity.ticks.fallingCrystalsTicks--;
+				
+				if (dinoEntity.ticks.fallingCrystalsTicks <= 0)
+				{
+					dinoEntity.ticks.fallingCrystalsTicks = 0;
+					dinoEntity.actions.fallingCrystals = false;
+				}
+			}
+			
+			if (dinoEntity.actions.standingStill)
+			{
+				if (dinoEntity.ticks.ticksStandingStill % 15 == 0)
+				{
+					entity.heal(1.0F);
+
+					if (entity.world instanceof WorldServer)
+					{
+						double d0 = entity.posY + entity.height / 3.0D;
+						double d1 = entity.width / 2.0F;
+						double d2 = entity.height / 9.0F;
+						((WorldServer) entity.world).spawnParticle(EnumParticleTypes.SPELL_INSTANT, entity.posX, d0, entity.posZ, 10, d1, d2, d1, 0.0D, 0);
+						((WorldServer) entity.world).spawnParticle(EnumParticleTypes.SPELL_WITCH, entity.posX, d0, entity.posZ, 10, d1, d2, d1, 0.0D, 0);
+					}
+				}
+
+				if ((dinoEntity.ticks.ticksStandingStill - 60) % 25 == 0)
+				{
+					entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_DRINK, SoundCategory.PLAYERS, 0.7F, entity.world.rand.nextFloat() * 0.5F + 0.5F);
+				}
+
+				dinoEntity.ticks.incrementTicksStandingStill();
+			}
+			
+			if (!(entity instanceof EntityPlayer) && dinoEntity.actions.isMesmerized())
+			{
+				if (entity instanceof EntityLiving)
+				{
+					EntityLivingBase target = ((EntityLiving) entity).getAttackTarget();
+					
+					if (target == null || !target.isEntityAlive() || target instanceof EntityPlayer)
+					{
+						List<Entity> entities = entity.world.getEntitiesInAABBexcluding(entity, entity.getEntityBoundingBox().grow(20.0D),
+								entity1 -> !(entity1 instanceof EntityPlayer) && entity1 instanceof EntityLivingBase && ((EntityLivingBase) entity1).canEntityBeSeen(entity) && entity1.canBeCollidedWith() && entity1.isCreatureType(EnumCreatureType.MONSTER, false));
+						EntityLivingBase found = null;
+						double foundLen = 20.0D;
+
+						for (Entity entity1 : entities)
+						{
+							EntityLivingBase living = (EntityLivingBase) entity1;
+							
+							if (!DinocraftEntity.getEntity(living).actions.isMesmerized())
+							{
+								double length = entity1.getDistance(entity);
+								
+								if (length < foundLen)
+								{
+									found = living;
+									foundLen = length;
+								}
+							}
+						}
+						
+						((EntityLiving) entity).setAttackTarget(found);
+					}
+				}
+
+				//				for (int i = 0; i < 2; i++)
+				//				{
+				//					DinocraftServer.spawnParticle(EnumParticleTypes.SPELL_WITCH, true, entity.world, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+				//							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+				//							0, 0, 0, 0);
+				//				}
+				//
+				//				if (entity.ticksExisted % 2 == 0)
+				//				{
+				//					DinocraftServer.spawnParticle(EnumParticleTypes.END_ROD, true, entity.world, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+				//							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+				//							entity.world.rand.nextGaussian() * 0.0025D, entity.world.rand.nextGaussian() * 0.0025D, entity.world.rand.nextGaussian() * 0.0025D, 0);
+				//				}
+				
+				dinoEntity.ticks.mesmerizedTicks--;
+				
+				if (dinoEntity.ticks.mesmerizedTicks <= 0)
+				{
+					dinoEntity.ticks.mesmerizedTicks = 0;
+					dinoEntity.actions.mesmerized = false;
+				}
+			}
+
+			if (dinoEntity.regenerating)
+			{
+				if (dinoEntity.ticks.regenerationTicks <= 0)
+				{
+					dinoEntity.regenerating = false;
+					dinoEntity.ticks.regenerationCount = 0;
+				}
+				else
+				{
+					dinoEntity.ticks.regenerationTicks--;
+					dinoEntity.ticks.regenerationCount++;
+					
+					if (dinoEntity.ticks.regenerationCount == dinoEntity.ticks.regenerationLoopTicks)
+					{
+						dinoEntity.ticks.regenerationCount = 0;
+						
+						if (dinoEntity.ticks.healthToRegenerate > 0.0F)
+						{
+							entity.heal(dinoEntity.ticks.healthToRegenerate);
+						}
+						else
+						{
+							float health = entity.getHealth() + dinoEntity.ticks.healthToRegenerate;
+							entity.setHealth(health > 0.0F ? health : 1.0F);
+						}
+					}
+				}
+			}
+			else
+			{
+				dinoEntity.ticks.regenerationLoopTicks = 0.0F;
+				dinoEntity.ticks.healthToRegenerate = 0.0F;
+				dinoEntity.ticks.regenerationTicks = 0;
+				dinoEntity.ticks.regenerationCount = 0;
+			}
+			
+			if (dinoEntity.invulnerable)
+			{
+				if (dinoEntity.ticks.ticksInvulnerable <= 0)
+				{
+					entity.setEntityInvulnerable(false);
+					dinoEntity.invulnerable = false;
+				}
+				else
+				{
+					if (!entity.getIsInvulnerable())
+					{
+						entity.setEntityInvulnerable(true);
+					}
+					
+					dinoEntity.ticks.ticksInvulnerable--;
+				}
+			}
+		}
 	}
 	
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onClone(Clone event)
-    {
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public static void onClone(Clone event)
+	{
 		if (event.getEntityLiving() instanceof EntityPlayer)
 		{
-			EntityPlayer player = event.getEntityPlayer();
+			EntityPlayer newPlayer = event.getEntityPlayer();
+			EntityPlayer oldPlayer = event.getOriginal();
 			IAttributeInstance oldMaxHealth = event.getOriginal().getAttributeMap().getAttributeInstance(SharedMonsterAttributes.MAX_HEALTH);
-	        AttributeModifier modifier = oldMaxHealth.getModifier(MAX_HEALTH_MODIFIER_ID);
-	        
-	        if (modifier != null)
-	        {
-	            Multimap<String, AttributeModifier> multimap = HashMultimap.<String, AttributeModifier>create();
-	            multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
-	            player.getAttributeMap().applyAttributeModifiers(multimap);
-	        }
-	        
-			DinocraftEntity newPlayer = DinocraftEntity.getEntity(player);
-			DinocraftEntity oldPlayer = DinocraftEntity.getEntity(event.getOriginal());
+			AttributeModifier modifier = oldMaxHealth.getModifier(MAX_HEALTH_MODIFIER_ID);
+
+			if (modifier != null)
+			{
+				Multimap<String, AttributeModifier> multimap = HashMultimap.create();
+				multimap.put(SharedMonsterAttributes.MAX_HEALTH.getName(), modifier);
+				newPlayer.getAttributeMap().applyAttributeModifiers(multimap);
+			}
+
+			DinocraftEntity newDinoPlayer = DinocraftEntity.getEntity(newPlayer);
+			DinocraftEntity oldDinoPlayer = DinocraftEntity.getEntity(oldPlayer);
 			
 			IStorage<IDinocraftEntity> storage = DinocraftCapabilities.DINOCRAFT_ENTITY.getStorage();
-    		NBTBase state = storage.writeNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, oldPlayer, null);
-    		storage.readNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, newPlayer, null, state);
+			NBTBase state = storage.writeNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, oldDinoPlayer, null);
+			storage.readNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, newDinoPlayer, null, state);
 		}
-    }
-	    
-    /**
-     * Sends a raw chat message to this entity
-     */
-    public void sendChatMessage(String msg)
-    {
-    	this.getEntity().sendMessage(new TextComponentString(msg));
-    }
-    
-    public enum Type
-    {
-    	CHAT, ACTIONBAR, TITLE, SUBTITLE
-    }
-    
-    /**
-     * If this entity is a player, sends a raw message of any type to this entity
-     */
-    public void sendMessage(Enum type, String msg)
-    {    	
-    	if (this.getEntity() instanceof EntityPlayer)
-    	{
-        	EntityPlayer player = (EntityPlayer) this.getEntity();
-        	
-        	if (type == Type.ACTIONBAR && !player.world.isRemote)
-        	{
-        		((EntityPlayerMP) player).connection.sendPacket(new SPacketTitle(SPacketTitle.Type.ACTIONBAR, new TextComponentString(msg)));
-        	}
-        	else if (type == Type.CHAT)
-        	{
-        		player.sendMessage(new TextComponentString(msg));
-        	}
-        	else if (type == Type.TITLE && !player.world.isRemote)
-        	{
-        		((EntityPlayerMP) player).connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString(msg)));
-        	}
-        	else if (type == Type.SUBTITLE && !player.world.isRemote)
-        	{
-        		((EntityPlayerMP) player).connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(msg)));
-        	}
-        }
-    }
-    
-    /**
-     * If this entity is a player, sends a raw actionbar message to this entity
-     */
-    //@SideOnly(Side.SERVER)
-    public void sendActionbarMessage(String msg)
-    {
-    	if (this.getEntity() instanceof EntityPlayerMP)
-    	{
-    		((EntityPlayerMP) this.getEntity()).connection.sendPacket(new SPacketTitle(SPacketTitle.Type.ACTIONBAR, new TextComponentString(msg)));
-    	}
-    }
-
-    /**
-     * Forces this entity to say specified message
-     */
-    public void say(String msg)
-    {
-    	this.SERVER.getPlayerList().sendMessage(new TextComponentString("<" + this.getEntity().getName() + "> " + msg));
-    }
-    
-    /**
-     * If this entity is a player, kicks this entity from the game with specified message
-     */
-    public void kick(String msg)
-    {
-    	if (this.getEntity() instanceof EntityPlayerMP)
-    	{
-            ((EntityPlayerMP) this.getEntity()).connection.disconnect(new TextComponentString(msg));
-    	}
-    }
-
-    /**
-     * Returns if this entity has the specified permission level or higher
-     */
-    public boolean hasOpLevel(int level)
-    {	
-    	return this.getOpLevel() >= level ? true : false;
-    }
-
-    /**
-     * Gets the operator level of this entity
-     */
-    public int getOpLevel()
-    {
-    	EntityLivingBase entity = this.getEntity();
-    	return entity.canUseCommand(4, "") ? 4 : entity.canUseCommand(3, "") ? 3 : entity.canUseCommand(2, "") ? 2 : entity.canUseCommand(1, "") ? 1 : 0;
-    }
-
-    private void sendPlayerPermissionLevel(EntityPlayerMP player, int permLevel)
-    {
-        if (player != null && player.connection != null)
-        {
-            player.connection.sendPacket(new SPacketEntityStatus(player, permLevel <= 0 ? 24 : permLevel >= 4 ? 28 : (byte) (24 + permLevel)));
-        }
-    }
-    
-    /**
-     * If this entity is a player, ops this entity to the specified permission level
-     */
-    public void op(int permissionLevel)
-    {
-    	if (this.getEntity() instanceof EntityPlayerMP)
-    	{
-    		EntityPlayerMP playerMP = (EntityPlayerMP) this.getEntity();
-    		UserListOps ops = playerMP.getServer().getPlayerList().getOppedPlayers();
-    		GameProfile profile = playerMP.getGameProfile();
-    		ops.addEntry(new UserListOpsEntry(profile, permissionLevel, ops.bypassesPlayerLimit(profile)));
-    		this.sendPlayerPermissionLevel(playerMP, permissionLevel);
-    	}
-    }
-    
-    /**
-     * If this entity is a player, ops the specified GameProfile to the specified permission level
-     */
-    public void op(int permissionLevel, GameProfile profile)
-    {
-    	if (this.getEntity() instanceof EntityPlayer)
-    	{
-    		EntityPlayerMP playerMP = (EntityPlayerMP) this.getEntity();
-    		UserListOps ops = playerMP.getServer().getPlayerList().getOppedPlayers();
-    		ops.addEntry(new UserListOpsEntry(profile, permissionLevel, ops.bypassesPlayerLimit(profile)));
-    		this.sendPlayerPermissionLevel(playerMP.getServer().getPlayerList().getPlayerByUUID(profile.getId()), permissionLevel);
-    	}
-    }
-
-    public void freeze()
-    {
-    	this.isFrozen = true;
-    }
-    
-    public void unFreeze()
-    {
-    	this.isFrozen = false;
-    }
-    
-    public boolean isFrozen()
-    {
-    	return this.isFrozen;
-    }
-    
-    private boolean isVanished;
-    
-    public void vanish()
-    {
-    	this.isVanished = true;
-    }
-    
-    public void unVanish()
-    {
-    	this.isVanished = false;
-    }
-    
-    public boolean isVanished()
-    {
-    	return this.isVanished;
-    }
-
-    public ItemStack getAmmo(Item item) 
+	}
+	
+	public enum Type
 	{
-    	EntityLivingBase entityliving = this.getEntity();
-    	ItemStack offhand = entityliving.getHeldItem(EnumHand.OFF_HAND);
-    	ItemStack mainhand = entityliving.getHeldItem(EnumHand.MAIN_HAND);
-    	
-		if (offhand != null && offhand.getItem() == item)
+		CHAT, ACTIONBAR, TITLE, SUBTITLE
+	}
+	
+	/**
+	 * If this entity is a player, sends a raw message of the specified type to this entity
+	 */
+	public void sendMessage(Type type, String msg)
+	{
+		if (this.entity instanceof EntityPlayerMP)
+		{
+			EntityPlayerMP player = (EntityPlayerMP) this.entity;
+			
+			if (type == Type.ACTIONBAR)
+			{
+				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.ACTIONBAR, new TextComponentString(msg)));
+			}
+			else if (type == Type.CHAT)
+			{
+				player.sendMessage(new TextComponentString(msg));
+			}
+			else if (type == Type.TITLE)
+			{
+				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString(msg)));
+			}
+			else if (type == Type.SUBTITLE)
+			{
+				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(msg)));
+			}
+		}
+	}
+	
+	/**
+	 * Returns if this entity has the specified permission level or higher
+	 */
+	public boolean hasOpLevel(int level)
+	{
+		return this.getPermissionLevel() >= level ? true : false;
+	}
+	
+	/**
+	 * Returns the OP permission level of this entity
+	 */
+	public int getPermissionLevel()
+	{
+		if (this.entity instanceof EntityPlayerMP)
+		{
+			if (SERVER.isDedicatedServer())
+			{
+				return SERVER.getPlayerList().getOppedPlayers().getPermissionLevel(((EntityPlayerMP) this.entity).getGameProfile());
+			}
+			else
+			{
+				ICommandSender sender = this.entity;
+				return sender.canUseCommand(4, "") ? 4 : sender.canUseCommand(3, "") ? 3 : sender.canUseCommand(2, "") ? 2 : sender.canUseCommand(1, "") ? 1 : 0;
+			}
+		}
+
+		return 0;
+	}
+
+	@SubscribeEvent
+	public static void onLivingSetAttackTarget(LivingSetAttackTargetEvent event)
+	{
+		EntityLivingBase living = event.getEntityLiving();
+
+		if (!(living instanceof EntityPlayer) && living instanceof EntityLiving)
+		{
+			if (DinocraftEntity.getEntity(living).actions.isMesmerized())
+			{
+				EntityLivingBase target = event.getTarget();
+
+				if (target instanceof EntityPlayer || target != null && !target.isEntityAlive())
+				{
+					((EntityLiving) living).setAttackTarget(null);
+				}
+			}
+		}
+	}
+	
+	public static ItemStack getAmmo(EntityLivingBase entity, Item item)
+	{
+		ItemStack offhand = entity.getHeldItemOffhand();
+		ItemStack mainhand = entity.getHeldItemMainhand();
+		
+		if (offhand.getItem() == item)
 		{
 			return offhand;
 		}
-		else if (mainhand != null && mainhand.getItem() == item)
+		else if (mainhand.getItem() == item)
 		{
 			return mainhand;
 		}
-		else if (entityliving instanceof EntityPlayer)
+		else if (entity instanceof EntityPlayer)
 		{
-			EntityPlayer player = (EntityPlayer) entityliving;
+			EntityPlayer player = (EntityPlayer) entity;
+			int size = player.inventory.getSizeInventory();
 			
-			for (int i = 0; i < player.inventory.getSizeInventory(); ++i)
+			for (int i = 0; i < size; ++i)
 			{
 				ItemStack stack = player.inventory.getStackInSlot(i);
 				
-				if (stack != null && stack.getItem() == item)
+				if (stack.getItem() == item)
 				{
 					return stack;
 				}
@@ -953,160 +1180,263 @@ public class DinocraftEntity implements IDinocraftEntity
 		
 		return null;
 	}
-    
-    /**
-     * Checks if this entity has the specified ammunition
-     */
-	public boolean hasAmmo(Item item)
+	
+	/**
+	 * Checks if this entity has the specified ammunition
+	 */
+	public static boolean hasAmmo(EntityLivingBase entity, Item item)
 	{
-		return this.getAmmo(item) != null;
+		return getAmmo(entity, item) != null;
 	}
-
+	
 	/**
 	 * Consumes the specified amount of ammunition from this entity's inventory
 	 */
-	public void consumeAmmo(Item item, int amount)
+	public static void consumeAmmo(EntityLivingBase entity, Item item, int amount)
 	{
-		this.getAmmo(item).shrink(amount);
+		getAmmo(entity, item).shrink(amount);
 	}
-
-    /**
-     * If this entity is a player, adds the specified item to the entity's inventory
-     */
-    public void addStack(Item item, int amount)
-    {
-    	if (this.getEntity() instanceof EntityPlayer)
-    	{
-    		ItemStack stack = new ItemStack(item, amount);
-        	EntityPlayer player = (EntityPlayer) this.getEntity();
-    		boolean flag = player.inventory.addItemStackToInventory(stack);
-    		
-            if (flag)
-            {
-            	player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-            	player.inventoryContainer.detectAndSendChanges();
-            }
-
-            if (flag && stack.isEmpty())
-            {
-            	stack.setCount(1);
-                EntityItem entityitem = player.dropItem(stack, false);
-                
-                if (entityitem != null)
-                {
-                	entityitem.makeFakeItem();
-                }
-            }
-            else
-            {
-                EntityItem entityitem = player.dropItem(stack, false);
-
-                if (entityitem != null)
-                {
-                    entityitem.setNoPickupDelay();
-                    entityitem.setOwner(player.getName());
-                }
-            }
-    	}
-    }
-
-    /**
-     * If this entity is a player, removes the specified item from the entity's inventory
-     */
-    //removes every presence of the stack? not very efficient. take from consumeAmmo() method.
-    public void removeStack(Item item, int amount)
-    {
-    	if (this.getEntity() instanceof EntityPlayer)
-    	{
-    		EntityPlayer player = (EntityPlayer) this.getEntity();
-    		InventoryPlayer inventory = player.inventory;
-
-    		for (ItemStack stack : player.inventoryContainer.getInventory())
-    		{
-    			if (stack.getItem() == item)
-    			{
-    				stack.shrink(amount);
-    			}
-    		}
-    	}	
-    }
-    
-    private int shootingTick;
-    
-    public int getShootingTick()
-    {
-    	return this.shootingTick;
-    }
-    
-    public void setShootingTick(int tick)
-    {
-    	this.shootingTick = tick;
-    }
-
-    private double attackReach = 0.0F;
-    private boolean hasExtraReach = false;
-    
-    public void setAttackReach(double reach)
-    {
-    	this.setHasExtraReach(reach > 1.0D ? true : false);
-    	this.attackReach = reach;
-    }
-    
-    public boolean hasExtraReach()
-    {
-    	return this.hasExtraReach;
-    }
-    
-    public void setHasExtraReach(boolean reach)
-    {
-    	this.hasExtraReach = reach;
-    }
-    
-    public double getAttackReach()
-    {
-    	return this.attackReach;
-    }
-    
-    public double getBlockReach()
-    {
-    	return this.getEntity() instanceof EntityPlayer ? ((EntityPlayerMP) this.getEntity()).interactionManager.getBlockReachDistance() : null;
-    }
-    
-    public void setBlockReach(double reach)
-    {
-    	if (this.getEntity() instanceof EntityPlayer)
-    	{
-    		((EntityPlayerMP) this.getEntity()).interactionManager.setBlockReachDistance(reach);
-    	}
-    }
-    
-    /**
-     * Causes this entity to move abruptly backward and receive an upward jolt
-     * @param knockback the amount this entity will be knocked back
-     * @param recoil the amount of recoil (upward jolt) this entity will receive
-     * @param sneakAccuracy whether sneaking reduces the knockback and recoil by one-half
-     */
-    public void recoil(float knockback, float recoil, boolean sneakAccuracy)
-    {
-    	EntityLivingBase entityliving = this.getEntity();
-    	float f = entityliving.isSneaking() ? -knockback / 2.0F : -knockback;
-		double d = -MathHelper.sin((float) (entityliving.rotationYaw / 180F * Math.PI)) * f;
-		double d1 = MathHelper.cos((float) (entityliving.rotationYaw / 180F * Math.PI)) * f;
-		entityliving.rotationPitch -= entityliving.isSneaking() ? recoil / 2.0F : recoil;
-		entityliving.addVelocity(d, 0.0D, d1);
-    }
-    
-    /**
-	 * Returns if this entity is holding the specified item in their mainhand or offhand
+	
+	/**
+	 * If this entity is a player, adds the specified item to the entity's inventory
 	 */
-	public boolean isHolding(Item item)
+	public static void addStack(EntityPlayer player, ItemStack stack)
 	{
-		EntityLivingBase entityliving = this.getEntity();
-		ItemStack mainhand = entityliving.getHeldItemMainhand();
-		ItemStack offhand = entityliving.getHeldItemOffhand();
-		return mainhand != null && mainhand.getItem() == item || offhand != null && offhand.getItem() == item;
+		boolean flag = player.inventory.addItemStackToInventory(stack);
+		
+		if (flag)
+		{
+			player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2F, ((player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
+			player.inventoryContainer.detectAndSendChanges();
+		}
+		
+		if (flag && stack.isEmpty())
+		{
+			stack.setCount(1);
+			EntityItem entity = player.dropItem(stack, false);
+			
+			if (entity != null)
+			{
+				entity.makeFakeItem();
+			}
+		}
+		else
+		{
+			EntityItem entity = player.dropItem(stack, false);
+			
+			if (entity != null)
+			{
+				entity.setNoPickupDelay();
+				entity.setOwner(player.getName());
+			}
+		}
 	}
-    
+	
+	/**
+	 * If this entity is a player, removes the specified item from the entity's inventory
+	 */
+	public static void removeStack(EntityPlayer player, Item item, int amount)
+	{
+		int size = player.inventory.getSizeInventory();
+		
+		for (int i = 0; i < size; ++i)
+		{
+			ItemStack stack = player.inventory.getStackInSlot(i);
+			
+			if (stack != null && stack.getItem() == item)
+			{
+				stack.shrink(amount);
+				return;
+			}
+		}
+	}
+	
+	/**
+	 * Causes this entity to receive an upward cursor jolt
+	 * @param recoil the amount of recoil (upward jolt) this entity will receive
+	 */
+	public static void recoil(EntityLivingBase entity, float recoil)
+	{
+		if (DinocraftConfig.WEAPON_RECOIL)
+		{
+			boolean sneaking = entity.isSneaking();
+			//			float f = realism && sneaking ? -knockback / 2.0F : !entity.onGround ? -knockback * 1.5F : -knockback;
+			//			double x = -MathHelper.sin((float) (entity.rotationYaw / 180F * Math.PI)) * f;
+			//			double z = MathHelper.cos((float) (entity.rotationYaw / 180F * Math.PI)) * f;
+			entity.rotationPitch -= sneaking ? recoil / 2.0F : recoil;
+			float f = entity.world.rand.nextFloat() * (recoil / (sneaking ? 3.0F : 2.0F));
+			entity.rotationYaw -= entity.world.rand.nextBoolean() ? f : -f;
+			//			entity.addVelocity(x, 0.0D, z);
+		}
+	}
+	
+	/**
+	 * Returns the position this entity was in right before it last teleported, and <code>null</code> if it never teleported
+	 */
+	@Nullable
+	public BlockPos getPosBeforeLastTeleport()
+	{
+		return this.lastTeleportPos;
+	}
+	
+	/**
+	 * Returns the position this entity was in right before it last died, and <code>null</code> if it never died
+	 */
+	@Nullable
+	public BlockPos getPosBeforeLastDeath()
+	{
+		return this.lastDeathPos;
+	}
+	
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public static void onLivingDeath(LivingDeathEvent event)
+	{
+		EntityLivingBase living = event.getEntityLiving();
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(living);
+
+		if (living instanceof EntityPlayer)
+		{
+			dinoEntity.lastDeathPos = new BlockPos(living.lastTickPosX, living.lastTickPosY, living.lastTickPosZ);
+		}
+	}
+	
+	@SubscribeEvent
+	public static void onTeleport(CommandEvent event) throws EntityNotFoundException, CommandException
+	{
+		ICommand command = event.getCommand();
+		ICommandSender sender = event.getSender();
+		MinecraftServer server = sender.getServer();
+		String[] args = event.getParameters();
+		
+		if (command instanceof CommandTP && args.length > 1 || command instanceof CommandTPHere && args.length >= 1)
+		{
+			List<Entity> list = new ArrayList<>();
+			Entity entity;
+			Entity uuidEntity;
+			
+			try
+			{
+				uuidEntity = server.getEntityFromUuid(UUID.fromString(args[0]));
+			}
+			catch (IllegalArgumentException exception)
+			{
+				uuidEntity = null;
+			}
+			
+			if (uuidEntity != null)
+			{
+				entity = uuidEntity;
+			}
+			else if (server.getPlayerList().getPlayerByUsername(args[0]) != null)
+			{
+				entity = CommandBase.getEntity(server, sender, args[0]);
+				list.add(entity);
+			}
+			else
+			{
+				try
+				{
+					list.addAll(CommandBase.getEntityList(sender.getServer(), sender, args[0]));
+				}
+				catch (EntityNotFoundException exception)
+				{
+					return;
+				}
+			}
+			
+			for (Entity entity0 : list)
+			{
+				if (entity0 instanceof EntityLivingBase)
+				{
+					DinocraftEntity.getEntity((EntityLivingBase) entity0).lastTeleportPos = new BlockPos(entity0.lastTickPosX, entity0.lastTickPosY, entity0.lastTickPosZ);
+				}
+			}
+		}
+		else if (command instanceof CommandTP && args.length == 1 || command instanceof CommandTPTo || command instanceof CommandJump)
+		{
+			EntityPlayerMP player = CommandBase.getCommandSenderAsPlayer(sender);
+			DinocraftEntity.getEntity(player).lastTeleportPos = new BlockPos(player.lastTickPosX, player.lastTickPosY, player.lastTickPosZ);
+		}
+	}
+	
+	public static boolean isLevel(ICommandSender sender, int level, MinecraftServer server)
+	{
+		return sender instanceof MinecraftServer || sender instanceof EntityPlayer && DinocraftEntity.getEntity((EntityPlayer) sender).hasOpLevel(level);
+	}
+	
+	/**
+	 * Gets a RayTraceResult describing whatever entity or block this entity is looking at within specified distance.
+	 */
+	@SideOnly(Side.CLIENT)
+	public static RayTraceResult getEntityTrace(double distance)
+	{
+		Minecraft minecraft = Minecraft.getMinecraft();
+		Entity entity = minecraft.getRenderViewEntity();
+		RayTraceResult result = null;
+
+		if (entity != null && minecraft.world != null)
+		{
+			result = entity.rayTrace(distance, 1.0F);
+			Vec3d pos = entity.getPositionEyes(1.0F);
+			double calcdist = distance;
+
+			if (result != null && result.typeOfHit == RayTraceResult.Type.BLOCK)
+			{
+				calcdist = result.hitVec.distanceTo(pos);
+			}
+
+			Vec3d lookvec = entity.getLookVec();
+			Vec3d vec3d = pos.addVector(lookvec.x * distance, lookvec.y * distance, lookvec.z * distance);
+			Entity pointedEntity = null;
+			List<Entity> list = minecraft.world.getEntitiesInAABBexcluding(entity, entity.getEntityBoundingBox().expand(lookvec.x * distance, lookvec.y * distance, lookvec.z * distance).grow(1.0F, 1.0F, 1.0F),
+					Predicates.and(EntitySelectors.NOT_SPECTATING, entity1 -> entity1 != null && entity1.canBeCollidedWith()));
+			double d = calcdist;
+
+			for (Entity entity1 : list)
+			{
+				AxisAlignedBB aabb = entity1.getEntityBoundingBox().grow(entity1.getCollisionBorderSize());
+				RayTraceResult result2 = aabb.calculateIntercept(pos, vec3d);
+
+				if (aabb.contains(pos))
+				{
+					if (d >= 0.0D)
+					{
+						pointedEntity = entity1;
+						d = 0.0D;
+					}
+				}
+				else if (result2 != null)
+				{
+					double d1 = pos.distanceTo(result2.hitVec);
+					
+					if (d1 < d || d == 0.0D)
+					{
+						if (entity1.getLowestRidingEntity() == entity.getLowestRidingEntity() && !entity1.canRiderInteract())
+						{
+							if (d == 0.0D)
+							{
+								pointedEntity = entity1;
+							}
+						}
+						else
+						{
+							pointedEntity = entity1;
+							d = d1;
+						}
+					}
+				}
+			}
+
+			if (pointedEntity != null && (d < calcdist || result == null))
+			{
+				minecraft.pointedEntity = pointedEntity;
+				result = new RayTraceResult(pointedEntity);
+			}
+		}
+		
+		return result;
+	}
+
 	public static class Storage implements IStorage<IDinocraftEntity>
 	{
 		@Override
@@ -1116,7 +1446,7 @@ public class DinocraftEntity implements IDinocraftEntity
 			instance.write(compound);
 			return compound;
 		}
- 
+		
 		@Override
 		public void readNBT(Capability<IDinocraftEntity> capability, IDinocraftEntity instance, EnumFacing side, NBTBase nbt)
 		{
@@ -1124,69 +1454,82 @@ public class DinocraftEntity implements IDinocraftEntity
 			instance.read(compound);
 		}
 	}
-
+	
 	@Override
 	public void write(NBTTagCompound tag)
 	{
-		tag.setBoolean("Fall Damage", this.fallDamage);
-		tag.setBoolean("Fall Damage Immune", this.fallDamageImmune);
-		tag.setBoolean("Reduced Fall Damage", this.reducedFallDamage);
-		tag.setFloat("Fall Damage Reduction Amount", this.fallDamageReductionAmount);
+		tag.setBoolean("FallDamage", this.fallDamage);
+		tag.setBoolean("FallDamageImmune", this.fallDamageImmune);
+		tag.setBoolean("ReducedFallDamage", this.reducedFallDamage);
+		tag.setFloat("FallDamageReductionAmount", this.fallDamageReductionAmount);
 		tag.setBoolean("Invulnerable", this.invulnerable);
-		tag.setBoolean("Regenerating", this.regenerating);
-		tag.setBoolean("Regenerating", this.regenerating);
-		tag.setInteger("Shooting Tick", this.shootingTick);
-		tag.setBoolean("Frozen", this.isFrozen);
+		tag.setBoolean("Frozen", this.frozen);
 		
-		DinocraftEntityActions actions = DinocraftEntity.getEntity(this.getEntity()).getActionsModule();
-		tag.setBoolean("doubleJump", actions.doubleJump);
-		tag.setBoolean("hasDoubleJumped", actions.hasDoubleJumped);
-		tag.setBoolean("extraMaxHealth", actions.extraMaxHealth);
-		tag.setInteger("chlorophyteTick", actions.chlorophyteTick);
-		tag.setFloat("chlorophyteAbsorptionAmount", actions.chlorophyteAbsorptionAmount);
+		if (!this.actions.standingStill)
+		{
+			tag.setBoolean("Regenerating", this.regenerating);
+		}
 		
-		DinocraftEntityTicks ticks = DinocraftEntity.getEntity(this.getEntity()).getTicksModule();
-		tag.setDouble("Regeneration Loop Ticks", ticks.regenerationLoopTicks);
-		tag.setInteger("Regeneration Ticks", ticks.regenerationTicks);
-		tag.setInteger("Regeneration Count", ticks.regenerationCount);
-		tag.setFloat("Regeneration Hearts", ticks.heartsRegenerate);
-		tag.setInteger("Ticks Invulnerable", ticks.ticksInvulnerable);
-		tag.setDouble("Degeneration Loop Ticks", ticks.degenerationLoopTicks);
-		tag.setInteger("Degeneration Ticks", ticks.degenerationTicks);
-		tag.setInteger("Degeneration Count", ticks.degenerationCount);
-		tag.setFloat("Degeneration Hearts", ticks.heartsDegenerate);
-		tag.setInteger("RegenTick", DinocraftEntityTicks.regenTick);
+		if (this.lastDeathPos != null)
+		{
+			tag.setDouble("LastDeathX", this.lastDeathPos.getX());
+			tag.setDouble("LastDeathY", this.lastDeathPos.getY());
+			tag.setDouble("LastDeathZ", this.lastDeathPos.getZ());
+		}
+		
+		if (this.lastTeleportPos != null)
+		{
+			tag.setDouble("LastTeleportX", this.lastTeleportPos.getX());
+			tag.setDouble("LastTeleportY", this.lastTeleportPos.getY());
+			tag.setDouble("LastTeleportZ", this.lastTeleportPos.getZ());
+		}
+		
+		tag.setDouble("LastTickPosX", this.lastTickPosX);
+		tag.setDouble("LastTickPosY", this.lastTickPosY);
+		tag.setDouble("LastTickPosZ", this.lastTickPosZ);
+		tag.setDouble("PosX", this.posX);
+		tag.setDouble("PosY", this.posY);
+		tag.setDouble("PosZ", this.posZ);
+
+		this.actions.write(tag);
+		this.ticks.write(tag);
+
+		tag.setBoolean("canFly", this.canFly());
+		tag.setBoolean("isFlying", this.isFlying());
 	}
- 
+
 	@Override
 	public void read(NBTTagCompound tag)
 	{
-		this.fallDamage = tag.getBoolean("Fall Damage");
-		this.fallDamageImmune = tag.getBoolean("Fall Damage Immune");
-		this.reducedFallDamage = tag.getBoolean("Reduced Fall Damage");
-		this.fallDamageReductionAmount = tag.getFloat("Fall Damage Reduction Amount");
+		this.fallDamage = tag.getBoolean("FallDamage");
+		this.fallDamageImmune = tag.getBoolean("FallDamageImmune");
+		this.reducedFallDamage = tag.getBoolean("ReducedFallDamage");
+		this.fallDamageReductionAmount = tag.getFloat("FallDamageReductionAmount");
 		this.invulnerable = tag.getBoolean("Invulnerable");
+		this.frozen = tag.getBoolean("Frozen");
 		this.regenerating = tag.getBoolean("Regenerating");
-		this.shootingTick = tag.getInteger("Shooting Tick");
-		this.isFrozen = tag.getBoolean("Frozen");
 		
-		DinocraftEntityActions actions = DinocraftEntity.getEntity(this.getEntity()).getActionsModule();
-		actions.doubleJump = tag.getBoolean("doubleJump");
-		actions.hasDoubleJumped = tag.getBoolean("hasDoubleJumped");
-		actions.extraMaxHealth = tag.getBoolean("extraMaxHealth");
-		actions.chlorophyteTick = tag.getInteger("chlorophyteTick");
-		actions.chlorophyteAbsorptionAmount = tag.getFloat("chlorophyteAbsorptionAmount");
+		if (tag.hasKey("LastDeathX") && tag.hasKey("LastDeathY") && tag.hasKey("LastDeathZ"))
+		{
+			this.lastDeathPos = new BlockPos(tag.getDouble("LastDeathX"), tag.getDouble("LastDeathY"), tag.getDouble("LastDeathZ"));
+		}
 		
-		DinocraftEntityTicks ticks = DinocraftEntity.getEntity(this.getEntity()).getTicksModule();
-		ticks.regenerationTicks = tag.getInteger("Regeneration Ticks");
-		ticks.regenerationLoopTicks = tag.getInteger("Regeneration Loop Ticks");
-		ticks.regenerationCount = tag.getInteger("Regeneration Count");
-		ticks.heartsRegenerate = tag.getFloat("Regeneration Hearts");
-		ticks.ticksInvulnerable = tag.getInteger("Ticks Invulnerable");
-		ticks.degenerationTicks = tag.getInteger("Degeneration Ticks");
-		ticks.degenerationLoopTicks = tag.getDouble("Degeneration Loop Ticks");
-		ticks.degenerationCount = tag.getInteger("Degeneration Count");
-		ticks.heartsDegenerate = tag.getFloat("Degeneration Hearts");
-		DinocraftEntityTicks.regenTick = tag.getInteger("RegenTick");
+		if (tag.hasKey("LastTeleportX") && tag.hasKey("LastTeleportY") && tag.hasKey("LastTeleportZ"))
+		{
+			this.lastTeleportPos = new BlockPos(tag.getDouble("LastTeleportX"), tag.getDouble("LastTeleportY"), tag.getDouble("LastTeleportZ"));
+		}
+		
+		this.lastTickPosX = tag.getDouble("LastTickPosX");
+		this.lastTickPosY = tag.getDouble("LastTickPosY");
+		this.lastTickPosZ = tag.getDouble("LastTickPosZ");
+		this.posX = tag.getDouble("PosX");
+		this.posY = tag.getDouble("PosY");
+		this.posZ = tag.getDouble("PosZ");
+
+		this.actions.read(tag);
+		this.ticks.read(tag);
+
+		this.setAllowFlight(tag.getBoolean("canFly"));
+		this.setFlight(tag.getBoolean("isFlying"));
 	}
 }

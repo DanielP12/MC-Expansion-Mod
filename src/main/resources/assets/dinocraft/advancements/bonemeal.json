@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:bonemeal"
+    ]
+  },
+  "criteria": {
+    "tusk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:tusk"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:bonemeal"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "tusk",
+      "recipe"
+    ]
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:tuskers_sword"
+    ]
+  },
+  "criteria": {
+    "tuskers_gemstone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:tuskers_gemstone"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:tuskers_sword"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "tuskers_gemstone",
+      "recipe"
+    ]
+  ]
+}

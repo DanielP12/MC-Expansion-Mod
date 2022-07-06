@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:dreaded_boots"
+    ]
+  },
+  "criteria": {
+    "dreaded_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:dreaded_ingot"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:dreaded_boots"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "dreaded_ingot",
+      "recipe"
+    ]
+  ]
+}

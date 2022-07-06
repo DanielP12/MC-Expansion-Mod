@@ -1,0 +1,21 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "TL",
+    "ST"
+  ],
+  "key": {
+    "L": {
+      "item": "dinocraft:leaf"
+    },
+    "T": {
+      "item": "dinocraft:tusk"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "dinocraft:leafy_dagger"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "WWW",
+    "W W"
+  ],
+  "key": {
+    "W": {
+      "item": "dinocraft:wadronite"
+    }
+  },
+  "result": {
+    "item": "dinocraft:wadronite_helmet"
+  }
+}

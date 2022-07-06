@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "O",
+    "O",
+    "S"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "O": {
+      "item": "dinocraft:olitropy"
+    }
+  },
+  "result": {
+    "item": "dinocraft:olitropy_sword"
+  }
+}

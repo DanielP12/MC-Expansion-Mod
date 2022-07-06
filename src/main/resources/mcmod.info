@@ -2,13 +2,13 @@
 {
   "modid": "dinocraft",
   "name": "Dinocraft Mod",
-  "description": "Example placeholder mod.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
+  "description": "Dinocraft Mod adds a variety of items, blocks, and armor. It also adds many useful commands.",
+  "version": "1.5.0",
+  "mcversion": "1.12.2",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
+  "authorList": ["Danfinite"],
+  "credits": "Danfinite",
   "logoFile": "",
   "screenshots": [],
   "dependencies": []

@@ -1,20 +1,26 @@
 package dinocraft.command.server;
 
-import dinocraft.capabilities.entity.DinocraftEntity;
-import dinocraft.util.server.DinocraftPlayerList;
-import dinocraft.util.server.ListForbiddenWordsEntry;
+import dinocraft.command.DinocraftCommandUtilities;
+import dinocraft.util.DinocraftConfig;
+import dinocraft.util.server.DinocraftServer;
+import dinocraft.util.server.ForbiddenWord;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentTranslation;
 
+/**
+ * Adds the specified word to the forbidden words list.
+ * <br><br>
+ * <b> Notes: </b> Can also forbid multiple words, putting each word in a separate argument.
+ * <br><br>
+ * <b> Copyright © 2019 Danfinite </b>
+ */
 public class CommandForbid extends CommandBase
 {
 	@Override
-	public String getName() 
+	public String getName()
 	{
 		return "forbid";
 	}
@@ -27,52 +33,34 @@ public class CommandForbid extends CommandBase
 	
 	@Override
 	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-	{		
-		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(4) : true;
+	{
+		return DinocraftCommandUtilities.checkPermissions(DinocraftConfig.PERMISSION_LEVEL_FORBID, sender);
+		//return DinocraftCommandUtilities.checkGroupPermissions(sender, this.getName());
 	}
 	
 	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
 	{
 		if (args.length == 0)
 		{
 			throw new WrongUsageException("commands.forbid.usage", new Object[0]);
 		}
-		else
-        {
-			/*
-			if (args[0].length() == 0)
+
+		for (String arg : args)
+		{
+			if (arg.contains("/"))
 			{
-				throw new CommandException("commands.forbid.failed.invalid", new Object[] {args[0]});
+				int posColon = arg.indexOf('/');
+				String word = arg.substring(0, posColon);
+				String replacement = arg.substring(posColon + 1);
+				DinocraftServer.FORBIDDEN_WORDS.addEntry(new ForbiddenWord(word, sender.getName(), replacement));
+				notifyCommandListener(sender, this, "commands.forbid.success", new Object[] {word, replacement});
 			}
 			else
-			{*/
-				for (int i = 0; i < args.length; ++i)
-				{
-					if (!args[i].equals(" ") && !DinocraftPlayerList.FORBIDDEN_WORDS.isForbidden(args[i]))
-					{
-						ListForbiddenWordsEntry entry = new ListForbiddenWordsEntry(args[i]);
-						DinocraftPlayerList.FORBIDDEN_WORDS.addEntry(entry);
-						notifyCommandListener(sender, this, "commands.forbid.success", new Object[] {args[i]});
-					}
-					else
-					{
-						sender.sendMessage(new TextComponentTranslation("commands.forbid.failed", new Object[] {args[i]}));
-					}
-				//}
-				/*
-				if (!DinocraftPlayerList.FORBIDDEN_WORDS.isForbidden(args[0]))
-				{   
-					ListForbiddenWordsEntry entry = new ListForbiddenWordsEntry(args[0]);
-					DinocraftPlayerList.FORBIDDEN_WORDS.addEntry(entry);
-					notifyCommandListener(sender, this, "commands.forbid.success", new Object[] {args[0]});
-				}
-				else
-				{
-					throw new CommandException("commands.forbid.failed", new Object[] {args[0]});
-				}
-				*/
+			{
+				DinocraftServer.FORBIDDEN_WORDS.addEntry(new ForbiddenWord(arg, sender.getName(), null));
+				notifyCommandListener(sender, this, "commands.forbid.success.noReplacement", new Object[] {arg});
 			}
-        }
+		}
 	}
 }

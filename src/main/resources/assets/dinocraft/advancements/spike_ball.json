@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:spike_ball"
+    ]
+  },
+  "criteria": {
+    "tusk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:tusk"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:spike_ball"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "tusk",
+      "recipe"
+    ]
+  ]
+}

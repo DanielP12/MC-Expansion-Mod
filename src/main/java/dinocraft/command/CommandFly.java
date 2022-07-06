@@ -4,25 +4,29 @@ import java.util.Collections;
 import java.util.List;
 
 import dinocraft.capabilities.entity.DinocraftEntity;
-import dinocraft.network.NetworkHandler;
-import dinocraft.network.PacketFly;
+import dinocraft.network.PacketHandler;
+import dinocraft.network.server.SPacketAllowFlying;
+import dinocraft.util.DinocraftConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
 /**
- * Toggles fly on or off for specified player.
- * <br><br>
- * <b> Copyright © Danfinite 2019 </b>
+ * Toggles flight on or off for the specified player.<p>
+ * <b>Name:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>fly</tt></span><br>
+ * <b>Usage:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>/fly [player]</tt></span><p>
+ * <b>Copyright © 2019 Danfinite</b>
  */
+//TODO: allow on and off specifications
 public class CommandFly extends CommandBase
 {
 	@Override
-	public String getName() 
+	public String getName()
 	{
 		return "fly";
 	}
@@ -35,45 +39,47 @@ public class CommandFly extends CommandBase
 	
 	@Override
 	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-	{		
-		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(3) : true;
+	{
+		return DinocraftCommandUtilities.checkPermissions(DinocraftConfig.PERMISSION_LEVEL_FLY, sender);
+		//return DinocraftCommandUtilities.checkGroupPermissions(sender, this.getName());
 	}
 
 	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
 	{
-		EntityPlayer player = args.length > 0 ? getPlayer(server, sender, args[0]) : getCommandSenderAsPlayer(sender);            
+		EntityPlayerMP player = args.length > 0 ? getPlayer(server, sender, args[0]) : getCommandSenderAsPlayer(sender);
 		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
-        EntityPlayerMP playerMP = (EntityPlayerMP) player;
 
-        if (!dinoEntity.canFly())
-        {
-        	//dinoEntity.sendChatMessage(TextFormatting.GREEN + "Turned on flight!");
-        	dinoEntity.setAllowFlight(true);
-            notifyCommandListener(sender, this, "commands.fly.success", new Object[] {"on", player.getName()});
-        	NetworkHandler.sendTo(new PacketFly(true), playerMP);
-        	dinoEntity.setFlight(true);
-        }
-        else
-        {
-        	//dinoEntity.sendChatMessage(TextFormatting.RED + "Turned off flight!");
-        	dinoEntity.setAllowFlight(false);
-            notifyCommandListener(sender, this, "commands.fly.success", new Object[] {"off", player.getName()});
-        	NetworkHandler.sendTo(new PacketFly(false), playerMP);
-        	dinoEntity.setFlight(false);
-			dinoEntity.setFallDamage(false);
-        }
+		if (!dinoEntity.canFly())
+		{
+			dinoEntity.setAllowFlight(true);
+			notifyCommandListener(sender, this, "commands.fly.success", "on", player.getName());
+			PacketHandler.sendTo(new SPacketAllowFlying(true, !player.onGround), player);
+			dinoEntity.setFlight(true);
+		}
+		else
+		{
+			dinoEntity.setAllowFlight(false);
+			notifyCommandListener(sender, this, "commands.fly.success", "off", player.getName());
+			PacketHandler.sendTo(new SPacketAllowFlying(false, false), player);
+			dinoEntity.setFlight(false);
+
+			if (!player.onGround)
+			{
+				dinoEntity.setFallDamage(false);
+			}
+		}
 	}
 
 	@Override
-	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos) 
+	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos)
 	{
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.<String>emptyList();
+		return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
 	}
 	
 	@Override
-	public boolean isUsernameIndex(String[] args, int index) 
+	public boolean isUsernameIndex(String[] args, int index)
 	{
-        return index == 0;
+		return index == 0;
 	}
 }

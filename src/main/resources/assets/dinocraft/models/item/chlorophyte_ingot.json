@@ -1,6 +1,0 @@
-{
-	"parent": "item/generated",
-	"textures": {
-		"layer0": "dinocraft:items/chlorophyte_ingot"
-	}
-}

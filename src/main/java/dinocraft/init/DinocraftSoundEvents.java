@@ -1,52 +1,75 @@
 package dinocraft.init;
 
-import dinocraft.Reference;
-import dinocraft.util.Utils;
+import dinocraft.Dinocraft;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.event.RegistryEvent.Register;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.registries.IForgeRegistry;
 
-public class DinocraftSoundEvents 
-{	
+public class DinocraftSoundEvents
+{
 	public static final SoundEvent GRAB;
 	public static final SoundEvent CHARM;
 	public static final SoundEvent HARP;
-	public static final SoundEvent CRUNCH;
-	public static final SoundEvent SHOT;
-	public static final SoundEvent GUN_SHOT;
-	public static final SoundEvent SHOTGUN_SHOT;
-	public static final SoundEvent RAY_GUN_SHOT;
+	public static final SoundEvent SPELL;
 	public static final SoundEvent SEED_SHOT;
 	public static final SoundEvent HIT;
 	public static final SoundEvent CRACK;
-	public static final SoundEvent BOING;
-	
+	public static final SoundEvent BOUNCE;
+	public static final SoundEvent GHOST_WHISPER;
+	public static final SoundEvent CLOCK;
+	public static final SoundEvent ROCK_SMASH;
+	public static final SoundEvent ZAP;
+	public static final SoundEvent ZAP2;
+	public static final SoundEvent SPLAT;
+
 	static
 	{
-		GRAB = new SoundEvent(new ResourceLocation(Reference.MODID, "grab")).setRegistryName("grab");
-		CHARM = new SoundEvent(new ResourceLocation(Reference.MODID, "charm")).setRegistryName("charm");
-		HARP = new SoundEvent(new ResourceLocation(Reference.MODID, "harp")).setRegistryName("harp");
-		CRUNCH = new SoundEvent(new ResourceLocation(Reference.MODID, "crunch")).setRegistryName("crunch");
-		SHOT = new SoundEvent(new ResourceLocation(Reference.MODID, "shot")).setRegistryName("shot");
-		GUN_SHOT = new SoundEvent(new ResourceLocation(Reference.MODID, "gun_shot")).setRegistryName("gun_shot");
-		SHOTGUN_SHOT = new SoundEvent(new ResourceLocation(Reference.MODID, "shotgun_shot")).setRegistryName("shotgun_shot");
-		RAY_GUN_SHOT = new SoundEvent(new ResourceLocation(Reference.MODID, "ray_gun_shot")).setRegistryName("ray_gun_shot");
-		SEED_SHOT = new SoundEvent(new ResourceLocation(Reference.MODID, "seed_shot")).setRegistryName("seed_shot");
-		HIT = new SoundEvent(new ResourceLocation(Reference.MODID, "hit")).setRegistryName("hit");
-		CRACK = new SoundEvent(new ResourceLocation(Reference.MODID, "crack")).setRegistryName("crack");
-		BOING = new SoundEvent(new ResourceLocation(Reference.MODID, "boing")).setRegistryName("boing");
+		BOUNCE = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "bounce"));
+		CHARM = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "charm"));
+		CLOCK = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "clock"));
+		CRACK = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "crack"));
+		GHOST_WHISPER = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "ghost_whisper"));
+		GRAB = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "grab"));
+		HARP = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "harp"));
+		HIT = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "hit"));
+		ROCK_SMASH = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "rock_smash"));
+		SEED_SHOT = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "seed_shot"));
+		SPELL = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "spell"));
+		ZAP = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "zap"));
+		ZAP2 = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "zap2"));
+		SPLAT = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "splat"));
 	}
-	
+
 	@EventBusSubscriber
 	public static class RegistrationHandler
 	{
-		@SubscribeEvent
-		public static void register(Register<SoundEvent> event)
+		public static SoundEvent getUnregisteredSoundEvent(SoundEvent soundEvent, String name)
 		{
-            event.getRegistry().registerAll(GRAB, CHARM, HARP, CRUNCH, SHOT, GUN_SHOT, SHOTGUN_SHOT, RAY_GUN_SHOT, SEED_SHOT, HIT, CRACK, BOING);
-	        Utils.getLogger().info("Registered all sounds");
+			return soundEvent.setRegistryName(new ResourceLocation(Dinocraft.MODID, name));
+		}
+		
+		@SubscribeEvent
+		public static void onEvent(Register<SoundEvent> event)
+		{
+			IForgeRegistry<SoundEvent> registry = event.getRegistry();
+			registry.register(getUnregisteredSoundEvent(BOUNCE, "bounce"));
+			registry.register(getUnregisteredSoundEvent(CHARM, "charm"));
+			registry.register(getUnregisteredSoundEvent(CLOCK, "clock"));
+			registry.register(getUnregisteredSoundEvent(CRACK, "crack"));
+			registry.register(getUnregisteredSoundEvent(GHOST_WHISPER, "ghost_whisper"));
+			registry.register(getUnregisteredSoundEvent(GRAB, "grab"));
+			registry.register(getUnregisteredSoundEvent(HARP, "harp"));
+			registry.register(getUnregisteredSoundEvent(HIT, "hit"));
+			registry.register(getUnregisteredSoundEvent(ROCK_SMASH, "rock_smash"));
+			registry.register(getUnregisteredSoundEvent(SEED_SHOT, "seed_shot"));
+			registry.register(getUnregisteredSoundEvent(SPELL, "spell"));
+			registry.register(getUnregisteredSoundEvent(SPLAT, "splat"));
+			registry.register(getUnregisteredSoundEvent(ZAP, "zap"));
+			registry.register(getUnregisteredSoundEvent(ZAP2, "zap2"));
+			Dinocraft.LOGGER.info("Registered all sounds");
 		}
 	}
 }

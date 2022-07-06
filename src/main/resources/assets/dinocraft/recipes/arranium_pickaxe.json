@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "AAA",
+    " S ",
+    " S "
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "A": {
+      "item": "dinocraft:arranium"
+    }
+  },
+  "result": {
+    "item": "dinocraft:arranium_pickaxe"
+  }
+}

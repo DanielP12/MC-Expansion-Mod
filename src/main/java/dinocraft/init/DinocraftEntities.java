@@ -1,36 +1,47 @@
 package dinocraft.init;
 
 import dinocraft.Dinocraft;
-import dinocraft.Reference;
+import dinocraft.entity.EntityDarkSoul;
+import dinocraft.entity.EntityDreadedEye;
+import dinocraft.entity.EntityDremoniteShuriken;
+import dinocraft.entity.EntityElectricBolt;
+import dinocraft.entity.EntityFallingCrystal;
+import dinocraft.entity.EntityJestersBolt;
+import dinocraft.entity.EntityLeafBolt;
 import dinocraft.entity.EntityLeaferang;
-import dinocraft.entity.EntityRayBullet;
-import dinocraft.entity.EntitySeed;
-import dinocraft.entity.EntityVineBall;
+import dinocraft.entity.EntityMagatiumBolt;
+import dinocraft.entity.EntityMagatiumSmallShard;
+import dinocraft.entity.EntityMesmerizingBolt;
+import dinocraft.entity.EntityPebble;
+import dinocraft.entity.EntitySpikeBall;
+import dinocraft.entity.EntitySplicentsThrowingKnife;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 
 public class DinocraftEntities
 {
-	public static final ResourceLocation VINE_BALL_TEXTURE;
-	public static final ResourceLocation RAY_BULLET_TEXTURE;
-	public static final ResourceLocation SEED_TEXTURE;
-	public static final ResourceLocation LEAFERANG_TEXTURE;
-	
-	static
-	{
-		VINE_BALL_TEXTURE = new ResourceLocation(Reference.MODID + ":textures/items/vine_ball.png");
-		RAY_BULLET_TEXTURE = new ResourceLocation(Reference.MODID + ":textures/items/ray_bullet.png");
-		SEED_TEXTURE = new ResourceLocation(Reference.MODID + ":textures/items/seed.png");
-		LEAFERANG_TEXTURE = new ResourceLocation(Reference.MODID + ":textures/items/leaferang.png");
-	}
-	
 	public static void init()
 	{
 		int id = 0;
+		registerEntity(EntitySpikeBall.class, "spike_ball", id++);
+		registerEntity(EntityMagatiumBolt.class, "magatium_bolt", id++);
+		registerEntity(EntityMagatiumSmallShard.class, "magatium_small_shard", id++);
+		registerEntity(EntityFallingCrystal.class, "falling_crystal", id++);
+		registerEntity(EntityElectricBolt.class, "electric_bolt", id++);
+		registerEntity(EntityLeaferang.class, "leaferang", id++);
+		registerEntity(EntityLeafBolt.class, "leaf_bolt", id++);
+		registerEntity(EntityMesmerizingBolt.class, "mesmerizing_bolt", id++);
+		registerEntity(EntityDarkSoul.class, "dark_soul", id++);
+		registerEntity(EntityDreadedEye.class, "dreaded_eye", id++);
+		registerEntity(EntityDremoniteShuriken.class, "dremonite_shuriken", id++);
+		registerEntity(EntityJestersBolt.class, "jesters_bolt", id++);
+		registerEntity(EntityPebble.class, "pebble", id++);
+		registerEntity(EntitySplicentsThrowingKnife.class, "splicents_throwing_knife", id++);
+	}
 
-		EntityRegistry.registerModEntity(VINE_BALL_TEXTURE, EntityVineBall.class, "vine_ball", id++, Dinocraft.instance, 1000, 1000, true);
-		EntityRegistry.registerModEntity(RAY_BULLET_TEXTURE, EntityRayBullet.class, "ray_bullet", id++, Dinocraft.instance, 1000, 1000, true);
-		EntityRegistry.registerModEntity(LEAFERANG_TEXTURE, EntityLeaferang.class, "leaferang", id++, Dinocraft.instance, 1000, 1000, true);
-		EntityRegistry.registerModEntity(SEED_TEXTURE, EntitySeed.class, "seed", id++, Dinocraft.instance, 1000, 1000, true);
+	private static void registerEntity(Class<? extends Entity> entityClass, String name, int id)
+	{
+		EntityRegistry.registerModEntity(new ResourceLocation(Dinocraft.MODID, name), entityClass, name, id, Dinocraft.INSTANCE, 1024, 1024, true);
 	}
 }

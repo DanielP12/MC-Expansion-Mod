@@ -1,0 +1,6 @@
+{
+    "parent": "block/wall_post",
+    "textures": {
+        "wall": "dinocraft:blocks/pebble_block"
+    }
+}

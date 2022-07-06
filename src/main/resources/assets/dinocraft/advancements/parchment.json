@@ -1,0 +1,42 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:parchment"
+    ]
+  },
+  "criteria": {
+    "reeds": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "minecraft:reeds"
+          }
+        ]
+      }
+    },
+    "dry_hide": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:dry_hide"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:parchment"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "reeds",
+      "dry_hide",
+      "recipe"
+    ]
+  ]
+}

@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north": { "model": "dinocraft:tusk_torch" },
+        "facing=east":  { "model": "dinocraft:tusk_torch", "y": 90 },
+        "facing=south": { "model": "dinocraft:tusk_torch", "y": 180 },
+        "facing=west":  { "model": "dinocraft:tusk_torch", "y": 270 }
+    }
+}

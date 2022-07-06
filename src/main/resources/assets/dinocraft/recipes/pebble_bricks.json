@@ -1,0 +1,16 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "PP",
+    "PP"
+  ],
+  "key": {
+    "P": {
+      "item": "dinocraft:pebble_block"
+    }
+  },
+  "result": {
+    "item": "dinocraft:pebble_bricks",
+    "count": 4
+  }
+}

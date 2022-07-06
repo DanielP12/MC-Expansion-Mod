@@ -1,14 +1,11 @@
 package dinocraft.item;
 
-import dinocraft.Reference;
 import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
 
-public class ItemTusk extends Item 
+public class ItemTusk extends Item
 {
-	public ItemTusk(String name)
+	public ItemTusk()
 	{
-		this.setUnlocalizedName(name);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+		
 	}
 }

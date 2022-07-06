@@ -1,62 +1,58 @@
 {
 	"grab": {
-		"category": "entity",
-		"subtitle": "item.grab",
-		"sounds": [ { "name": "dinocraft:grab", "stream": true } ]
+		"category": "ambient",
+		"sounds": [ { "name": "dinocraft:grab", "stream": false } ]
 	},
 	"charm": {
-		"category": "random",
-		"subtitle": "charm",
+		"category": "neutral",
 		"sounds": [ { "name": "dinocraft:charm", "stream": true } ]
 	},
 	"harp": {
-		"category": "random",
-		"subtitle": "harp",
+		"category": "neutral",
 		"sounds": [ { "name": "dinocraft:harp", "stream": true } ]
 	},
-	"crunch": {
-		"category": "random",
-		"subtitle": "crunch",
-		"sounds": [ { "name": "dinocraft:crunch", "stream": true } ]
-	},
-	"shot": {
-		"category": "random",
-		"subtitle": "shot",
-		"sounds": [ { "name": "dinocraft:shot", "stream": true } ]
-	},
-	"shotgun_shot": {
-		"category": "random",
-		"subtitle": "shotgun_shot",
-		"sounds": [ { "name": "dinocraft:shotgun_shot", "stream": true } ]
-	},
-	"ray_gun_shot": {
-		"category": "random",
-		"subtitle": "ray_gun_shot",
-		"sounds": [ { "name": "dinocraft:ray_gun_shot", "stream": true } ]
-	},
-	"gun_shot": {
-		"category": "random",
-		"subtitle": "gun_shot",
-		"sounds": [ { "name": "dinocraft:gun_shot", "stream": true } ]
+	"spell": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:spell", "stream": true } ]
 	},
 	"hit": {
-		"category": "random",
-		"subtitle": "hit",
-		"sounds": [ { "name": "dinocraft:hit", "stream": true } ]
+		"category": "ambient",
+		"sounds": [ { "name": "dinocraft:hit", "stream": false } ]
 	},
 	"crack": {
-		"category": "random",
-		"subtitle": "crack",
-		"sounds": [ { "name": "dinocraft:crack", "stream": true } ]
+		"category": "ambient",
+		"sounds": [ { "name": "dinocraft:crack", "stream": false } ]
 	},
-	"boing": {
-		"category": "random",
-		"subtitle": "boing",
-		"sounds": [ { "name": "dinocraft:boing", "stream": true } ]
+	"bounce": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:bounce", "stream": false } ]
 	},
 	"seed_shot": {
-		"category": "random",
-		"subtitle": "seed_shot",
-		"sounds": [ { "name": "dinocraft:seed_shot", "stream": true } ]
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:seed_shot", "stream": false } ]
+	},
+    "ghost_whisper": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:ghost_whisper", "stream": false } ]
+	},
+    "clock": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:clock", "stream": false } ]
+	},
+    "rock_smash": {
+		"category": "ambient",
+		"sounds": [ { "name": "dinocraft:rock_smash", "stream": false } ]
+	},
+    "zap": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:zap", "stream": false } ]
+	},
+    "zap2": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:zap2", "stream": false } ]
+	},
+    "splat": {
+		"category": "neutral",
+		"sounds": [ { "name": "dinocraft:splat", "stream": false } ]
 	}
 }

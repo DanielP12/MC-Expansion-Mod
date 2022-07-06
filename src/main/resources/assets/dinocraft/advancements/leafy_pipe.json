@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:leafy_pipe"
+    ]
+  },
+  "criteria": {
+    "leaf": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:leaf"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:leafy_pipe"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "leaf",
+      "recipe"
+    ]
+  ]
+}

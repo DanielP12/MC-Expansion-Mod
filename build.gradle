@@ -14,9 +14,9 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 //Minor updates and bug fixes (e.g. Small edits for items, blocks, or commands, etc.): third number
 //Mediocre updates (e.g. New items, blocks, or commands, etc.): second number
 //Major updates (e.g. Added more than five items, blocks, or commands, etc.): first number
-version = " v2.4.5"
+version = " v2.8.0"
 group = "dinocraft" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "Dinocraft 1.12.2 "
+archivesBaseName = "Dinocraft 1.12.2"
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 compileJava {

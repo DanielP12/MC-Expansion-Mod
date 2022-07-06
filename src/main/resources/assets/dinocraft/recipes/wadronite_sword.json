@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "W",
+    "W",
+    "S"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "W": {
+      "item": "dinocraft:wadronite"
+    }
+  },
+  "result": {
+    "item": "dinocraft:wadronite_sword"
+  }
+}

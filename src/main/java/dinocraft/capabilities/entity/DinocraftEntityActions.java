@@ -1,5 +1,7 @@
 package dinocraft.capabilities.entity;
 
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class DinocraftEntityActions extends DinocraftEntityModule
@@ -9,88 +11,183 @@ public class DinocraftEntityActions extends DinocraftEntityModule
 		super(entity);
 	}
 	
-	/* Double Jump */
-	protected boolean hasDoubleJumped;
-	protected boolean doubleJump;
-                
-	public boolean hasDoubleJumped()
+	private boolean hasJumpedInAir;
+	private boolean canJumpInAir;
+	private boolean canSneakJump;
+	protected boolean dreadedFlying;
+	protected boolean jesterSpeeding;
+	protected boolean jesterized;
+	protected EntityLivingBase jesterizingEntity;
+	protected boolean mesmerized;
+	protected boolean fallingCrystals;
+	protected EntityLivingBase fallingCrystalsShooter;
+	protected boolean electrified;
+	
+	public void setMesmerized(int time)
 	{
-		return this.hasDoubleJumped;
+		if (!(this.getEntity() instanceof EntityPlayer))
+		{
+			this.mesmerized = true;
+			this.getDinocraftEntity().ticks.mesmerizedTicks = time * 20;
+		}
 	}
 
-	public void setHasDoubleJumped(boolean doubleJumped) 
+	public boolean isMesmerized()
 	{
-		this.hasDoubleJumped = doubleJumped;
-	}
-
-	public boolean canDoubleJumpAgain()
-	{
-		return this.doubleJump;
-	}
-
-	public void setCanDoubleJumpAgain(boolean flag) 
-	{
-		this.doubleJump = flag;
+		return !(this.getEntity() instanceof EntityPlayer) ? this.mesmerized : false;
 	}
 	
-	protected boolean extraMaxHealth;
+	public void setDreadedFlying(boolean dreadedFlying)
+	{
+		this.dreadedFlying = dreadedFlying;
+	}
+	
+	public boolean isDreadedFlying()
+	{
+		return this.dreadedFlying;
+	}
+	
+	public void setJesterSpeeding(boolean jesterSpeeding)
+	{
+		this.jesterSpeeding = jesterSpeeding;
+	}
+	
+	public boolean isJesterSpeeding()
+	{
+		return this.jesterSpeeding;
+	}
+
+	public void setJesterized(EntityLivingBase jesterizingEntity, int time)
+	{
+		this.jesterized = true;
+		this.jesterizingEntity = jesterizingEntity;
+		this.getDinocraftEntity().ticks.jesterizedTicks = time * 20;
+	}
+
+	public boolean isJesterized()
+	{
+		return this.jesterized;
+	}
+	
+	public void setFallingCrystals(EntityLivingBase fallingCrystalsShooter, int time)
+	{
+		this.fallingCrystals = true;
+		this.fallingCrystalsShooter = fallingCrystalsShooter;
+		this.getDinocraftEntity().ticks.fallingCrystalsTicks = time * 20;
+	}
+
+	public boolean isFallingCrystals()
+	{
+		return this.fallingCrystals;
+	}
+	
+	public void setElectrified(int time)
+	{
+		this.electrified = true;
+		this.getDinocraftEntity().ticks.electrifiedTicks = time * 20;
+	}
+
+	public boolean isElectrified()
+	{
+		return this.electrified;
+	}
+
+	protected int shootingCount = 0;
+	protected int boltCount;
+
+	public void shootMagatiumBolts(int count)
+	{
+		this.boltCount = count;
+		this.shootingCount = 0;
+	}
+
+	public boolean canSneakJump()
+	{
+		return this.canSneakJump;
+	}
+
+	public void setCanSneakJump(boolean canSneakJump)
+	{
+		this.canSneakJump = canSneakJump;
+	}
+	
+	public boolean hasJumpedInAir()
+	{
+		return this.hasJumpedInAir;
+	}
+
+	public void setHasJumpedInAir(boolean jumpedInAir)
+	{
+		this.hasJumpedInAir = jumpedInAir;
+	}
+
+	public boolean canJumpInAir()
+	{
+		return this.canJumpInAir;
+	}
+
+	public void setCanJumpInAir(boolean jumpedInAir)
+	{
+		this.canJumpInAir = jumpedInAir;
+	}
+	
+	protected boolean hasExtraMaxHealth;
 	
 	public boolean hasExtraMaxHealth()
 	{
-		return this.extraMaxHealth;
+		return this.hasExtraMaxHealth;
 	}
 	
-	public void setHasExtraMaxHealth(boolean flag)
+	public void setHasExtraMaxHealth(boolean hasExtraMaxHealth)
 	{
-		this.extraMaxHealth = flag;
+		this.hasExtraMaxHealth = hasExtraMaxHealth;
 	}
 	
-	protected int chlorophyteTick = 0;
-	
-	public int getChlorophyteTick() 
+	protected boolean standingStill;
+
+	public boolean isStandingStill()
 	{
-		return chlorophyteTick;
+		return this.standingStill;
+	}
+
+	public void setStandingStill(boolean isStandingStill)
+	{
+		this.standingStill = isStandingStill;
+		this.getDinocraftEntity().ticks.ticksStandingStill = 60;
 	}
 	
-	public void setChlorophyteTick(int chlorophyteTick)
+	public void resetStandingStill()
 	{
-		this.chlorophyteTick = chlorophyteTick;
-	}
-	
-	protected float chlorophyteAbsorptionAmount = 0.0F;
-	
-	public float getChlorophyteAbsorptionAmount() 
-	{
-		return chlorophyteAbsorptionAmount;
-	}
-	
-	public void setChlorophyteAbsorptionAmount(float chlorophyteAbsorptionAmount) 
-	{
-		this.chlorophyteAbsorptionAmount = chlorophyteAbsorptionAmount;
+		this.standingStill = false;
 	}
 	
 	@Override
 	public void write(NBTTagCompound tag)
 	{
 		NBTTagCompound root = new NBTTagCompound();
-		tag.setTag("Abilities", root);
-
-		tag.setBoolean("doubleJump", this.doubleJump);
-		tag.setBoolean("hasDoubleJumped", this.hasDoubleJumped);
-		tag.setBoolean("extraMaxHealth", this.extraMaxHealth);
-		tag.setInteger("chlorophyteTick", this.chlorophyteTick);
-		tag.setFloat("chlorophyteAbsorptionAmount", this.chlorophyteAbsorptionAmount);
+		tag.setTag("Actions", root);
+		
+		root.setBoolean("CanJumpInAir", this.canJumpInAir);
+		root.setBoolean("HasJumpedInAir", this.hasJumpedInAir);
+		root.setBoolean("HasExtraMaxHealth", this.hasExtraMaxHealth);
+		
+		root.setBoolean("Mesmerized", this.mesmerized);
+		root.setBoolean("Electrified", this.electrified);
+		root.setBoolean("DreadedFlying", this.dreadedFlying);
 	}
 
 	@Override
 	public void read(NBTTagCompound tag)
 	{
-		NBTTagCompound root = tag.getCompoundTag("Abilities");
-
-		this.doubleJump = root.getBoolean("doubleJump");
-		this.hasDoubleJumped = root.getBoolean("hasDoubleJumped");
-		this.extraMaxHealth = root.getBoolean("extraMaxHealth");
-		this.chlorophyteTick = root.getInteger("chlorophyteTick");
-		this.chlorophyteAbsorptionAmount = root.getFloat("chlorophyteAbsorptionAmount");
+		NBTTagCompound root = tag.getCompoundTag("Actions");
+		
+		this.canJumpInAir = root.getBoolean("CanJumpInAir");
+		this.hasJumpedInAir = root.getBoolean("HasJumpedInAir");
+		this.hasExtraMaxHealth = root.getBoolean("HasExtraMaxHealth");
+		this.standingStill = root.getBoolean("StandingStill");
+		
+		this.mesmerized = root.getBoolean("Mesmerized");
+		this.electrified = root.getBoolean("Electrified");
+		this.dreadedFlying = root.getBoolean("DreadedFlying");
 	}
 }

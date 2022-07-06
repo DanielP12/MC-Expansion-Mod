@@ -1,0 +1,16 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "OOO",
+    "O O",
+    "O O"
+  ],
+  "key": {
+    "O": {
+      "item": "dinocraft:olitropy"
+    }
+  },
+  "result": {
+    "item": "dinocraft:olitropy_leggings"
+  }
+}

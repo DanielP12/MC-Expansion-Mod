@@ -1,0 +1,26 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "C",
+    "T"
+  ],
+  "key": {
+    "T": {
+      "item": "dinocraft:tusk"
+    },
+    "C": [
+      {
+        "item": "minecraft:coal",
+        "data": 0
+      },
+      {
+        "item": "minecraft:coal",
+        "data": 1
+      }
+    ]
+  },
+  "result": {
+    "item": "dinocraft:tusk_torch",
+    "count": 4
+  }
+}

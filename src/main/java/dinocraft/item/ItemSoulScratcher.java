@@ -5,18 +5,11 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import dinocraft.Reference;
-import dinocraft.init.DinocraftItems;
-import dinocraft.util.DinocraftServer;
-import dinocraft.util.Utils;
+import dinocraft.Dinocraft;
 import net.minecraft.block.Block;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.EnumHelper;
@@ -25,39 +18,38 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemSoulScratcher extends ItemTool
 {
-	private static final Set<Block> EFFECTIVE_BLOCKS = Sets.newHashSet(new Block[] {});
+	private static final Set<Block> EFFECTIVE_BLOCKS = Sets.newHashSet();
 	
-	public ItemSoulScratcher(String name) 
+	public ItemSoulScratcher()
 	{
-		super(EnumHelper.addToolMaterial(Reference.MODID + ":soul_scratcher", 0, 65, 0, 0, 0), EFFECTIVE_BLOCKS);
-		this.setUnlocalizedName(name);
+		super(EnumHelper.addToolMaterial(Dinocraft.MODID + ":soul_scratcher", 0, 65, 0, 0, 0), EFFECTIVE_BLOCKS);
 		this.setMaxDamage(65);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
 	}
 	
-	@Override
-	public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker)
-	{
-		if (attacker.isSneaking() && target.hurtTime == target.maxHurtTime && target.deathTime <= 0)
-		{
-			for (int i = 0; i < 10; ++i)
-			{
-				DinocraftServer.spawnParticle(EnumParticleTypes.SMOKE_LARGE, false, target.world, target.posX, target.posY, target.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, 1);
-			}
-			
-			stack.damageItem(1, attacker);
-			target.dropItem(DinocraftItems.CHUNKY_FLESH, 1);
-			target.playSound(SoundEvents.ENTITY_ZOMBIE_ATTACK_DOOR_WOOD, 1.0F, 0.5F);
-		}
-		
-		return true;
-	}
+	//	@Override
+	//	public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker)
+	//	{
+	//		if (attacker.isSneaking() && target.hurtTime == target.maxHurtTime && target.deathTime <= 0)
+	//		{
+	//			if (!target.world.isRemote)
+	//			{
+	//				for (int i = 0; i < 10; ++i)
+	//				{
+	//					DinocraftServer.spawnParticle(EnumParticleTypes.SMOKE_LARGE, false, target.world, target.posX, target.posY, target.posZ, Math.random() * 0.2 - 0.1, Math.random() * 0.25, Math.random() * 0.2 - 0.1, 1);
+	//				}
+	//			}
+	//
+	//			stack.damageItem(1, attacker);
+	//		}
+	//
+	//		return true;
+	//	}
 	
-    @SideOnly(Side.CLIENT)
+	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
-		tooltip.add(TextFormatting.DARK_GREEN + Utils.getLang().localize("soul_scratcher.tooltip"));
+		tooltip.add(TextFormatting.DARK_GREEN + Dinocraft.lang().localize("soul_scratcher.tooltip"));
 		super.addInformation(stack, world, tooltip, flag);
 	}
 }

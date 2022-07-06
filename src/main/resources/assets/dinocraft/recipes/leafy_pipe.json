@@ -1,0 +1,22 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "SLS",
+    "TTT",
+    "SLS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:reeds"
+    },
+    "L": {
+      "item": "dinocraft:leaf"
+    },
+    "T": {
+      "item": "dinocraft:tusk"
+    }
+  },
+  "result": {
+    "item": "dinocraft:leafy_pipe"
+  }
+}

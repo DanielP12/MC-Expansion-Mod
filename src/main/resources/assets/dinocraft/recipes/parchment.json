@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "SDS",
+    "DDD",
+    "SDS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:reeds"
+    },
+    "D": {
+      "item": "dinocraft:dry_hide"
+    }
+  },
+  "result": {
+    "item": "dinocraft:parchment"
+  }
+}

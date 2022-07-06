@@ -1,0 +1,16 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    " S ",
+    "SSS",
+    " S "
+  ],
+  "key": {
+    "S": {
+      "item": "dinocraft:spike_ball"
+    }
+  },
+  "result": {
+    "item": "dinocraft:spike_ball_bundle"
+  }
+}

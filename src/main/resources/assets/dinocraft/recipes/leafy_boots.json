@@ -1,0 +1,15 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "L L",
+    "L L"
+  ],
+  "key": {
+    "L": {
+      "item": "dinocraft:leaf"
+    }
+  },
+  "result": {
+    "item": "dinocraft:leafy_boots"
+  }
+}

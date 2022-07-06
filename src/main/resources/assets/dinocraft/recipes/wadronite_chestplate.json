@@ -1,0 +1,16 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "W W",
+    "WWW",
+    "WWW"
+  ],
+  "key": {
+    "W": {
+      "item": "dinocraft:wadronite"
+    }
+  },
+  "result": {
+    "item": "dinocraft:wadronite_chestplate"
+  }
+}

@@ -4,30 +4,41 @@ import com.google.gson.JsonObject;
 
 public class DinocraftEntry<T>
 {
-    private final T value;
+	private T value;
 
-    public DinocraftEntry(T value)
-    {
-        this.value = value;
-    }
+	DinocraftEntry(T value)
+	{
+		this.value = value;
+	}
 
-    protected DinocraftEntry(T value, JsonObject object)
-    {
-        this.value = value;
-    }
+	DinocraftEntry(T value, JsonObject object)
+	{
+		this.value = value;
+	}
 
-    T getValue()
-    {
-        return this.value;
-    }
+	T getValue()
+	{
+		return this.value;
+	}
+	
+	boolean hasExpired()
+	{
+		return false;
+	}
+	
+	/**
+	 * Invoked when this entry expires and is ready to be disposed
+	 */
+	void onExpiration()
+	{
 
-    boolean hasMuteExpired()
-    {
-        return false;
-    }
-    
-    protected void onSerialization(JsonObject object)
-    {
-    	
-    }
+	}
+
+	/**
+	 * Invoked when this entry is serialized into the specified <code>JsonObject</code>
+	 */
+	protected void onSerialization(JsonObject object)
+	{
+		
+	}
 }

@@ -1,0 +1,14 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "item": "dinocraft:pebbles"
+    }
+  },
+  "result": {
+    "item": "dinocraft:pebble_path"
+  }
+}

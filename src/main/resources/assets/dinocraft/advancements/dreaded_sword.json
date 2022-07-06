@@ -1,0 +1,42 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:dreaded_sword"
+    ]
+  },
+  "criteria": {
+    "dreaded_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:dreaded_ingot"
+          }
+        ]
+      }
+    },
+    "blevent_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:blevent_ingot"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:dreaded_sword"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "dreaded_ingot",
+      "blevent_ingot",
+      "recipe"
+    ]
+  ]
+}

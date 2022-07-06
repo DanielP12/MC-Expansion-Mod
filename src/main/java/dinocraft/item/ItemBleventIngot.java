@@ -1,14 +1,11 @@
 package dinocraft.item;
 
-import dinocraft.Reference;
 import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
 
-public class ItemBleventIngot extends Item 
+public class ItemBleventIngot extends Item
 {
-	public ItemBleventIngot(String name)
+	public ItemBleventIngot()
 	{
-		this.setUnlocalizedName(name);
-		this.setRegistryName(new ResourceLocation(Reference.MODID, name));
+
 	}
 }

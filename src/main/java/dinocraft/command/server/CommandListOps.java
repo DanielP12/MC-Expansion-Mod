@@ -1,48 +1,51 @@
 package dinocraft.command.server;
 
-import com.mojang.authlib.GameProfile;
-
-import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.command.DinocraftCommandUtilities;
+import dinocraft.util.DinocraftConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.UserListOps;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 
+/**
+ * Displays a list containing all opped users and their permission levels.
+ * <br><br>
+ * <b> Copyright © 2019 Danfinite </b>
+ */
 public class CommandListOps extends CommandBase
 {
-    @Override
+	@Override
 	public String getName()
-    {
-        return "opslist";
-    }
-
-    @Override
-	public String getUsage(ICommandSender sender)
-    {
-        return "commands.opslist.usage";
-    }
-    
-    @Override
-	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-	{		
-		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(3) : true;
+	{
+		return "oplist";
 	}
 
-    @Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
-    {
-    	UserListOps ops = server.getPlayerList().getOppedPlayers();
-    	String[] list = ops.getKeys();
-    	sender.sendMessage(new TextComponentTranslation("commands.opslist.players", new Object[] {list.length}));
+	@Override
+	public String getUsage(ICommandSender sender)
+	{
+		return "/oplist";
+	}
+	
+	@Override
+	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
+	{
+		return DinocraftCommandUtilities.checkPermissions(DinocraftConfig.PERMISSION_LEVEL_OPLIST, sender);
+		//return DinocraftCommandUtilities.checkGroupPermissions(sender, this.getName());
+	}
 
-    	for (String user : list)
-    	{
-    		GameProfile profile = server.getPlayerProfileCache().getGameProfileForUsername(user);
-    		sender.sendMessage(new TextComponentString(profile.getName() + " (permission level " + ops.getPermissionLevel(profile) + ")"));
-    	}
-    }
+	@Override
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
+	{
+		UserListOps ops = server.getPlayerList().getOppedPlayers();
+		String[] list = ops.getKeys();
+		sender.sendMessage(new TextComponentTranslation("commands.oplist.players", list.length));
+		
+		for (int i = 0; i < list.length; i++)
+		{
+			sender.sendMessage(new TextComponentString(list[i] + " (permission level " + ops.getPermissionLevel(server.getPlayerProfileCache().getGameProfileForUsername(list[i])) + ")" + (list.length == 1 ? "" : i == list.length - 2 ? " and" : i == list.length - 1 ? "" : ",")));
+		}
+	}
 }

@@ -4,24 +4,28 @@ import java.util.Collections;
 import java.util.List;
 
 import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.util.DinocraftConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
 /**
- * Sets the specified regenerating the specified amount of half-hearts every specified amount of seconds for the specified amount of seconds
- * <br><br>
- * <b> Copyright © Danfinite 2019 </b>
+ * Sets the specified living entity regenerating/degenerating the specified amount of health every specified amount of seconds for a total of specified amount of seconds.<p>
+ * <b>Name:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>regenerate</tt></span><br>
+ * <b>Usage:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>/regenerate &lt;entity&gt; &lt;health&gt; &lt;loop time&gt; &lt;time&gt;</tt></span><p>
+ * <b>Copyright © 2019 - 2020 Danfinite</b>
  */
 public class CommandRegenerate extends CommandBase
 {
 	@Override
-	public String getName() 
+	public String getName()
 	{
 		return "regenerate";
 	}
@@ -34,57 +38,58 @@ public class CommandRegenerate extends CommandBase
 	
 	@Override
 	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-	{		
-		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(3) : true;
+	{
+		return DinocraftCommandUtilities.checkPermissions(DinocraftConfig.PERMISSION_LEVEL_REGENERATE, sender);
+		//return DinocraftCommandUtilities.checkGroupPermissions(sender, this.getName());
 	}
 
 	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
 	{
-		if (args.length <= 2)
+		if (args.length <= 3)
 		{
-			throw new WrongUsageException("commands.regenerate.usage", new Object[0]);
+			throw new WrongUsageException("commands.regenerate.usage");
 		}
-		else
-        {
-	        int time = parseInt(args[0]);
-	        float loopTime = Float.parseFloat(args[1]);
-	        float health = Float.parseFloat(args[2]);
-	        
-	        if (time <= 0 || loopTime <= 0)
-	        {
-				throw new CommandException("commands.regenerate.failed.time", new Object[0]);
-	        }
-	        
-	        EntityPlayer player = args.length > 3 ? getPlayer(server, sender, args[3]) : getCommandSenderAsPlayer(sender);
-	        DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
-	        
-	        if (health == 0)
-	        {
-				throw new CommandException("commands.regenerate.failed.health", new Object[0]);
-	        }
-	        else if (health < 0)
-	        {
-	        	dinoEntity.setDegenerating(time, loopTime, health * -1);
-	        }
-	        else
-	        {
-	        	dinoEntity.setRegenerating(time, loopTime, health);
-	        }
 
-            notifyCommandListener(sender, this, "commands.regenerate.success", new Object[] {player.getName(), health, loopTime, time});
-        }
+		Entity entity = getEntity(server, sender, args[0]);
+		float health = (float) parseDouble(args[1]);
+		float loopTime = (float) parseDouble(args[2]);
+		int time = parseInt(args[3]);
+		
+		if (health == 0)
+		{
+			throw new CommandException("commands.regenerate.failed.health");
+		}
+		
+		if (time <= 0 || loopTime <= 0)
+		{
+			throw new CommandException("commands.regenerate.failed.time");
+		}
+		
+		if (entity instanceof EntityLivingBase)
+		{
+			DinocraftEntity.getEntity((EntityLivingBase) entity).setRegenerating(time, loopTime, health);
+
+			if (health < 0)
+			{
+				notifyCommandListener(sender, this, "commands.regenerate.success", entity.getName(), "degenerating", -health, loopTime, time);
+			}
+			else
+			{
+				notifyCommandListener(sender, this, "commands.regenerate.success", entity.getName(), "regenerating", health, loopTime, time);
+			}
+		}
 	}
 
 	@Override
 	public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, BlockPos pos)
 	{
-        return args.length == 4 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.<String>emptyList();
+		return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
 	}
 	
 	@Override
-	public boolean isUsernameIndex(String[] args, int index) 
+	public boolean isUsernameIndex(String[] args, int index)
 	{
-        return index == 3;
+		return index == 0;
 	}
 }

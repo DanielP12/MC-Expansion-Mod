@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "DD",
+    "SD",
+    "S "
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stick"
+    },
+    "D": {
+      "item": "dinocraft:dracolite"
+    }
+  },
+  "result": {
+    "item": "dinocraft:dracolite_axe"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    " D ",
+    "DBD",
+    " D "
+  ],
+  "key": {
+    "D": {
+      "item": "dinocraft:dreaded_ingot"
+    },
+    "B": {
+      "item": "dinocraft:blevent_ingot"
+    }
+  },
+  "result": {
+    "item": "dinocraft:dreaded_shuriken"
+  }
+}

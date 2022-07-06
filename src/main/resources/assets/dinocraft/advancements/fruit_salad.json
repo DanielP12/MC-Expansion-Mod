@@ -1,0 +1,64 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:fruit_salad"
+    ]
+  },
+  "criteria": {
+    "gooseberry": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:gooseberry"
+          }
+        ]
+      }
+    },
+    "melon": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "minecraft:melon"
+          }
+        ]
+      }
+    },
+    "apple": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "minecraft:apple"
+          }
+        ]
+      }
+    },
+    "bowl": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "minecraft:bowl"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:fruit_salad"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "gooseberry",
+      "melon",
+      "apple",
+      "bowl",
+      "recipe"
+    ]
+  ]
+}

@@ -1,0 +1,6 @@
+{
+"parent": "item/bow",
+"textures": {
+"layer0": "dinocraft:items/tuskers_bow_pulling_0"
+}
+}

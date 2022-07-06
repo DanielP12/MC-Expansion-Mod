@@ -1,0 +1,22 @@
+{
+  "type": "forge:ore_shaped",
+  "pattern": [
+    "ST ",
+    "S G",
+    "ST "
+  ],
+  "key": {
+    "T": {
+      "item": "dinocraft:tusk"
+    },
+    "G": {
+      "item": "dinocraft:tuskers_gemstone"
+    },
+    "S": {
+      "item": "minecraft:string"
+    }
+  },
+  "result": {
+    "item": "dinocraft:tuskers_bow"
+  }
+}

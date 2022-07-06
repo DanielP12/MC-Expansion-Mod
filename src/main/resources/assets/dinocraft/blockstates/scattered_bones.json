@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north": { "model": "dinocraft:scattered_bones" },
+        "facing=east":  { "model": "dinocraft:scattered_bones", "y": 90 },
+        "facing=south": { "model": "dinocraft:scattered_bones", "y": 180 },
+        "facing=west":  { "model": "dinocraft:scattered_bones", "y": 270 }
+    }
+}

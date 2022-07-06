@@ -1,0 +1,31 @@
+{
+  "rewards": {
+    "recipes": [
+      "dinocraft:spike_ball_bundle"
+    ]
+  },
+  "criteria": {
+    "spike_ball": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "item": "dinocraft:spike_ball"
+          }
+        ]
+      }
+    },
+    "recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "dinocraft:spike_ball_bundle"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "spike_ball",
+      "recipe"
+    ]
+  ]
+}

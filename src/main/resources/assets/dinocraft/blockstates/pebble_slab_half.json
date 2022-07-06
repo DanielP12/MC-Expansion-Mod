@@ -1,0 +1,6 @@
+{
+    "variants": {
+        "half=bottom": { "model": "dinocraft:pebble_slab_bottom" },
+        "half=top": { "model": "dinocraft:pebble_slab_top" }
+    }
+}

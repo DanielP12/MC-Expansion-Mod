@@ -1,26 +1,29 @@
 package dinocraft.command;
 
 import dinocraft.capabilities.entity.DinocraftEntity;
+import dinocraft.util.DinocraftConfig;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.SoundEvents;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.RayTraceResult.Type;
+import net.minecraft.util.text.TextComponentTranslation;
 
 /**
- * Teleports the sender to the block they are looking at.
- * <br><br>
- * <b> Copyright © Danfinite 2019 </b>
+ * Teleports the sender to the block they are looking at.<p>
+ * <b>Name:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>jump</tt></span><br>
+ * <b>Usage:</b><br>
+ * <span style="margin-left: 40px; display: inline-block"><tt>/jump</tt></span><p>
+ * <b>Copyright © 2019 Danfinite</b>
  */
 public class CommandJump extends CommandBase
 {
 	@Override
-	public String getName() 
+	public String getName()
 	{
 		return "jump";
 	}
@@ -33,26 +36,24 @@ public class CommandJump extends CommandBase
 	
 	@Override
 	public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-	{		
-		return sender instanceof EntityPlayerMP ? DinocraftEntity.getEntity((EntityPlayerMP) sender).hasOpLevel(2) : true;
+	{
+		return DinocraftCommandUtilities.checkPermissions(DinocraftConfig.PERMISSION_LEVEL_JUMP, sender);
+		//return DinocraftCommandUtilities.checkGroupPermissions(sender, this.getName());
 	}
 
 	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException 
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
 	{
- 	    EntityPlayer player = getCommandSenderAsPlayer(sender);
- 	    RayTraceResult result = DinocraftEntity.getEntity(player).getTrace(1000.0D);
- 	    
- 	    if (result == null || result.typeOfHit == RayTraceResult.Type.MISS)
- 	    {
- 	    	throw new CommandException("commands.jump.failed", new Object[0]);
- 	    }
- 	    else
- 	    {
- 	    	BlockPos pos = result.getBlockPos();
- 	    	player.setPositionAndUpdate(pos.getX(), pos.getY() + 1.0D, pos.getZ());
- 	    	player.world.playSound(null, pos, SoundEvents.ENTITY_ENDERMEN_TELEPORT, SoundCategory.PLAYERS, 1.5F, 1.0F);
- 	    	notifyCommandListener(sender, this, "commands.jump.success", new Object[0]);
- 	    }
+		EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+		RayTraceResult result = DinocraftEntity.getBlockTrace(player, 1024.0D);
+
+		if (result == null || result.typeOfHit == Type.MISS)
+		{
+			throw new CommandException("commands.jump.failed");
+		}
+		
+		BlockPos pos = result.getBlockPos();
+		player.setPositionAndUpdate(pos.getX(), pos.getY() + 1.0D, pos.getZ());
+		sender.sendMessage(new TextComponentTranslation("commands.jump.jumpPlayer"));
 	}
 }

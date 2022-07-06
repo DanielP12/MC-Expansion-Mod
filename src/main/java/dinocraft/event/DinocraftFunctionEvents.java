@@ -1,144 +1,117 @@
 package dinocraft.event;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import javax.annotation.Nullable;
+
 import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.capabilities.entity.DinocraftEntityActions;
+import dinocraft.command.server.CommandShutDown;
 import dinocraft.entity.EntityLeaferang;
-import dinocraft.entity.EntityRayBullet;
 import dinocraft.init.DinocraftItems;
 import dinocraft.init.DinocraftSoundEvents;
-import dinocraft.network.NetworkHandler;
-import dinocraft.network.reach.MessageExtendedReachAttack;
-import dinocraft.util.DinocraftServer;
-import net.minecraft.block.Block;
+import dinocraft.item.DinocraftWeapon;
+import dinocraft.network.PacketHandler;
+import dinocraft.network.server.SPacketItemPickupEffect;
+import dinocraft.util.DinocraftConfig;
+import dinocraft.util.server.DinocraftServer;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.command.CommandBase;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.monster.EntityPigZombie;
 import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityPig;
-import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
-import net.minecraft.init.Items;
+import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.IProgressUpdate;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.MinecraftException;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.client.event.MouseEvent;
-import net.minecraftforge.client.event.RenderPlayerEvent.Pre;
-import net.minecraftforge.event.ServerChatEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
-import net.minecraftforge.event.entity.living.LivingSpawnEvent;
-import net.minecraftforge.event.world.BlockEvent.BreakEvent;
-import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.event.entity.living.LivingSpawnEvent.SpecialSpawn;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @EventBusSubscriber
 public class DinocraftFunctionEvents
 {
-	/** The server's existed ticks */
-	private static int serverTick = 0;
 	public static boolean flag = false;
 	public static boolean toggle = false;
 	public static int time = 0;
 	public static boolean flag2 = true;
 	
-	/* Server Thread */
+	@SubscribeEvent
+	public static void onImpact(ProjectileImpactEvent event)
+	{
+
+	}
+
 	@SubscribeEvent
 	public static void onServerTick(ServerTickEvent event)
-	{		
+	{
 		if (event.phase != Phase.END)
 		{
 			return;
 		}
 		
 		MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-
-		++serverTick;
 		
-		if (serverTick == 12000 /* 10 minutes */)
+		if (server.isDedicatedServer() && DinocraftConfig.WORLD_SAVING && server.getTickCounter() % (DinocraftConfig.WORLD_SAVING_INTERVAL * 20) == 0)
 		{
-			serverTick = 0;
-
-			server.sendMessage(new TextComponentTranslation("commands.save.start", new Object[0]));
-
-			if (server.getPlayerList() != null)
-	        {
-				PlayerList list = server.getPlayerList();
-				list.sendMessage(new TextComponentString(TextFormatting.GRAY + (TextFormatting.ITALIC + "[Server: Saved the world]")));
-				list.saveAllPlayerData();
-	        }
-
-	        try
-	        {
-	            for (int i = 0; i < server.worlds.length; ++i)
-	            {
-	                if (server.worlds[i] != null)
-	                {
-	                    WorldServer worldserver = server.worlds[i];
-	                    boolean flag = worldserver.disableLevelSaving;
-	                    worldserver.disableLevelSaving = false;
-	                    worldserver.saveAllChunks(true, (IProgressUpdate) null);
-	                    worldserver.disableLevelSaving = flag;
-	                }
-	            }
-	        }
-	        catch (MinecraftException exception)
-	        {
-				PlayerList list = server.getPlayerList();
-	        	list.sendMessage(new TextComponentString(TextFormatting.GRAY + (TextFormatting.ITALIC + "[Server: Could not save the world]")));
-
-				server.sendMessage(new TextComponentTranslation("commands.save.failed", new Object[] {exception.getMessage()}));
-	        	return;
-	        }
-	        
-			server.sendMessage(new TextComponentTranslation("commands.save.success", new Object[0]));
+			server.commandManager.executeCommand(server, "save-all");
 		}
 		
 		if (flag && toggle)
 		{
-			--time;
+			time--;
 			
 			PlayerList list = server.getPlayerList();
 			
@@ -150,9 +123,45 @@ public class DinocraftFunctionEvents
 					flag2 = false;
 				}
 				
-				if (time == 1200 || time == 1000 || time == 800 || time == 600 || time == 400 || time == 200 || time == 100 || time == 80 || time == 60 || time == 40 || time == 20)
+				if (time <= 12000 && time != 0 && (time % 200 == 0 || time == 100 || time == 80 || time == 60 || time == 40 || time == 20)) //TODO: allow to handle in config?
 				{
-					list.sendMessage(new TextComponentString("Server shutting down in " + time / 20 + " seconds"));
+					int seconds = time / 20;
+					int minutes = seconds / 60;
+					seconds %= 60;
+					int hours = minutes / 60;
+					minutes %= 60;
+					int days = hours / 24;
+					hours %= 24;
+					int[] times = new int[] {days, hours, minutes, seconds};
+					int pos = 0;
+					
+					for (int time : times)
+					{
+						if (time > 0)
+						{
+							pos++;
+						}
+					}
+					
+					String[] display = new String[pos];
+					int posDisplay = 0;
+					
+					for (int i = 0; i < times.length; i++)
+					{
+						if (times[i] > 0)
+						{
+							display[posDisplay++] = times[i] + (i == 0 ? " days" : i == 1 ? " hours" : i == 2 ? " minutes" : " seconds");
+						}
+					}
+					
+					String time = "";
+					
+					for (int i = 0; i < display.length; i++)
+					{
+						time += i == display.length - 1 ? display[i] : display[i] + ", ";
+					}
+
+					list.sendMessage(new TextComponentString("Server shutting down in " + time));
 				}
 			}
 			
@@ -160,7 +169,8 @@ public class DinocraftFunctionEvents
 			{
 				if (list != null)
 				{
-					list.sendMessage(new TextComponentString(TextFormatting.RED + "SHUTTING DOWN"));
+					list.sendMessage(new TextComponentString(TextFormatting.RED + "SERVER SHUTTING DOWN"));
+					CommandBase.notifyCommandListener(server, new CommandShutDown(), "commands.shutdown.success.done");
 				}
 				
 				flag = false;
@@ -170,178 +180,313 @@ public class DinocraftFunctionEvents
 		}
 	}
 	
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	@SubscribeEvent(priority = EventPriority.HIGH)
 	public static void onLivingDeath(LivingDeathEvent event)
 	{
 		EntityLivingBase dead = event.getEntityLiving();
+		Entity immediateSource = event.getSource().getImmediateSource();
 		Entity killer = event.getSource().getTrueSource();
-
-		if (dead instanceof EntityEnderman)
+		
+		//		if (dead.world.isRemote && DinocraftConfig.ENTITY_BLOOD_EFFECTS)
+		//		{
+		//			for (int i = 0; i < 50; i++)
+		//			{
+		//				dead.world.spawnParticle(EnumParticleTypes.BLOCK_CRACK, true, dead.posX, dead.posY + (dead.height - 0.25D), dead.posZ,
+		//						Math.random() * 0.2D - 0.1D, Math.random() * 0.25D, Math.random() * 0.2D - 0.1D, Block.getIdFromBlock(Blocks.REDSTONE_BLOCK));
+		//			}
+		//		}
+		
+		List<EntityItem> entities = dead.world.getEntities(EntityItem.class, entityitem ->
 		{
-			EntityLiving enderman = (EntityLiving) event.getEntityLiving();
-			
-			if (killer instanceof EntityPlayer || killer instanceof EntityWolf)
+			Item item = entityitem.getItem().getItem();
+			return (item == DinocraftItems.HEART || item == DinocraftItems.ABSORPTION_HEART) && entityitem.getTags().contains(dead.getUniqueID().toString());
+		});
+		
+		for (EntityItem entity : entities)
+		{
+			if (!entity.world.isRemote)
 			{
-				EntityPlayer player = killer instanceof EntityWolf && ((EntityWolf) killer).isTamed() ? (EntityPlayer) ((EntityWolf) killer).getOwner() : (EntityPlayer) killer;
-				
-				if (DinocraftEntity.getEntity(player).isWearing(Item.getItemFromBlock(Blocks.PUMPKIN), null, DinocraftItems.FEATHERY_UNDERWEAR, null) && player.inventory.hasItemStack(new ItemStack(Items.MELON)) && enderman.world.rand.nextInt(150) < 1)
+				entity.setDead();
+			}
+			else
+			{
+				for (int i = 0; i < 20; i++)
 				{
-					enderman.world.spawnEntity(new EntityItem(enderman.world, enderman.posX, enderman.posY, enderman.posZ, new ItemStack(DinocraftItems.MERCHANTS_LUCKY_BOOTS, 1)));
+					entity.world.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, false, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+							entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D, 0);
 				}
-			}
-		}
-		
-		if (dead instanceof EntityMob && killer instanceof EntityLivingBase)
-		{			
-			EntityLivingBase entityliving = (EntityLivingBase) event.getSource().getTrueSource();
-
-			if (entityliving.getItemStackFromSlot(EntityEquipmentSlot.FEET) != null && entityliving.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.MERCHANTS_LUCKY_BOOTS)
-			{
-				DinocraftEntity.getEntity(entityliving).setRegenerating(5, 1.0F, 1.0F);
-			}
-		}
-		
-		if (dead.world.isRemote)
-		{
-			for (int i = 0; i < 50; ++i)
-			{
-				dead.world.spawnParticle(EnumParticleTypes.BLOCK_CRACK, true, dead.posX, dead.posY + (dead.height - 0.25D), dead.posZ, 
-						Math.random() * 0.2D - 0.1D, Math.random() * 0.25D, Math.random() * 0.2D - 0.1D, Block.getIdFromBlock(Blocks.REDSTONE_BLOCK));
 			}
 		}
 		
 		if (!dead.world.isRemote)
 		{
-			for (Entity entity : dead.world.loadedEntityList)
+			if (immediateSource instanceof EntityArrow && immediateSource.getTags().contains("HeartArrow"))
 			{
-				if (!dead.world.loadedEntityList.isEmpty() && entity instanceof EntityItem)
+				if (killer.world.rand.nextInt(2) == 0)
 				{
-					EntityItem entityitem = (EntityItem) entity;
-				
-					if (entityitem.getItem().getItem() == DinocraftItems.HEART)
-					{
-						for (String tag : entityitem.getTags())
-						{
-							if (tag.equals(dead.getUniqueID().toString()))
-							{
-								Random rand = entityitem.world.rand;
+					EntityItem heart = new EntityItem(killer.world, dead.posX, dead.posY, dead.posZ, new ItemStack(DinocraftItems.ABSORPTION_HEART, 1));
 
-								for (int i = 0; i < 20; i++)
-								{
-									DinocraftServer.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, true, entityitem.world, entityitem.posX + (rand.nextFloat() * entityitem.width * 2.0F) - entityitem.width, 
-											entityitem.posY + (rand.nextFloat() * entityitem.height), entityitem.posZ + (rand.nextFloat() * entityitem.width * 2.0F) - entityitem.width,
-											rand.nextGaussian() * 0.02D, rand.nextGaussian() * 0.02D, rand.nextGaussian() * 0.02D, 0);
-								}
-							
-								entityitem.setDead();
-							}
-						}
+					if (!(killer instanceof EntityPlayer))
+					{
+						heart.setInfinitePickupDelay();
 					}
+
+					String id = killer.getUniqueID().toString();
+					heart.setOwner(id);
+					heart.addTag(id);
+					killer.world.spawnEntity(heart);
 				}
 			}
 		}
 	}
-	
+
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void onLivingSetAttackTarget(LivingSetAttackTargetEvent event)
 	{
-		EntityLiving entityliving = (EntityLiving) event.getEntityLiving();
+		EntityLiving living = (EntityLiving) event.getEntityLiving();
 		
-		if (entityliving.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.LEAFY_BOOTS)
+		if (living.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.LEAFY_BOOTS)
 		{
-			if (entityliving.ticksExisted % 100 == 0)
+			if (living.ticksExisted % 80 == 0 && !living.isInLava() && !living.isInWater() && !living.isOnLadder() && !living.isRiding())
 			{
-				entityliving.motionY = 0.485D;
+				living.motionY = 0.485D;
+				living.motionX *= 1.025D;
+				living.motionZ *= 1.025D;
 			}
 			
-			if (!entityliving.world.isRemote && (entityliving instanceof EntityZombie || entityliving instanceof EntitySkeleton))
+			if (!living.world.isRemote && (living instanceof EntityZombie || living instanceof EntitySkeleton))
 			{
-				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entityliving);
+				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(living);
 				DinocraftEntityActions actions = dinoEntity.getActionsModule();
 				
-				if (entityliving.onGround || entityliving.isInWater() || entityliving.isInLava() || entityliving.isOnLadder())
+				if (living.onGround || living.isInWater() || living.isInLava() || living.isOnLadder() || living.isRiding())
 				{
-				    actions.setHasDoubleJumped(true);
-				    actions.setCanDoubleJumpAgain(false);
+					actions.setHasJumpedInAir(true);
+					actions.setCanJumpInAir(false);
 				}
-
-				if (!entityliving.onGround)
+				
+				if (!living.onGround)
 				{
-					if (!actions.canDoubleJumpAgain())
+					if (!actions.canJumpInAir())
 					{
-						actions.setHasDoubleJumped(false);
-						actions.setCanDoubleJumpAgain(true);
+						actions.setHasJumpedInAir(false);
+						actions.setCanJumpInAir(true);
 					}
 					
-					Random rand = entityliving.world.rand;
-
-					if (!actions.hasDoubleJumped() && entityliving.ticksExisted % (rand.nextInt(5) + 15) == 0 && entityliving.motionY < 0.01D)
+					Random rand = living.world.rand;
+					
+					if (!actions.hasJumpedInAir() && living.ticksExisted % (rand.nextInt(10) + 1) == 0 && living.motionY < 0.01D)
 					{
-						actions.setHasDoubleJumped(true);
-						
-						PotionEffect effect = entityliving.getActivePotionEffect(MobEffects.JUMP_BOOST);
-						entityliving.motionY = effect != null ? (effect.getAmplifier() * 0.095D) + 0.575D : 0.4875D + (0.01D * entityliving.world.rand.nextDouble());
-						entityliving.motionX *= 1.015D;    
-						entityliving.motionZ *= 1.015D;
-						entityliving.fallDistance = 0.0F;
-						
-						for (int i = 0; i < 25; ++i)
+						actions.setHasJumpedInAir(true);
+						PotionEffect effect = living.getActivePotionEffect(MobEffects.JUMP_BOOST);
+						living.motionY = effect != null ? effect.getAmplifier() * 0.095D + 0.575D : 0.5D;
+						living.motionX *= 1.05D;
+						living.motionZ *= 1.05D;
+						living.fallDistance = 0.0F;
+
+						for (int i = 0; i < 25; i++)
 						{
-							dinoEntity.spawnParticle(EnumParticleTypes.CLOUD, true, entityliving.posX + (rand.nextFloat() * entityliving.width * 2.5F) - entityliving.width, 
-									entityliving.posY + 0.5D + (rand.nextFloat() * entityliving.height) - 1.25D, entityliving.posZ + (rand.nextFloat() * entityliving.width * 2.5F) - entityliving.width, 
-									rand.nextGaussian() * 0.025D, rand.nextGaussian() * 0.025D, rand.nextGaussian() * 0.025D, 1);
+							((WorldServer) living.world).spawnParticle(EnumParticleTypes.CLOUD, true, living.posX + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
+									living.posY - 0.1F * living.height + living.world.rand.nextFloat() * living.height * 0.25F, living.posZ + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
+									1, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, 1);
 						}
-						
-						float j = rand.nextFloat();
-						entityliving.world.playSound(null, entityliving.getPosition(), SoundEvents.BLOCK_CLOTH_BREAK, SoundCategory.NEUTRAL, 1.0F, j - (j / 1.5F));
+
+						for (int i = 0; i < 20; i++)
+						{
+							((WorldServer) living.world).spawnParticle(EnumParticleTypes.TOTEM, true, living.posX + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
+									living.posY - 0.1F * living.height + living.world.rand.nextFloat() * living.height * 0.25F, living.posZ + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
+									1, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.025D, 1);
+						}
+
+						living.world.playSound(null, living.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.PLAYERS, 1.0F, living.world.rand.nextFloat() + 0.25F);
 						dinoEntity.setFallDamageReductionAmount(7.5F);
 					}
 				}
 			}
 		}
 		
-		if (event.getEntityLiving() instanceof EntityMob)
+		if (living instanceof EntityMob && !living.world.isRemote)
 		{
-			EntityMob mob = (EntityMob) event.getEntityLiving();
+			ItemStack mainhand = living.getHeldItemMainhand();
+			ItemStack offhand = living.getHeldItemOffhand();
+			Item mainhandItem = mainhand.getItem();
+			boolean isMainhand = mainhandItem == DinocraftItems.LEAFERANG;
+			boolean isOffhand = offhand.getItem() == DinocraftItems.LEAFERANG;
 			
-			if (mob.getHeldItemMainhand().getItem() != null && mob.getHeldItemMainhand().getItem() == DinocraftItems.LEAFERANG && !mob.world.isRemote)
+			if (living.ticksExisted % 20 == 0 && (isMainhand || isOffhand))
 			{
-				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(mob);
-				dinoEntity.setShootingTick(dinoEntity.getShootingTick() + 1);
-				
-				if (dinoEntity.getShootingTick() >= 20)
-				{				
-					ItemStack stack = mob.getHeldItemMainhand();
-					ItemStack copy = stack.copy();
-					copy.setCount(1);
-					EntityLeaferang leaferang = new EntityLeaferang(mob.world, mob, copy);
-					leaferang.shoot(mob, mob.rotationPitch, mob.rotationYaw, 0.0F, mob.world.rand.nextFloat() + 0.75F, 0.75F);
-					mob.world.spawnEntity(leaferang);
-					mob.world.playSound(null, mob.posX, mob.posY, mob.posZ, SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (mob.world.rand.nextFloat() * 0.4F + 0.8F));
-					stack.shrink(1);
-				}
+				ItemStack stack = isMainhand ? mainhand : offhand;
+				float vel = living.world.rand.nextFloat() * 0.25F + 0.5F;
+				EntityLeaferang leaferang = new EntityLeaferang(living.world, living, stack, isMainhand ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND, vel);
+				leaferang.shoot(living, living.rotationPitch, living.rotationYaw, 0.0F, vel, 1.0F);
+				living.world.spawnEntity(leaferang);
+				living.world.playSound(null, living.posX, living.posY, living.posZ, SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (living.world.rand.nextFloat() * 0.4F + 0.8F));
+				stack.shrink(1);
 			}
+		}
+	}
 
-			if (mob.getHeldItemMainhand().getItem() != null && mob.getHeldItemMainhand().getItem() == DinocraftItems.RAY_GUN && !mob.world.isRemote)
+	@SubscribeEvent
+	public static void onRender(RenderGameOverlayEvent.Pre event)
+	{
+		if (event.getType() == RenderGameOverlayEvent.ElementType.CROSSHAIRS)
+		{
+			Minecraft minecraft = Minecraft.getMinecraft();
+			GameSettings gamesettings = minecraft.gameSettings;
+			//			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(minecraft.player);
+			//
+			//			if (dinoEntity.hasModifiedReach())
+			//			{
+			//				event.setCanceled(true);
+			//
+			//				if (gamesettings.thirdPersonView == 0)
+			//				{
+			//					if (minecraft.playerController.isSpectator() && minecraft.pointedEntity == null)
+			//					{
+			//						RayTraceResult raytraceresult = minecraft.objectMouseOver;
+			//
+			//						if (raytraceresult == null || raytraceresult.typeOfHit != RayTraceResult.Type.BLOCK)
+			//						{
+			//							return;
+			//						}
+			//
+			//						BlockPos blockpos = raytraceresult.getBlockPos();
+			//						IBlockState state = minecraft.world.getBlockState(blockpos);
+			//
+			//						if (!state.getBlock().hasTileEntity(state) || !(minecraft.world.getTileEntity(blockpos) instanceof IInventory))
+			//						{
+			//							return;
+			//						}
+			//					}
+			//
+			//					ScaledResolution resolution = new ScaledResolution(minecraft);
+			//					int width = resolution.getScaledWidth();
+			//					int height = resolution.getScaledHeight();
+			//					minecraft.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
+			//					GlStateManager.enableBlend();
+			//
+			//					if (gamesettings.showDebugInfo && !gamesettings.hideGUI && !minecraft.player.hasReducedDebug() && !gamesettings.reducedDebugInfo)
+			//					{
+			//						GlStateManager.pushMatrix();
+			//						GlStateManager.translate(width / 2, height / 2, 0);
+			//						Entity entity = minecraft.getRenderViewEntity();
+			//						GlStateManager.rotate(entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * event.getPartialTicks(), -1.0F, 0.0F, 0.0F);
+			//						GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * event.getPartialTicks(), 0.0F, 1.0F, 0.0F);
+			//						GlStateManager.scale(-1.0F, -1.0F, -1.0F);
+			//						OpenGlHelper.renderDirections(10);
+			//						GlStateManager.popMatrix();
+			//					}
+			//					else
+			//					{
+			//						double range = dinoEntity.getAttackReach();
+			//						GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			//						GlStateManager.enableAlpha();
+			//						//Draws the crosshair
+			//						minecraft.ingameGUI.drawTexturedModalRect(width / 2 - 7, height / 2 - 7, 0, 0, 16, 16);
+			//
+			//						if (minecraft.gameSettings.attackIndicator == 1)
+			//						{
+			//							float f = minecraft.player.getCooledAttackStrength(0.0F);
+			//							boolean flag = false;
+			//							RayTraceResult result = getMouseOver(range);
+			//
+			//							if (result != null && result.entityHit != null && result.entityHit instanceof EntityLivingBase && f >= 1.0F)
+			//							{
+			//								flag = ((EntityLivingBase) result.entityHit).isEntityAlive();
+			//							}
+			//
+			//							int i = height / 2 - 7 + 16;
+			//							int j = width / 2 - 8;
+			//
+			//							if (flag)
+			//							{
+			//								minecraft.ingameGUI.drawTexturedModalRect(j, i, 68, 94, 16, 16);
+			//							}
+			//							else if (f < 1.0F)
+			//							{
+			//								minecraft.ingameGUI.drawTexturedModalRect(j, i, 36, 94, 16, 4);
+			//								minecraft.ingameGUI.drawTexturedModalRect(j, i, 52, 94, (int) (f * 17.0F), 4);
+			//							}
+			//						}
+			//					}
+			//				}
+			//			}
+			/*else */if (minecraft.player.getHeldItemMainhand().getItem() instanceof DinocraftWeapon)
 			{
-				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(mob);
-				dinoEntity.setShootingTick(dinoEntity.getShootingTick() + 1);
+				event.setCanceled(true);
 				
-				if (dinoEntity.getShootingTick() >= 15)
+				if (gamesettings.thirdPersonView == 0)
 				{
-					ItemStack stack = mob.getHeldItemMainhand();
-					stack.damageItem(1, mob);
-					dinoEntity.setShootingTick(0);
-					mob.setActiveHand(EnumHand.MAIN_HAND);
-					EntityRayBullet ball = new EntityRayBullet(mob, 0.001F);
-					ball.shoot(mob, mob.rotationPitch, mob.rotationYaw, 0.0F, 5.0F, 0.75F);
-					Vec3d vector = mob.getLookVec();
-		            ball.motionX = vector.x * 3.0D;
-		            ball.motionY = vector.y * 3.0D;
-		            ball.motionZ = vector.z * 3.0D;
-					mob.world.spawnEntity(ball);
+					if (minecraft.playerController.isSpectator() && minecraft.pointedEntity == null)
+					{
+						RayTraceResult raytraceresult = minecraft.objectMouseOver;
+
+						if (raytraceresult == null || raytraceresult.typeOfHit != RayTraceResult.Type.BLOCK)
+						{
+							return;
+						}
+
+						BlockPos blockpos = raytraceresult.getBlockPos();
+						IBlockState state = minecraft.world.getBlockState(blockpos);
+
+						if (!state.getBlock().hasTileEntity(state) || !(minecraft.world.getTileEntity(blockpos) instanceof IInventory))
+						{
+							return;
+						}
+					}
 					
-					mob.world.playSound(null, mob.getPosition(), DinocraftSoundEvents.RAY_GUN_SHOT, SoundCategory.NEUTRAL, 3.0F, mob.world.rand.nextFloat() + 0.5F);
+					ScaledResolution resolution = new ScaledResolution(minecraft);
+					int width = resolution.getScaledWidth();
+					int height = resolution.getScaledHeight();
+					minecraft.getTextureManager().bindTexture(new ResourceLocation("textures/gui/icons.png"));
+					GlStateManager.enableBlend();
+
+					if (gamesettings.showDebugInfo && !gamesettings.hideGUI && !minecraft.player.hasReducedDebug() && !gamesettings.reducedDebugInfo)
+					{
+						GlStateManager.pushMatrix();
+						GlStateManager.translate(width / 2, height / 2, 0);
+						Entity entity = minecraft.getRenderViewEntity();
+						GlStateManager.rotate(entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * event.getPartialTicks(), -1.0F, 0.0F, 0.0F);
+						GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * event.getPartialTicks(), 0.0F, 1.0F, 0.0F);
+						GlStateManager.scale(-1.0F, -1.0F, -1.0F);
+						OpenGlHelper.renderDirections(10);
+						GlStateManager.popMatrix();
+					}
+					else
+					{
+						double range = ((DinocraftWeapon) minecraft.player.getHeldItemMainhand().getItem()).getRange();
+						GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+						GlStateManager.enableAlpha();
+						//Draws the crosshair
+						minecraft.ingameGUI.drawTexturedModalRect(width / 2 - 7, height / 2 - 7, 0, 0, 16, 16);
+
+						if (minecraft.gameSettings.attackIndicator == 1)
+						{
+							float f = minecraft.player.getCooledAttackStrength(0.0F);
+							boolean flag = false;
+							RayTraceResult result = DinocraftEntity.getEntityTrace(range);
+							
+							if (result != null && result.entityHit != null && result.entityHit instanceof EntityLivingBase && f >= 1.0F)
+							{
+								flag = minecraft.player.getCooldownPeriod() > 5.0F;
+								flag = flag & ((EntityLivingBase) result.entityHit).isEntityAlive();
+							}
+
+							int i = height / 2 - 7 + 16;
+							int j = width / 2 - 8;
+
+							if (flag)
+							{
+								minecraft.ingameGUI.drawTexturedModalRect(j, i, 68, 94, 16, 16);
+							}
+							else if (f < 1.0F)
+							{
+								minecraft.ingameGUI.drawTexturedModalRect(j, i, 36, 94, 16, 4);
+								minecraft.ingameGUI.drawTexturedModalRect(j, i, 52, 94, (int) (f * 17.0F), 4);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -350,123 +495,66 @@ public class DinocraftFunctionEvents
 	@SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = false)
 	public static void onLivingHurt(LivingHurtEvent event)
 	{
-		if (event.getEntity() instanceof EntityPlayer)
-		{
-			EntityPlayer player = (EntityPlayer) event.getEntity();
-			
-			if (!player.isActiveItemStackBlocking() && !player.world.isRemote)
-			{
-				Random rand = player.world.rand;
-				
-				for (int i = 0; i < 50; ++i)
-                {
-					DinocraftEntity.getEntity(player).spawnParticle(EnumParticleTypes.BLOCK_CRACK, true, player.posX + (rand.nextFloat() * player.width * 2.0F) - player.width, 
-                			player.posY + 0.5D + (rand.nextFloat() * player.height), player.posZ + (rand.nextFloat() * player.width * 2.0F) - player.width, 
-                			rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, rand.nextGaussian() * 0.0015D, Block.getIdFromBlock(Blocks.REDSTONE_BLOCK));
-                }
-				
-				player.world.playSound(null, player.getPosition(), SoundEvents.BLOCK_METAL_BREAK, SoundCategory.NEUTRAL, 1.0F, rand.nextFloat() + 0.75F);
-			}
-		}
-	}	
+		//		EntityLivingBase living = event.getEntityLiving();
+		//
+		//		if (living instanceof EntityPlayer && DinocraftConfig.PLAYER_BLOOD_EFFECTS && !living.isActiveItemStackBlocking() && !living.world.isRemote)
+		//		{
+		//			for (int i = 0; i < 50; i++)
+		//			{
+		//				DinocraftServer.spawnParticle(EnumParticleTypes.BLOCK_CRACK, true, living.world, living.posX + living.world.rand.nextFloat() * living.width * 2.0F - living.width,
+		//						living.posY + 0.5D + living.world.rand.nextFloat() * living.height, living.posZ + living.world.rand.nextFloat() * living.width * 2.0F - living.width,
+		//						living.world.rand.nextGaussian() * 0.0015D, living.world.rand.nextGaussian() * 0.0015D, living.world.rand.nextGaussian() * 0.0015D, Block.getIdFromBlock(Blocks.REDSTONE_BLOCK));
+		//			}
+		//
+		//			living.world.playSound(null, living.getPosition(), SoundEvents.BLOCK_METAL_BREAK, SoundCategory.NEUTRAL, 1.0F, living.world.rand.nextFloat() + 0.75F);
+		//		}
+	}
 	
 	@SubscribeEvent
-	public static void onBreak(BreakEvent event)
+	public static void onLivingUpdate(LivingUpdateEvent event)
 	{
-		Block block = event.getState().getBlock();
+		EntityLivingBase living = event.getEntityLiving();
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(living);
+		if (living instanceof EntityLiving)
+		{
+			((EntityLiving) living).setCanPickUpLoot(true);
+		}//TODO: remove
 		
-		if (block == Blocks.LEAVES || block == Blocks.LEAVES2)
+		if (!living.world.isRemote)
 		{
-			World world = event.getWorld();
-			
-			if (world.rand.nextInt(10000) < 1)
-            {
-				BlockPos pos = event.getPos();
-				world.spawnEntity(new EntityItem(world, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(DinocraftItems.LEAF, 1)));
-            }
-		}
-	}
-
-	@SideOnly(Side.CLIENT)
-	@SubscribeEvent
-	public void onPre(Pre event)
-	{
-		if (DinocraftEntity.getEntity(event.getEntityPlayer()).isVanished())
-		{
-			event.setCanceled(true);
-		}
-	}
-	
-	/*
-	@SubscribeEvent
-	public static void onLivingUpdate(LivingUpdateEvent event)
-	{
-		if (event.getEntityLiving() instanceof EntityZombie)
-		{
-			EntityZombie zombie = (EntityZombie) event.getEntityLiving();
-			List list = zombie.world.getEntitiesWithinAABBExcludingEntity(zombie, new AxisAlignedBB(zombie.posX, zombie.posY, zombie.posZ, zombie.posX + 1.0D, zombie.posY + 1.0D, zombie.posZ + 1.0D).expand(2.0D, 4.0D, 2.0D));
-			Iterator iterator = list.iterator();	
-			
-			if (!list.isEmpty())
+			if (living.getHealth() < 6.0F && living.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.MAGATIUM_BOOTS)
 			{
-				do
-				{					
-					if (!iterator.hasNext())
-					{
-						break;
-					}
-					
-					Entity entity = (Entity) iterator.next();
-					
-					if (!(entity instanceof EntityItem))
-					{
-						continue;
-					}
-					
-					EntityItem entityitem = (EntityItem) entity;
-					Item item = entityitem.getItem().getItem();
-					
-					if (!zombie.world.isRemote && item != null && item == DinocraftItems.HEART && entityitem.getOwner().equals(zombie.getUniqueID().toString()))
-					{	
-						zombie.heal(2.0F);
-						zombie.world.playSound(null, zombie.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 0.5F, ((zombie.getRNG().nextFloat() - zombie.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-						entityitem.setDead();
-					}
-				}
-					
-				while (true);
+				living.addPotionEffect(new PotionEffect(MobEffects.RESISTANCE, 15, 2, true, true));
 			}
-		}
-	}
-	*/
-	
-	@SubscribeEvent
-	public static void onLivingUpdate(LivingUpdateEvent event)
-	{
-		if (event.getEntityLiving() instanceof EntityLiving)
-		{	
-			EntityLiving entityliving = (EntityLiving) event.getEntityLiving();
-			AxisAlignedBB axisalignedbb = new AxisAlignedBB(entityliving.posX, entityliving.posY, entityliving.posZ, entityliving.posX + 1.0D, entityliving.posY + 1.0D, entityliving.posZ + 1.0D).expand(1.0D, 3.0D, 1.0D);
-			List<Entity> list = entityliving.world.getEntitiesWithinAABBExcludingEntity(entityliving, axisalignedbb);
-			
-			if (!list.isEmpty())
+
+			if (!(living instanceof EntityPlayer))
 			{
-				for (Entity entity : list)
+				AxisAlignedBB axisalignedbb = living.getEntityBoundingBox().grow(living.width, 0.5D, living.width);
+				List<Entity> list = living.world.getEntitiesInAABBexcluding(living, axisalignedbb, entity ->
 				{
 					if (entity instanceof EntityItem)
 					{
 						EntityItem entityitem = (EntityItem) entity;
 						Item item = entityitem.getItem().getItem();
-						
-						if (item != null && item == DinocraftItems.HEART && entityitem.getOwner() != null)
-						{
-							if (!entityliving.world.isRemote && entityitem.getOwner().equals(entityliving.getUniqueID().toString()))
-							{
-								entityliving.heal(2.0F);
-								entityliving.world.playSound(null, entityliving.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.NEUTRAL, 0.5F, ((entityliving.getRNG().nextFloat() - entityliving.getRNG().nextFloat()) * 0.7F + 1.0F) * 2.0F);
-								entityitem.setDead();
-							}
-						}
+						return (item == DinocraftItems.HEART || item == DinocraftItems.ABSORPTION_HEART) && living.getUniqueID().toString().equals(entityitem.getOwner());
+					}
+					
+					return false;
+				});
+				
+				for (Entity entity : list)
+				{
+					PacketHandler.sendToAllAround(new SPacketItemPickupEffect((EntityItem) entity, living), new TargetPoint(living.world.provider.getDimension(), living.posX, living.posY, living.posZ, 64.0D));
+					living.world.playSound(null, living.getPosition(), DinocraftSoundEvents.GRAB, SoundCategory.AMBIENT, 0.5F, ((living.world.rand.nextFloat() - living.world.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+					entity.setDead();
+					
+					if (((EntityItem) entity).getItem().getItem() == DinocraftItems.HEART)
+					{
+						living.heal(2.0F);
+					}
+					else
+					{
+						living.setAbsorptionAmount(living.getAbsorptionAmount() + 1.0F);
 					}
 				}
 			}
@@ -476,172 +564,426 @@ public class DinocraftFunctionEvents
 	@SubscribeEvent
 	public static void onLivingAttack(LivingAttackEvent event)
 	{
-		if (event.getSource().getTrueSource() instanceof EntityLiving)
+		Entity attackerEntity = event.getSource().getTrueSource();
+		
+		if (attackerEntity instanceof EntityLivingBase && !(attackerEntity instanceof EntityPlayer))
 		{
-			EntityLiving attacker = (EntityLiving) event.getSource().getTrueSource();
+			EntityLivingBase attacker = (EntityLivingBase) attackerEntity;
+			ItemStack stack = attacker.getHeldItemMainhand();
+			Item item = stack.getItem();
 			
-			if (attacker.getHeldItemMainhand().getItem() == DinocraftItems.TUSKERERS_SWORD)
+			if (item == DinocraftItems.TUSKERS_SWORD || item == DinocraftItems.LEAFY_DAGGER || item == DinocraftItems.MAGATIUM_SCYTHE
+					|| item == DinocraftItems.SPLICENTS_BLADE || item == DinocraftItems.JESTERS_SWORD)
 			{
-				EntityLivingBase target = event.getEntityLiving();
+				item.hitEntity(stack, event.getEntityLiving(), attacker);
+			}
+			else if (item == DinocraftItems.DREMONITE_SWORD)
+			{
+				item.onEntitySwing(attacker, stack);
+				event.setCanceled(true);
+			}
+		}
+
+		Entity entity = event.getSource().getImmediateSource();
+
+		if (entity != null && !entity.world.isRemote)
+		{
+			EntityLivingBase living = event.getEntityLiving();
+
+			if (DinocraftEntity.getEntity(living).getActionsModule().isElectrified())
+			{
+				double d = entity.posX - living.posX;
+				double d1;
 				
-				if (target.world.rand.nextInt(2) < 1)
+				for (d1 = entity.posZ - living.posZ; d * d + d1 * d1 < 0.0001D; d1 = (Math.random() - Math.random()) * 0.01D)
 				{
-					EntityItem heart = new EntityItem(target.world, target.posX, target.posY, target.posZ, new ItemStack(DinocraftItems.HEART, 1));
-					heart.setInfinitePickupDelay();
-					heart.addTag(attacker.getUniqueID().toString());
-					heart.setOwner(attacker.getUniqueID().toString());
-					target.world.spawnEntity(heart);
+					d = (Math.random() - Math.random()) * 0.01D;
 				}
-			}
-			
-			if (attacker.getHeldItemMainhand().getItem() == DinocraftItems.SHEEPLITE_SWORD)
-			{
-				EntityLivingBase target = event.getEntityLiving();
-
-				if (target.hurtTime == target.maxHurtTime && target.deathTime <= 0)
-				{
-					Vec3d vector = attacker.getLookVec().normalize();
-			        target.motionX = vector.x;
-			        target.motionY = vector.y + target.world.rand.nextDouble();
-			        target.motionZ = vector.z;	
-				}
-			}
-			
-			if (attacker.getHeldItemMainhand().getItem() == DinocraftItems.CHLOROPHYTE_SWORD)
-			{
-				EntityLivingBase target = event.getEntityLiving();
-
-				if (target.hurtTime == target.maxHurtTime && target.deathTime <= 0)
-				{
-					target.addPotionEffect(new PotionEffect(MobEffects.POISON, 60, 2, false, true));
-				}
+				
+				float f = MathHelper.sqrt(d * d + d1 * d1);
+				entity.motionX /= 2.0D;
+				entity.motionY /= 2.0D;
+				entity.motionZ /= 2.0D;
+				entity.motionX += d / f;
+				entity.motionY += 0.5D;
+				entity.motionZ += d1 / f;
+				entity.world.playSound(null, entity.getPosition(), entity.world.rand.nextBoolean() ? DinocraftSoundEvents.ZAP : DinocraftSoundEvents.ZAP2, SoundCategory.NEUTRAL, 0.5F, entity.world.rand.nextFloat() + 0.5F);
+				entity.attackEntityFrom(DamageSource.causeMobDamage(living), 1.0F);
+				float f0 = entity.height / 2.0F;
+				DinocraftServer.spawnElectricParticles(entity.world, 20, 15, 10, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
+				event.setCanceled(true);
 			}
 		}
 	}
 	
 	@SubscribeEvent
-    public static void onLivingDrops(LivingDropsEvent event) 
+	public static void onLivingDrops(LivingDropsEvent event)
 	{
-        Entity entity = event.getEntity();
-        Random rand = entity.world.rand;
-        BlockPos pos = entity.getPosition();
-        double x = pos.getX();
-        double y = pos.getY();
-        double z = pos.getZ();
-        
-        if ((entity instanceof EntityPig || entity instanceof EntityPigZombie) && rand.nextInt(3) < 1)
-        {
-            event.getDrops().add(new EntityItem(entity.world, x, y, z, new ItemStack(DinocraftItems.TUSK, rand.nextInt(2) + 1)));
-        }
-        else if (entity instanceof EntityCreeper && rand.nextInt(1000) < 1) 
-        {
-            event.getDrops().add(new EntityItem(entity.world, x, y, z, new ItemStack(DinocraftItems.CLOUD_CHESTPLATE)));
-        }
-        else if (entity instanceof EntitySkeleton && rand.nextInt(1500) < 1) 
-        {
-            event.getDrops().add(new EntityItem(entity.world, x, y, z, new ItemStack(DinocraftItems.KATANA)));
-        }
-        else if (entity instanceof EntityZombie && rand.nextInt(500) < 1)
-        {
-            event.getDrops().add(new EntityItem(entity.world, x, y, z, new ItemStack(DinocraftItems.SOUL_SCRATCHER)));
-        }
-    }
-	
-	@SubscribeEvent
-    public static void onLivingSpawn(LivingSpawnEvent event) 
-	{
-		EntityLivingBase entityliving = event.getEntityLiving();
-		Random rand = entityliving.world.rand;
-		EnumDifficulty difficulty = entityliving.world.getDifficulty();
+		EntityLivingBase living = event.getEntityLiving();
+		Random rand = living.world.rand;
+		BlockPos pos = living.getPosition();
+		double x = pos.getX();
+		double y = pos.getY();
+		double z = pos.getZ();
+		List<EntityItem> drops = event.getDrops();
 		
-		if (entityliving instanceof EntityZombie)
+		if ((living instanceof EntityPig || living instanceof EntityPigZombie) && rand.nextInt(3) < 1)
 		{
-			int i = rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
-			int j = rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
-			
-			if (i < 16 && entityliving.getHeldItemMainhand().isEmpty())
+			drops.add(new EntityItem(living.world, x, y, z, new ItemStack(DinocraftItems.TUSK, rand.nextInt(2) + 1)));
+		}
+		else if (living instanceof EntityCreeper && rand.nextInt(1000) < 1)
+		{
+			drops.add(new EntityItem(living.world, x, y, z, new ItemStack(DinocraftItems.CLOUD_CHESTPLATE)));
+		}
+		else if (living instanceof EntitySkeleton && rand.nextInt(1500) < 1)
+		{
+			//			drops.add(new EntityItem(living.world, x, y, z, new ItemStack(DinocraftItems.KATANA)));
+		}
+		else if (living instanceof EntityZombie && rand.nextInt(500) < 1)
+		{
+			drops.add(new EntityItem(living.world, x, y, z, new ItemStack(DinocraftItems.SOUL_SCRATCHER)));
+		}
+		
+		List<EntityItem> toRemove = new ArrayList<>();
+		
+		for (EntityItem item : drops)
+		{
+			if (item.getItem().getItem() == DinocraftItems.TUSKERS_JUG)
 			{
-				entityliving.setHeldItem(EnumHand.MAIN_HAND, i < 1 ? new ItemStack(DinocraftItems.RAY_GUN) : i < 2 ? new ItemStack(DinocraftItems.TUSKERERS_SWORD) : i < 4 ? new ItemStack(DinocraftItems.KATANA) : i < 7 ? new ItemStack(DinocraftItems.CHLOROPHYTE_SWORD) : i < 10 ? new ItemStack(DinocraftItems.SHEEPLITE_SWORD) : i < 13 ? new ItemStack(DinocraftItems.SOUL_SCRATCHER) : i < 16 ? new ItemStack(DinocraftItems.LEAFERANG) : null);
-			}
-			
-			if (j < 4)
-			{
-				entityliving.setItemStackToSlot(EntityEquipmentSlot.FEET, j < 1 ? new ItemStack(DinocraftItems.LEAFY_BOOTS) : j < 2 ? new ItemStack(DinocraftItems.MERCHANTS_LUCKY_BOOTS) : j < 4 ? new ItemStack(DinocraftItems.BLEVENT_BOOTS) : null);
+				toRemove.add(item);
 			}
 		}
 		
-		if (entityliving instanceof EntityZombie || entityliving instanceof EntitySkeleton)
+		if (!toRemove.isEmpty())
 		{
-			int i = rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
-			
-			if (i < 3)
-			{				
-				if (rand.nextInt(2) > 0)
+			living.world.playSound(null, pos, SoundEvents.BLOCK_GLASS_BREAK, SoundCategory.NEUTRAL, 1.0F, 0.5F);
+			drops.removeAll(toRemove);
+		}
+	}
+	
+	protected static void setEquipmentBasedOnDifficulty(EntityLiving entity, DifficultyInstance difficulty)
+	{
+		float k = difficulty.getClampedAdditionalDifficulty();
+		
+		if (entity.world.rand.nextFloat() < 0.075F * k)
+		{
+			int i = entity.world.rand.nextInt(4);
+			float f = entity.world.getDifficulty() == EnumDifficulty.HARD ? 0.1F : 0.25F;
+			boolean flag = true;
+
+			for (EntityEquipmentSlot slot : EntityEquipmentSlot.values())
+			{
+				if (slot.getSlotType() == EntityEquipmentSlot.Type.ARMOR)
 				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(DinocraftItems.RANIUM_BOOTS));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(DinocraftItems.RANIUM_LEGGINGS));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(DinocraftItems.RANIUM_CHESTPLATE));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(DinocraftItems.RANIUM_HELMET));
+					if (!flag && entity.world.rand.nextFloat() < f)
+					{
+						break;
+					}
+
+					flag = false;
+
+					if (entity.getItemStackFromSlot(slot).isEmpty())
+					{
+						Item item = getArmorByIndex(slot, i);
+
+						if (item != null)
+						{
+							entity.setItemStackToSlot(slot, new ItemStack(item));
+						}
+					}
 				}
 			}
-			else if (i < 6)
+		}
+
+		if (entity.world.rand.nextFloat() < 0.05F * k)
+		{
+			EntityEquipmentSlot slot = EntityEquipmentSlot.values()[entity.world.rand.nextInt(4) + 2];
+			
+			if (entity.getItemStackFromSlot(slot).isEmpty())
 			{
-				if (rand.nextInt(2) > 0)
+				Item item = getRandomSpecialArmorForSlot(slot);
+
+				if (item != null)
 				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(DinocraftItems.CHLOROPHYTE_BOOTS));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(DinocraftItems.CHLOROPHYTE_LEGGINGS));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(DinocraftItems.CHLOROPHYTE_CHESTPLATE));
-				}
-				
-				if (rand.nextInt(2) > 0)
-				{
-					entityliving.setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(DinocraftItems.CHLOROPHYTE_HELMET));
+					entity.setItemStackToSlot(slot, new ItemStack(item));
 				}
 			}
 		}
 	}
+
+	@SubscribeEvent
+	public static void onSpawn(SpecialSpawn event)
+	{
+		EntityLivingBase entity = event.getEntityLiving();
+		World world = event.getWorld();
+		EnumDifficulty difficulty = world.getDifficulty();
+
+		if (entity instanceof EntityZombie || entity instanceof EntitySkeleton)
+		{
+			setEquipmentBasedOnDifficulty((EntityLiving) entity, world.getDifficultyForLocation(entity.getPosition()));
+		}
+
+		if (entity instanceof EntityZombie)
+		{
+			setHeldWeaponBasedOnDifficulty((EntityLiving) entity, difficulty);
+		}
+	}
+
+	protected static void setHeldWeaponBasedOnDifficulty(EntityLiving entity, EnumDifficulty difficulty)
+	{
+		if (entity.world.rand.nextFloat() < (difficulty == EnumDifficulty.HARD ? 0.01F /* 1% */: 0.002F /* 0.2% */))
+		{
+			int i = entity.world.rand.nextInt(6);
+
+			if (entity.getItemStackFromSlot(EntityEquipmentSlot.MAINHAND).isEmpty())
+			{
+				entity.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, new ItemStack(
+						i == 0 ? DinocraftItems.TUSKERS_SWORD :
+							i == 1 ? DinocraftItems.LEAFY_DAGGER :
+								i == 2 ? DinocraftItems.MAGATIUM_SCYTHE :
+									i == 3 ? DinocraftItems.SPLICENTS_BLADE :
+										i == 4 ? DinocraftItems.JESTERS_SWORD :
+											DinocraftItems.DREMONITE_SWORD));
+			}
+		}
+	}
+	
+	@Nullable
+	public static Item getRandomSpecialArmorForSlot(EntityEquipmentSlot slot)
+	{
+		Random rand = new Random();
+		
+		switch (slot)
+		{
+			case HEAD:
+				
+				return DinocraftItems.JESTERS_HAT;
+				
+			case CHEST:
+				
+				return DinocraftItems.SPLICENTS_CHESTPLATE;
+				
+			case LEGS:
+				
+				return DinocraftItems.TUSKERS_OLD_RAGS;
+				
+			case FEET:
+				
+				int i = rand.nextInt(3);
+				
+				if (i == 0)
+				{
+					return DinocraftItems.LEAFY_BOOTS;
+				}
+				else if (i == 1)
+				{
+					return DinocraftItems.MAGATIUM_BOOTS;
+				}
+				else
+				{
+					return DinocraftItems.DREMONITE_BOOTS;
+				}
+				
+			default:
+				return null;
+		}
+	}
+
+	@Nullable
+	public static Item getArmorByIndex(EntityEquipmentSlot slot, int index)
+	{
+		switch (slot)
+		{
+			case HEAD:
+				
+				if (index == 0)
+				{
+					return DinocraftItems.OLITROPY_HELMET;
+				}
+				else if (index == 1)
+				{
+					return DinocraftItems.WADRONITE_HELMET;
+				}
+				else if (index == 2)
+				{
+					return DinocraftItems.DRACOLITE_HELMET;
+				}
+				else if (index == 3)
+				{
+					return DinocraftItems.ARRANIUM_HELMET;
+				}
+				
+			case CHEST:
+				
+				if (index == 0)
+				{
+					return DinocraftItems.OLITROPY_CHESTPLATE;
+				}
+				else if (index == 1)
+				{
+					return DinocraftItems.WADRONITE_CHESTPLATE;
+				}
+				else if (index == 2)
+				{
+					return DinocraftItems.DRACOLITE_CHESTPLATE;
+				}
+				else if (index == 3)
+				{
+					return DinocraftItems.ARRANIUM_CHESTPLATE;
+				}
+				
+			case LEGS:
+				
+				if (index == 0)
+				{
+					return DinocraftItems.OLITROPY_LEGGINGS;
+				}
+				else if (index == 1)
+				{
+					return DinocraftItems.WADRONITE_LEGGINGS;
+				}
+				else if (index == 2)
+				{
+					return DinocraftItems.DRACOLITE_LEGGINGS;
+				}
+				else if (index == 3)
+				{
+					return DinocraftItems.ARRANIUM_LEGGINGS;
+				}
+				
+			case FEET:
+				
+				if (index == 0)
+				{
+					return DinocraftItems.OLITROPY_BOOTS;
+				}
+				else if (index == 1)
+				{
+					return DinocraftItems.WADRONITE_BOOTS;
+				}
+				else if (index == 2)
+				{
+					return DinocraftItems.DRACOLITE_BOOTS;
+				}
+				else if (index == 3)
+				{
+					return DinocraftItems.ARRANIUM_BOOTS;
+				}
+				
+			default:
+				return null;
+		}
+	}
+
+	
+	//	@SubscribeEvent
+	//	public static void onSpecialSpawn(SpecialSpawn event)
+	//	{
+	//		EntityLivingBase living = event.getEntityLiving();
+	//		World world = event.getWorld();
+	//		EnumDifficulty difficulty = world.getDifficulty();
+	//
+	//		if (living instanceof EntityZombie)
+	//		{
+	//			int i = world.rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
+	//			int j = world.rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
+	//			int l = world.rand.nextInt(difficulty == difficulty.EASY ? 10000 : difficulty == difficulty.NORMAL ? 5000 : 2500);
+	//
+	//			if (l < 1)
+	//			{
+	//				living.setHeldItem(living.getHeldItemMainhand().isEmpty() ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND, new ItemStack(DinocraftItems.TUSKERS_JUG));
+	//			}
+	//
+	//			if (i < 16 && living.getHeldItemMainhand().isEmpty())
+	//			{
+	//				int k = world.rand.nextInt(16);
+	//
+	//				if (k < 1)
+	//				{
+	//					living.setHeldItem(EnumHand.OFF_HAND, new ItemStack(DinocraftItems.TUSKERS_JUG));
+	//				}
+	//
+	//				//TODO: implement				living.setHeldItem(EnumHand.MAIN_HAND, i < 1 ? new ItemStack(DinocraftItems.FLARE_GUN) : i < 2 ? new ItemStack(DinocraftItems.TUSKERS_SWORD) : i < 4 ? new ItemStack(DinocraftItems.KATANA) : i < 7 ? new ItemStack(DinocraftItems.CHLOROPHYTE_SWORD) : i < 10 ? new ItemStack(DinocraftItems.DREADED_SWORD) : i < 13 ? new ItemStack(DinocraftItems.SOUL_SCRATCHER) : i < 16 ? new ItemStack(DinocraftItems.LEAFERANG) : null);
+	//			}
+	//
+	//			if (j < 4)
+	//			{
+	//				//TODO: implement 				living.setItemStackToSlot(EntityEquipmentSlot.FEET, j < 1 ? new ItemStack(DinocraftItems.LEAFY_BOOTS) : j < 2 ? new ItemStack(DinocraftItems.MERCHANTS_LUCKY_BOOTS) : j < 4 ? new ItemStack(DinocraftItems.DREADED_BOOTS) : null);
+	//			}
+	//		}
+	//
+	//		if (living instanceof EntityZombie || living instanceof EntitySkeleton)
+	//		{
+	//			int i = world.rand.nextInt(difficulty == difficulty.EASY ? 20000 : difficulty == difficulty.NORMAL ? 15000 : 10000);
+	//
+	//			if (i < 3)
+	//			{
+	//				if (world.rand.nextInt(2) > 0)
+	//				{
+	//					living.setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(DinocraftItems.RANIUM_BOOTS));
+	//				}
+	//
+	//				if (world.rand.nextInt(2) > 0)
+	//				{
+	//					living.setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(DinocraftItems.RANIUM_LEGGINGS));
+	//				}
+	//
+	//				if (world.rand.nextInt(2) > 0)
+	//				{
+	//					living.setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(DinocraftItems.RANIUM_CHESTPLATE));
+	//				}
+	//
+	//				if (world.rand.nextInt(2) > 0)
+	//				{
+	//					living.setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(DinocraftItems.RANIUM_HELMET));
+	//				}
+	//			}
+	//			//			else if (i < 6)
+	//			//			{
+	//			//				if (world.rand.nextInt(2) > 0)
+	//			//				{
+	//			//					living.setItemStackToSlot(EntityEquipmentSlot.FEET, new ItemStack(DinocraftItems.CHLOROPHYTE_BOOTS));
+	//			//				}
+	//			//
+	//			//				if (world.rand.nextInt(2) > 0)
+	//			//				{
+	//			//					living.setItemStackToSlot(EntityEquipmentSlot.LEGS, new ItemStack(DinocraftItems.CHLOROPHYTE_LEGGINGS));
+	//			//				}
+	//			//
+	//			//				if (world.rand.nextInt(2) > 0)
+	//			//				{
+	//			//					living.setItemStackToSlot(EntityEquipmentSlot.CHEST, new ItemStack(DinocraftItems.CHLOROPHYTE_CHESTPLATE));
+	//			//				}
+	//			//
+	//			//				if (world.rand.nextInt(2) > 0)
+	//			//				{
+	//			//					living.setItemStackToSlot(EntityEquipmentSlot.HEAD, new ItemStack(DinocraftItems.CHLOROPHYTE_HELMET));
+	//			//				}
+	//			//			}
+	//		}
+	//	}
 	
 	@SideOnly(Side.CLIENT)
 	@SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
 	public void onMouse(MouseEvent event)
-	{ 
-	    if (event.getButton() == 0 && event.isButtonstate())
-	    {	    	
-	        EntityPlayer player = Minecraft.getMinecraft().player;
-	        
-	        if (player != null)
-	        {
-	        	/*
+	{
+		if (event.getButton() == 0 && event.isButtonstate())
+		{
+			EntityPlayer player = Minecraft.getMinecraft().player;
+			
+			if (player != null)
+			{
+				/*
 	            ItemStack stack = player.getHeldItemMainhand();
 	            IExtendedReach extendedreach;
-	            
+
 	            if (stack != null)
 	            {
 	            	extendedreach = stack.getItem() instanceof IExtendedReach ? (IExtendedReach) stack.getItem() : null;
-	   
+
 	                if (extendedreach != null)
 	                {
-	                    RayTraceResult result = this.getMouseOverExtended(extendedreach.getReach()); 
+	                    RayTraceResult result = this.getMouseOverExtended(extendedreach.getReach());
 
 	                    if (result != null && result.entityHit != null && result.entityHit != player)
 	                    {
@@ -649,106 +991,33 @@ public class DinocraftFunctionEvents
 	                    }
 	                }
 	            }
-	            */
-	            DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
-	            
-	            if (player.getHeldItemMainhand() != null && dinoEntity.hasExtraReach())
-	            {	   
-	                RayTraceResult result = getMouseOverExtended(dinoEntity.getAttackReach()); 
+				 */
 
-	                if (result != null && result.entityHit != null && result.entityHit != player)
-	                {
-	                    NetworkHandler.sendToServer(new MessageExtendedReachAttack(result.entityHit.getEntityId()));
-	                }
-	            }
-	        }
-	    }
-	}
-	        
-	public static RayTraceResult getMouseOverExtended(double distance)
-	{
-	    Minecraft minecraft = FMLClientHandler.instance().getClient();
-	    Entity renderviewentity = minecraft.getRenderViewEntity();
-	    AxisAlignedBB box = new AxisAlignedBB(renderviewentity.posX - 0.5D, renderviewentity.posY - 0.0D, renderviewentity.posZ - 0.5D,
-	    		renderviewentity.posX + 0.5D, renderviewentity.posY + 1.5D, renderviewentity.posZ + 0.5D);
-	    RayTraceResult result = null;
-	    
-	    if (minecraft.world != null)
-	    {
-	        double var2 = distance;
-	        result = renderviewentity.rayTrace(var2, 0.0F);
-	        double calcdist = var2;
-	        Vec3d pos = renderviewentity.getPositionEyes(0.0F);
-	        var2 = calcdist;
-	        
-	        if (result != null)
-	        {
-	            calcdist = result.hitVec.distanceTo(pos);
-	        }
-	         
-	        Vec3d lookvec = renderviewentity.getLook(0.0F);
-	        Vec3d var8 = pos.addVector(lookvec.x * var2, lookvec.y * var2, lookvec.z * var2);
-	        Entity pointedentity = null;
-	        float var9 = 1.0F;
-	        List<Entity> list = minecraft.world.getEntitiesWithinAABBExcludingEntity(renderviewentity, box.grow(lookvec.x * var2, lookvec.y * var2, lookvec.z * var2).expand(var9, var9, var9));
-	        double d = calcdist;
-	            
-	        for (Entity entity : list)
-	        {
-	            if (entity.canBeCollidedWith())
-	            {
-	                float bordersize = entity.getCollisionBorderSize();
-	                AxisAlignedBB aabb = new AxisAlignedBB(entity.posX - entity.width / 2.0D, entity.posY, entity.posZ - entity.width / 2.0D, 
-	                		entity.posX + entity.width / 2.0D, entity.posY + entity.height, entity.posZ + entity.width / 2.0D);
-	                aabb.expand(bordersize, bordersize, bordersize);
-	                RayTraceResult result2 = aabb.calculateIntercept(pos, var8);
-	                    
-	                if (aabb.contains(pos))
-	                {
-	                    if (0.0D < d || d == 0.0D)
-	                    {
-	                        pointedentity = entity;
-	                        d = 0.0D;
-	                    }
-	                } 
-	                else if (result2 != null)
-	                {
-	                    double d1 = pos.distanceTo(result2.hitVec);
-	                    
-	                    if (d1 < d || d == 0.0D)
-	                    {
-	                        pointedentity = entity;
-	                        d = d1;
-	                    }
-	                }
-	            }
-	        }
-	           
-	        if (pointedentity != null && (d < calcdist || result == null))
-	        {
-	        	result = new RayTraceResult(pointedentity);
-	        }
-	    }
-	    
-	    return result;
-	}
-	
-	@SubscribeEvent
-	public static void onServerChat(ServerChatEvent event)
-	{
-		EntityPlayerMP player = event.getPlayer();
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
-		
-		if (player.getServer().isDedicatedServer())
-		{
-			if (dinoEntity.hasOpLevel(2))
-			{
-				String prefix = dinoEntity.hasOpLevel(4) ? TextFormatting.DARK_RED + "[OWNER] " : dinoEntity.hasOpLevel(3) ? TextFormatting.RED + "[ADMIN] " : dinoEntity.hasOpLevel(2) ? TextFormatting.DARK_GREEN + "[MODERATOR] " : "";
-				event.setComponent(new TextComponentString(prefix + player.getName() + TextFormatting.RESET + ": " + event.getMessage()));
-			}
-			else
-			{
-				event.setComponent(new TextComponentString(TextFormatting.GRAY + player.getName() + ": " + event.getMessage()));
+
+
+				//				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+				//
+				//				if (player.getHeldItemMainhand() != null && dinoEntity.hasModifiedReach())
+				//				{
+				//					RayTraceResult result = DinocraftEntity.getEntityTrace(dinoEntity.getAttackReach());
+				//
+				//					if (result != null && result.entityHit != null && result.entityHit instanceof EntityLivingBase)
+				//					{
+				//						Packet.sendToServer(new CPacketReachAttack(result.entityHit));
+				//					}
+				//				}
+
+				//				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+				//
+				//				if (dinoEntity.hasModifiedReach())
+				//				{
+				//					RayTraceResult result = DinocraftEntity.getEntityTrace(dinoEntity.getAttackReach());
+				//
+				//					if (result != null && result.entityHit != null)
+				//					{
+				//						Packet.sendToServer(new CPacketReachAttack(result.entityHit));
+				//					}
+				//				}
 			}
 		}
 	}
