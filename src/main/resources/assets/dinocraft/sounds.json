@@ -3,10 +3,6 @@
 		"category": "ambient",
 		"sounds": [ { "name": "dinocraft:grab", "stream": false } ]
 	},
-	"charm": {
-		"category": "neutral",
-		"sounds": [ { "name": "dinocraft:charm", "stream": true } ]
-	},
 	"harp": {
 		"category": "neutral",
 		"sounds": [ { "name": "dinocraft:harp", "stream": true } ]

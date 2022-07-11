@@ -91,7 +91,7 @@ public class ItemDremoniteBoots extends ItemArmor
 	@Override
 	public void onArmorTick(World world, EntityPlayer player, ItemStack stack)
 	{
-		if (player.getCooldownTracker().getCooldown(this, 0.0F) == 0 && world.isRemote && !player.capabilities.allowFlying && !player.isCreative() && !player.isElytraFlying())
+		if (!player.getCooldownTracker().hasCooldown(this) && world.isRemote && !player.capabilities.allowFlying && !player.isElytraFlying())
 		{
 			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 			DinocraftEntityActions actions = dinoEntity.getActionsModule();
@@ -107,28 +107,11 @@ public class ItemDremoniteBoots extends ItemArmor
 				actions.setCanJumpInAir(false);
 				actions.setDreadedFlying(false);
 			}
-			
-			if (!player.onGround)
+			else
 			{
 				boolean jumping = dinoEntity.isJumping();
 				boolean sprinting = player.isSprinting();
 				
-				if (sprinting && !jumping && !actions.canJumpInAir())
-				{
-					actions.setHasJumpedInAir(false);
-					actions.setCanJumpInAir(true);
-				}
-				
-				if (sprinting && jumping && !actions.hasJumpedInAir())
-				{
-					actions.setHasJumpedInAir(true);
-					player.motionX *= 2.5D;
-					player.motionZ *= 2.5D;
-					player.motionY = player.getLookVec().normalize().y + 0.75D;
-					PacketHandler.sendToServer(new CPacketDreadedFlight(true));
-					actions.setDreadedFlying(true);
-				}
-
 				if (actions.isDreadedFlying())
 				{
 					if (player.isSneaking())
@@ -140,7 +123,7 @@ public class ItemDremoniteBoots extends ItemArmor
 
 					if (player.motionY < -0.33D && vec.y > 0.0D)
 					{
-						player.motionY += vec.y * 0.033D;
+						player.motionY += vec.y * 0.5D;
 					}
 					
 					if (player.motionY < 0.01D)
@@ -148,16 +131,36 @@ public class ItemDremoniteBoots extends ItemArmor
 						player.motionY += 0.075D;
 					}
 
-					player.motionY += vec.y < -0.5D ? vec.y * 0.025D : 0.0D;
+					if (vec.y < -0.5D)
+					{
+						player.motionY += vec.y * 0.02D;
+					}
 
 					if (sprinting)
 					{
-						player.motionX *= 1.0025D;
-						player.motionZ *= 1.0025D;
+						player.motionX *= 1.005D;
+						player.motionZ *= 1.005D;
 					}
 					
 					player.motionX *= 1.05D;
 					player.motionZ *= 1.05D;
+				}
+				else if (sprinting)
+				{
+					if (!jumping && !actions.canJumpInAir())
+					{
+						actions.setHasJumpedInAir(false);
+						actions.setCanJumpInAir(true);
+					}
+					else if (jumping && !actions.hasJumpedInAir())
+					{
+						actions.setHasJumpedInAir(true);
+						player.motionX *= 2.5D;
+						player.motionZ *= 2.5D;
+						player.motionY = player.getLookVec().normalize().y + 0.75D;
+						PacketHandler.sendToServer(new CPacketDreadedFlight(true));
+						actions.setDreadedFlying(true);
+					}
 				}
 			}
 		}

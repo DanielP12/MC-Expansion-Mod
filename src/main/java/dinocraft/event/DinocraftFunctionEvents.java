@@ -10,6 +10,7 @@ import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.capabilities.entity.DinocraftEntityActions;
 import dinocraft.command.server.CommandShutDown;
 import dinocraft.entity.EntityLeaferang;
+import dinocraft.entity.EntitySplicentsThrowingKnife;
 import dinocraft.init.DinocraftItems;
 import dinocraft.init.DinocraftSoundEvents;
 import dinocraft.item.DinocraftWeapon;
@@ -59,10 +60,8 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
@@ -87,12 +86,6 @@ public class DinocraftFunctionEvents
 	public static boolean toggle = false;
 	public static int time = 0;
 	public static boolean flag2 = true;
-	
-	@SubscribeEvent
-	public static void onImpact(ProjectileImpactEvent event)
-	{
-
-	}
 
 	@SubscribeEvent
 	public static void onServerTick(ServerTickEvent event)
@@ -196,133 +189,122 @@ public class DinocraftFunctionEvents
 		//			}
 		//		}
 		
-		List<EntityItem> entities = dead.world.getEntities(EntityItem.class, entityitem ->
+		if (!dead.world.isRemote)
 		{
-			Item item = entityitem.getItem().getItem();
-			return (item == DinocraftItems.HEART || item == DinocraftItems.ABSORPTION_HEART) && entityitem.getTags().contains(dead.getUniqueID().toString());
-		});
-		
-		for (EntityItem entity : entities)
-		{
-			if (!entity.world.isRemote)
+			List<EntityItem> entities = dead.world.getEntities(EntityItem.class, entityitem ->
 			{
+				Item item = entityitem.getItem().getItem();
+				return (item == DinocraftItems.HEART || item == DinocraftItems.ABSORPTION_HEART) && entityitem.getTags().contains(dead.getUniqueID().toString());
+			});
+			
+			for (EntityItem entity : entities)
+			{
+				float f0 = entity.height / 2.0F;
+				DinocraftServer.spawnParticles(EnumParticleTypes.EXPLOSION_NORMAL, entity.world, 10, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width,
+						entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D);
 				entity.setDead();
-			}
-			else
-			{
-				for (int i = 0; i < 20; i++)
-				{
-					entity.world.spawnParticle(EnumParticleTypes.EXPLOSION_NORMAL, false, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-							entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D, entity.world.rand.nextGaussian() * 0.02D, 0);
-				}
 			}
 		}
 		
-		if (!dead.world.isRemote)
+		if (!dead.world.isRemote && immediateSource instanceof EntityArrow && immediateSource.getTags().contains("HeartArrow") && killer.world.rand.nextInt(2) == 0)
 		{
-			if (immediateSource instanceof EntityArrow && immediateSource.getTags().contains("HeartArrow"))
+			EntityItem heart = new EntityItem(killer.world, dead.posX, dead.posY, dead.posZ, new ItemStack(DinocraftItems.ABSORPTION_HEART, 1));
+
+			if (!(killer instanceof EntityPlayer))
 			{
-				if (killer.world.rand.nextInt(2) == 0)
-				{
-					EntityItem heart = new EntityItem(killer.world, dead.posX, dead.posY, dead.posZ, new ItemStack(DinocraftItems.ABSORPTION_HEART, 1));
-
-					if (!(killer instanceof EntityPlayer))
-					{
-						heart.setInfinitePickupDelay();
-					}
-
-					String id = killer.getUniqueID().toString();
-					heart.setOwner(id);
-					heart.addTag(id);
-					killer.world.spawnEntity(heart);
-				}
+				heart.setInfinitePickupDelay();
 			}
+
+			String id = killer.getUniqueID().toString();
+			heart.setOwner(id);
+			heart.addTag(id);
+			killer.world.spawnEntity(heart);
 		}
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	@SubscribeEvent
 	public static void onLivingSetAttackTarget(LivingSetAttackTargetEvent event)
 	{
-		EntityLiving living = (EntityLiving) event.getEntityLiving();
+		EntityLiving entity = (EntityLiving) event.getEntityLiving();
+		ItemStack boots = entity.getItemStackFromSlot(EntityEquipmentSlot.FEET);
 		
-		if (living.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.LEAFY_BOOTS)
+		if (boots.getItem() == DinocraftItems.LEAFY_BOOTS)
 		{
-			if (living.ticksExisted % 80 == 0 && !living.isInLava() && !living.isInWater() && !living.isOnLadder() && !living.isRiding())
+			if (entity.ticksExisted % 80 == 0 && entity.onGround && !entity.isInLava() && !entity.isInWater() && !entity.isOnLadder() && !entity.isRiding())
 			{
-				living.motionY = 0.485D;
-				living.motionX *= 1.025D;
-				living.motionZ *= 1.025D;
+				entity.motionY = 0.488D;
+				entity.motionX *= 1.025D;
+				entity.motionZ *= 1.025D;
 			}
 			
-			if (!living.world.isRemote && (living instanceof EntityZombie || living instanceof EntitySkeleton))
+			if (!entity.world.isRemote && (entity instanceof EntityZombie || entity instanceof EntitySkeleton))
 			{
-				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(living);
+				DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
 				DinocraftEntityActions actions = dinoEntity.getActionsModule();
 				
-				if (living.onGround || living.isInWater() || living.isInLava() || living.isOnLadder() || living.isRiding())
+				if (entity.motionY > 0.45D && (entity.onGround || entity.isInWater() || entity.isInLava() || entity.isOnLadder() || entity.isRiding()))
 				{
 					actions.setHasJumpedInAir(true);
 					actions.setCanJumpInAir(false);
 				}
-				
-				if (!living.onGround)
+
+				if (!entity.onGround)
 				{
 					if (!actions.canJumpInAir())
 					{
 						actions.setHasJumpedInAir(false);
 						actions.setCanJumpInAir(true);
 					}
-					
-					Random rand = living.world.rand;
-					
-					if (!actions.hasJumpedInAir() && living.ticksExisted % (rand.nextInt(10) + 1) == 0 && living.motionY < 0.01D)
+					else if (!actions.hasJumpedInAir() && entity.motionY < -0.33D)
 					{
 						actions.setHasJumpedInAir(true);
-						PotionEffect effect = living.getActivePotionEffect(MobEffects.JUMP_BOOST);
-						living.motionY = effect != null ? effect.getAmplifier() * 0.095D + 0.575D : 0.5D;
-						living.motionX *= 1.05D;
-						living.motionZ *= 1.05D;
-						living.fallDistance = 0.0F;
-
-						for (int i = 0; i < 25; i++)
+						dinoEntity.setFallDamageReductionAmount(5.0F);
+						PotionEffect effect = entity.getActivePotionEffect(MobEffects.JUMP_BOOST);
+						double d0 = 0.5D;
+						
+						if (effect != null)
 						{
-							((WorldServer) living.world).spawnParticle(EnumParticleTypes.CLOUD, true, living.posX + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
-									living.posY - 0.1F * living.height + living.world.rand.nextFloat() * living.height * 0.25F, living.posZ + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
-									1, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, living.world.rand.nextGaussian() * 0.033D, 1);
+							d0 += 0.075D + effect.getAmplifier() * 0.1D;
 						}
-
-						for (int i = 0; i < 20; i++)
-						{
-							((WorldServer) living.world).spawnParticle(EnumParticleTypes.TOTEM, true, living.posX + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
-									living.posY - 0.1F * living.height + living.world.rand.nextFloat() * living.height * 0.25F, living.posZ + living.world.rand.nextFloat() * living.width * 2.5F - 1.25F * living.width,
-									1, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.25D, living.world.rand.nextGaussian() * 0.025D, 1);
-						}
-
-						living.world.playSound(null, living.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.PLAYERS, 1.0F, living.world.rand.nextFloat() + 0.25F);
-						dinoEntity.setFallDamageReductionAmount(7.5F);
+						
+						entity.motionY = d0;
+						entity.motionX *= 1.05D;
+						entity.motionZ *= 1.05D;
+						entity.fallDistance = 0.0F;
+						float f0 = entity.width * 1.33F;
+						DinocraftServer.spawnParticles(EnumParticleTypes.CLOUD, entity.world, 25, entity.posX, entity.posY - 0.2F * entity.height, entity.posZ, f0, 0.1F * entity.height, f0,
+								entity.world.rand.nextGaussian() * 0.033D, entity.world.rand.nextGaussian() * 0.033D, entity.world.rand.nextGaussian() * 0.033D);
+						entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.HOSTILE, 1.0F, entity.world.rand.nextFloat() + 0.25F);
+						boots.damageItem(1, entity);
 					}
 				}
 			}
 		}
 		
-		if (living instanceof EntityMob && !living.world.isRemote)
+		if (entity instanceof EntityMob && !entity.world.isRemote)
 		{
-			ItemStack mainhand = living.getHeldItemMainhand();
-			ItemStack offhand = living.getHeldItemOffhand();
-			Item mainhandItem = mainhand.getItem();
-			boolean isMainhand = mainhandItem == DinocraftItems.LEAFERANG;
-			boolean isOffhand = offhand.getItem() == DinocraftItems.LEAFERANG;
+			ItemStack mainhandItem = entity.getHeldItemMainhand(), offhandItem = entity.getHeldItemOffhand();
+			ItemStack leaferang = mainhandItem.getItem() == DinocraftItems.LEAFERANG ? mainhandItem : offhandItem.getItem() == DinocraftItems.LEAFERANG ? offhandItem : null;
 			
-			if (living.ticksExisted % 20 == 0 && (isMainhand || isOffhand))
+			if (leaferang != null && entity.ticksExisted % 20 == 0)
 			{
-				ItemStack stack = isMainhand ? mainhand : offhand;
-				float vel = living.world.rand.nextFloat() * 0.25F + 0.5F;
-				EntityLeaferang leaferang = new EntityLeaferang(living.world, living, stack, isMainhand ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND, vel);
-				leaferang.shoot(living, living.rotationPitch, living.rotationYaw, 0.0F, vel, 1.0F);
-				living.world.spawnEntity(leaferang);
-				living.world.playSound(null, living.posX, living.posY, living.posZ, SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (living.world.rand.nextFloat() * 0.4F + 0.8F));
-				stack.shrink(1);
+				float vel = entity.world.rand.nextFloat() * 0.25F + 0.5F;
+				EntityLeaferang entityleaferang = new EntityLeaferang(entity.world, entity, leaferang, mainhandItem == leaferang ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND, vel);
+				entityleaferang.shoot(entity, entity.rotationPitch, entity.rotationYaw, 0.0F, vel, 1.0F);
+				entity.world.spawnEntity(entityleaferang);
+				entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (entity.world.rand.nextFloat() * 0.4F + 0.8F));
+				leaferang.shrink(1);
+			}
+
+			ItemStack knife = mainhandItem.getItem() == DinocraftItems.SPLICENTS_THROWING_KNIFE ? mainhandItem : offhandItem.getItem() == DinocraftItems.SPLICENTS_THROWING_KNIFE ? offhandItem : null;
+			
+			if (knife != null && entity.ticksExisted % 80 == 0)
+			{
+				EntitySplicentsThrowingKnife splicentsthrowingknife = new EntitySplicentsThrowingKnife(entity, 0.001F);
+				splicentsthrowingknife.shoot(entity, entity.rotationPitch, entity.rotationYaw, 0.0F, entity.world.rand.nextFloat() * 0.5F + 1.0F, 1.0F);
+				entity.world.spawnEntity(splicentsthrowingknife);
+				entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (entity.world.rand.nextFloat() * 0.4F + 0.8F));
+				knife.shrink(1);
 			}
 		}
 	}

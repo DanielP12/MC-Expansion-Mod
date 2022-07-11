@@ -25,40 +25,40 @@ public class ItemTuskersSword extends ItemSword
 	{
 		super(material);
 	}
-	
+
 	@Override
 	public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker)
 	{
-		if (!target.world.isRemote && itemRand.nextInt(3) < 1)
+		if (itemRand.nextInt(3) < 1)
 		{
 			EntityItem heart = new EntityItem(target.world, target.posX, target.posY, target.posZ, new ItemStack(DinocraftItems.HEART, 1));
-			
+
 			if (!(attacker instanceof EntityPlayer))
 			{
 				heart.setInfinitePickupDelay();
 			}
-			
+
 			String id = attacker.getUniqueID().toString();
 			heart.setOwner(id);
 			heart.addTag(id);
 			target.world.spawnEntity(heart);
 		}
-		
+
 		return super.hitEntity(stack, target, attacker);
 	}
-	
+
 	@Override
 	public IRarity getForgeRarity(ItemStack stack)
 	{
 		return EnumRarity.EPIC;
 	}
-	
+
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
 		KeyBinding shift = Minecraft.getMinecraft().gameSettings.keyBindSneak;
-
+		
 		if (GameSettings.isKeyDown(shift))
 		{
 			tooltip.add(TextFormatting.GRAY + "Chance to drop a heart when attacking");

@@ -73,29 +73,23 @@ public class EntityJestersBolt extends EntityThrowable
 				{
 					return;
 				}
-				
-				if (!this.world.isRemote)
-				{
-					this.world.setEntityState(this, (byte) 3);
-					this.setDead();
-				}
 
-				return;
+				break;
 			case ENTITY:
-				if (!this.world.isRemote && result.entityHit != null && result.entityHit != this.thrower && result.entityHit instanceof EntityLivingBase)
+				if (!this.world.isRemote && result.entityHit != null && result.entityHit != this.thrower && result.entityHit.isNonBoss() && result.entityHit instanceof EntityLivingBase)
 				{
-					if (result.entityHit.isNonBoss())
-					{
-						DinocraftEntity.getEntity((EntityLivingBase) result.entityHit).getActionsModule().setJesterized(this.thrower, this.rand.nextInt(11) + 20);
-					}
-					
-					this.world.setEntityState(this, (byte) 3);
-					this.setDead();
+					DinocraftEntity.getEntity((EntityLivingBase) result.entityHit).getActionsModule().setJesterized(this.thrower, 16);
 				}
 				
-				return;
+				break;
 			default:
 				break;
+		}
+		
+		if (!this.world.isRemote)
+		{
+			this.world.setEntityState(this, (byte) 3);
+			this.setDead();
 		}
 	}
 	
@@ -115,12 +109,13 @@ public class EntityJestersBolt extends EntityThrowable
 					20, 100, 0);
 			this.world.spawnParticle(EnumParticleTypes.SPELL_INSTANT, true, this.prevPosX + this.rand.nextFloat() * this.width - this.width,
 					this.prevPosY + this.rand.nextFloat() * this.height, this.prevPosZ + this.rand.nextFloat() * this.width - this.width,
-					this.rand.nextGaussian() * 0.0025D, this.rand.nextGaussian() * 0.0025D, this.rand.nextGaussian() * 0.0025D, 0);
+					0, 0, 0);
 		}
 		else if (this.ticksExisted > 100)
 		{
 			this.world.setEntityState(this, (byte) 3);
 			this.setDead();
+			return;
 		}
 		
 		this.lastTickPosX = this.posX;

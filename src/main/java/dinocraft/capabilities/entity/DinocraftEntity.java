@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -25,8 +24,6 @@ import dinocraft.network.PacketHandler;
 import dinocraft.network.server.SPacketAllowFlying;
 import dinocraft.network.server.SPacketChangeCapability;
 import dinocraft.network.server.SPacketFlySpeed;
-import dinocraft.network.server.SPacketTag;
-import dinocraft.network.server.SPacketTag.Action;
 import dinocraft.util.DinocraftConfig;
 import dinocraft.util.server.DinocraftServer;
 import io.netty.buffer.Unpooled;
@@ -60,7 +57,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SPacketCustomPayload;
 import net.minecraft.network.play.server.SPacketEntityVelocity;
-import net.minecraft.network.play.server.SPacketTitle;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
@@ -74,15 +70,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.Capability.IStorage;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
@@ -95,8 +88,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerChangedDimensionEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -135,12 +126,6 @@ public class DinocraftEntity implements IDinocraftEntity
 	private @Nullable BlockPos lastTeleportPos;
 	/** The position this entity was in right before it last died */
 	private @Nullable BlockPos lastDeathPos;
-	public double lastTickPosX;
-	public double lastTickPosY;
-	public double lastTickPosZ;
-	public double posX;
-	public double posY;
-	public double posZ;
 	private Random rand = new Random();
 
 	public DinocraftEntity(EntityLivingBase entity)
@@ -339,21 +324,6 @@ public class DinocraftEntity implements IDinocraftEntity
 			dinoEntity.reducedFallDamage = false;
 		}
 	}
-
-	/**
-	 * Returns if specified items are equipped on this entity. In this case, null means nothing OR any other item equipped.
-	 */
-	public static boolean isWearing(EntityLivingBase entity, @Nullable Item helmet, @Nullable Item chestplate, @Nullable Item leggings, @Nullable Item boots)
-	{
-		ItemStack helmet2 = entity.getItemStackFromSlot(EntityEquipmentSlot.HEAD);
-		ItemStack chestplate2 = entity.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
-		ItemStack leggings2 = entity.getItemStackFromSlot(EntityEquipmentSlot.LEGS);
-		ItemStack boots2 = entity.getItemStackFromSlot(EntityEquipmentSlot.FEET);
-		return (helmet != null ? helmet2.getItem() == helmet : helmet2.getItem() != helmet)
-				&& (chestplate != null ? chestplate2.getItem() == chestplate : chestplate2.getItem() != chestplate)
-				&& (leggings != null ? leggings2.getItem() == leggings : leggings2.getItem() != leggings)
-				&& (boots != null ? boots2.getItem() == boots : boots2.getItem() != boots);
-	}
 	
 	/**
 	 * Sets this entity's max health to specified amount
@@ -496,6 +466,11 @@ public class DinocraftEntity implements IDinocraftEntity
 	 */
 	public void freeze()
 	{
+		if (!this.entity.world.isRemote && this.entity instanceof EntityPlayerMP)
+		{
+			PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DE_FROZEN, true), (EntityPlayerMP) this.entity);
+		}
+		
 		this.frozen = true;
 	}
 	
@@ -504,6 +479,11 @@ public class DinocraftEntity implements IDinocraftEntity
 	 */
 	public void unfreeze()
 	{
+		if (!this.entity.world.isRemote && this.entity instanceof EntityPlayerMP)
+		{
+			PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DE_FROZEN, false), (EntityPlayerMP) this.entity);
+		}
+		
 		this.frozen = false;
 	}
 	
@@ -544,44 +524,13 @@ public class DinocraftEntity implements IDinocraftEntity
 		this.ticks.regenerationLoopTicks = loopTime * 20;
 		this.ticks.healthToRegenerate = health;
 	}
-	
-	@SubscribeEvent
-	public static void onPlayerTick(PlayerTickEvent event)
-	{
-		if (event.phase == Phase.END)
-		{
-			return;
-		}
-		
-		if (event.player.world.isRemote)
-		{
-			if (event.player.getTags().contains("frozen"))
-			{
-				KeyBinding.unPressAllKeys();
-			}
-		}
-	}
-
-	@SubscribeEvent
-	public static void onLivingAttack(LivingAttackEvent event)
-	{
-		if (event.getSource() == DamageSource.OUT_OF_WORLD)
-		{
-			return;
-		}
-		
-		if (event.getEntityLiving().getTags().contains("frozen"))
-		{
-			event.setCanceled(true);
-		}
-	}
 
 	@SubscribeEvent
 	public static void onPlayerChangedDimension(PlayerChangedDimensionEvent event)
 	{
-		if (!event.player.world.isRemote && event.player.getTags().contains("frozen"))
+		if (!event.player.world.isRemote && DinocraftEntity.getEntity(event.player).isFrozen())
 		{
-			PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+			PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DE_FROZEN, true), (EntityPlayerMP) event.player);
 		}
 	}
 
@@ -590,12 +539,13 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		if (!event.player.world.isRemote)
 		{
-			if (event.player.getTags().contains("frozen"))
+			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
+			
+			if (dinoEntity.isFrozen())
 			{
-				PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+				PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DE_FROZEN, true), (EntityPlayerMP) event.player);
 			}
 			
-			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
 			boolean canFly = !event.player.isCreative() && dinoEntity.canFly();
 			PacketHandler.sendTo(new SPacketAllowFlying(canFly, false), (EntityPlayerMP) event.player);
 			event.player.capabilities.allowFlying = canFly;
@@ -606,7 +556,7 @@ public class DinocraftEntity implements IDinocraftEntity
 	@SubscribeEvent
 	public static void onMouse(MouseEvent event)
 	{
-		if (Minecraft.getMinecraft().player.getTags().contains("frozen"))
+		if (DinocraftEntity.getEntity(Minecraft.getMinecraft().player).isFrozen())
 		{
 			event.setCanceled(true);
 		}
@@ -615,20 +565,23 @@ public class DinocraftEntity implements IDinocraftEntity
 	@SubscribeEvent
 	public static void onPlayerLoggedIn(PlayerLoggedInEvent event)
 	{
-		Set<String> tags = event.player.getTags();
-
-		if (tags.contains("frozen"))
+		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
+		
+		if (dinoEntity.isFrozen())
 		{
-			PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) event.player);
+			PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DE_FROZEN, true), (EntityPlayerMP) event.player);
+		}
+
+		if (dinoEntity.actions.isDreadedFlying())
+		{
+			PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DA_DREADED_FLYING, true), (EntityPlayerMP) event.player);
 		}
 		
-		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(event.player);
 		boolean canFly = event.player.isCreative() || dinoEntity.canFly();
 		boolean isFlying = dinoEntity.isFlying();
 		PacketHandler.sendTo(new SPacketAllowFlying(canFly, dinoEntity.flying), (EntityPlayerMP) event.player);
 		event.player.capabilities.allowFlying = canFly;
 		event.player.capabilities.isFlying = dinoEntity.flying;
-		PacketHandler.sendTo(new SPacketChangeCapability(SPacketChangeCapability.Capability.DA_DREADED_FLYING, dinoEntity.actions.isDreadedFlying()), (EntityPlayerMP) event.player);
 	}
 
 	@SubscribeEvent
@@ -652,21 +605,6 @@ public class DinocraftEntity implements IDinocraftEntity
 		//			creeper.targetTasks.addTask(0, new EntityAIPanic(creeper, 2.0D));
 
 		//		}
-	}
-	
-	public double getLastTickPosX()
-	{
-		return this.lastTickPosX;
-	}
-	
-	public double getLastTickPosY()
-	{
-		return this.lastTickPosY;
-	}
-	
-	public double getLastTickPosZ()
-	{
-		return this.lastTickPosZ;
 	}
 
 	private static Method getExperiencePoints()
@@ -711,16 +649,51 @@ public class DinocraftEntity implements IDinocraftEntity
 	{
 		EntityLivingBase entity = event.getEntityLiving();
 		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(entity);
+
+		if (dinoEntity.ticks.ticksStandingStill >= 60)
+		{
+			if (dinoEntity.ticks.ticksStandingStill % 15 == 0)
+			{
+				if (!entity.world.isRemote)
+				{
+					entity.heal(1.0F);
+				}
+				else
+				{
+					for (int i = 0; i < 16; ++i)
+					{
+						entity.world.spawnParticle(EnumParticleTypes.SPELL_INSTANT,
+								true, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
+								entity.posY + entity.height / 3.0F + entity.world.rand.nextFloat() * entity.height / 3.0F,
+								entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width, 0, 0, 0);
+					}
+				}
+			}
+
+			if (!entity.world.isRemote)
+			{
+				if ((dinoEntity.ticks.ticksStandingStill - 60) % 25 == 0)
+				{
+					if ((dinoEntity.ticks.ticksStandingStill - 60) % 100 == 0)
+					{
+						ItemStack mainhandItem = entity.getHeldItemMainhand(), offhandItem = entity.getHeldItemOffhand();
+						ItemStack stack = mainhandItem.getItem() == DinocraftItems.TUSKERS_JUG ? mainhandItem : offhandItem.getItem() == DinocraftItems.TUSKERS_JUG ? offhandItem : null;
+
+						if (stack != null)
+						{
+							stack.damageItem(1, entity);
+						}
+					}
+
+					entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_DRINK, SoundCategory.PLAYERS, 0.7F, entity.world.rand.nextFloat() * 0.5F + 0.5F);
+				}
+
+				dinoEntity.ticks.incrementTicksStandingStill();
+			}
+		}
 		
 		if (!entity.world.isRemote)
 		{
-			dinoEntity.lastTickPosX = dinoEntity.posX;
-			dinoEntity.lastTickPosY = dinoEntity.posY;
-			dinoEntity.lastTickPosZ = dinoEntity.posZ;
-			dinoEntity.posX = entity.posX;
-			dinoEntity.posY = entity.posY;
-			dinoEntity.posZ = entity.posZ;
-			
 			try
 			{
 				if (entity.world.getGameRules().getBoolean("doMobLoot") && entity.deathTime == 19 && HIT.getInt(entity) <= 0)
@@ -744,39 +717,20 @@ public class DinocraftEntity implements IDinocraftEntity
 
 			}
 
-			if (dinoEntity.isFrozen())
-			{
-				if (entity instanceof EntityPlayerMP && !entity.getTags().contains("frozen"))
-				{
-					entity.addTag("frozen");
-					PacketHandler.sendTo(new SPacketTag("frozen", Action.ADD), (EntityPlayerMP) entity);
-				}
-			}
-			else if (entity instanceof EntityPlayerMP && entity.getTags().contains("frozen"))
-			{
-				entity.removeTag("frozen");
-				PacketHandler.sendTo(new SPacketTag("frozen", Action.REMOVE), (EntityPlayerMP) entity);
-			}
-
 			if (entity.getItemStackFromSlot(EntityEquipmentSlot.FEET).getItem() == DinocraftItems.DREMONITE_BOOTS && dinoEntity.actions.dreadedFlying)
 			{
 				if (entity.ticksExisted % 2 == 0)
 				{
-					float f0 = entity.width * 1.5F;
-					float f1 = entity.height / 4.0F;
-					float f2 = 0.0005F;
-					DinocraftServer.spawnParticles(EnumParticleTypes.SMOKE_LARGE, entity.world, 16, entity.posX, entity.posY + entity.height / 2.0F, entity.posZ, f0, f1, f0, f2, f2, f2);
+					float f0 = entity.width * 2.0F;
+					Vec3d vec = entity.getLookVec().normalize();
+					DinocraftServer.spawnParticles(EnumParticleTypes.SMOKE_LARGE, entity.world, 40, entity.posX + vec.x * 2.0D, entity.posY + vec.y * 2.0D + entity.getEyeHeight() / 1.5D, entity.posZ + vec.z * 2.0D, f0, entity.height * 0.5F, f0, 0, 0, 0);
+
+					if (entity.ticksExisted % 6 == 0)
+					{
+						entity.fallDistance = 0.0F;
+						entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.PLAYERS, 1.0F, entity.world.rand.nextFloat() + 0.25F);
+					}
 				}
-
-				entity.fallDistance = 0.0F;
-
-				if (entity.ticksExisted % 6 == 0)
-				{
-					entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.PLAYERS, 1.0F, entity.world.rand.nextFloat() + 0.25F);
-				}
-
-				entity.addPotionEffect(new PotionEffect(MobEffects.INVISIBILITY, 2, 0, true, false));
-				entity.addPotionEffect(new PotionEffect(MobEffects.BLINDNESS, 18, 0, true, false));
 			}
 
 			if (dinoEntity.actions.boltCount > 0)
@@ -797,6 +751,23 @@ public class DinocraftEntity implements IDinocraftEntity
 				}
 				
 				dinoEntity.actions.shootingCount--;
+			}
+			
+			if (dinoEntity.actions.electrified)
+			{
+				if (entity.ticksExisted % 2 == 0)
+				{
+					float f0 = entity.height / 2.0F;
+					DinocraftServer.spawnElectricParticles(entity.world, 2, 2, 20, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
+				}
+				
+				dinoEntity.ticks.electrifiedTicks--;
+				
+				if (dinoEntity.ticks.electrifiedTicks <= 0)
+				{
+					dinoEntity.ticks.electrifiedTicks = 0;
+					dinoEntity.actions.electrified = false;
+				}
 			}
 			
 			if (dinoEntity.actions.jesterized)
@@ -839,23 +810,6 @@ public class DinocraftEntity implements IDinocraftEntity
 				}
 			}
 			
-			if (dinoEntity.actions.electrified)
-			{
-				if (entity.ticksExisted % 2 == 0)
-				{
-					float f0 = entity.height / 2.0F;
-					DinocraftServer.spawnElectricParticles(entity.world, 2, 2, 20, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
-				}
-				
-				dinoEntity.ticks.electrifiedTicks--;
-				
-				if (dinoEntity.ticks.electrifiedTicks <= 0)
-				{
-					dinoEntity.ticks.electrifiedTicks = 0;
-					dinoEntity.actions.electrified = false;
-				}
-			}
-			
 			if (dinoEntity.actions.fallingCrystals)
 			{
 				if (dinoEntity.ticks.fallingCrystalsTicks % 8 == 0)
@@ -870,8 +824,9 @@ public class DinocraftEntity implements IDinocraftEntity
 							entity.world.getBlockState(new BlockPos(posX, topOfEntity + 1.0D, posZ)).getBlock() == Blocks.AIR)
 					{
 						double posY = topOfEntity + 2.0D;
+						double maxPosY = topOfEntity + 5.0D;
 
-						while (posY < topOfEntity + 5.0D)
+						while (posY < maxPosY)
 						{
 							if (entity.world.getBlockState(new BlockPos(posX, posY, posZ)).getBlock() != Blocks.AIR)
 							{
@@ -904,30 +859,6 @@ public class DinocraftEntity implements IDinocraftEntity
 					dinoEntity.ticks.fallingCrystalsTicks = 0;
 					dinoEntity.actions.fallingCrystals = false;
 				}
-			}
-			
-			if (dinoEntity.actions.standingStill)
-			{
-				if (dinoEntity.ticks.ticksStandingStill % 15 == 0)
-				{
-					entity.heal(1.0F);
-
-					if (entity.world instanceof WorldServer)
-					{
-						double d0 = entity.posY + entity.height / 3.0D;
-						double d1 = entity.width / 2.0F;
-						double d2 = entity.height / 9.0F;
-						((WorldServer) entity.world).spawnParticle(EnumParticleTypes.SPELL_INSTANT, entity.posX, d0, entity.posZ, 10, d1, d2, d1, 0.0D, 0);
-						((WorldServer) entity.world).spawnParticle(EnumParticleTypes.SPELL_WITCH, entity.posX, d0, entity.posZ, 10, d1, d2, d1, 0.0D, 0);
-					}
-				}
-
-				if ((dinoEntity.ticks.ticksStandingStill - 60) % 25 == 0)
-				{
-					entity.world.playSound(null, entity.getPosition(), SoundEvents.ENTITY_WITCH_DRINK, SoundCategory.PLAYERS, 0.7F, entity.world.rand.nextFloat() * 0.5F + 0.5F);
-				}
-
-				dinoEntity.ticks.incrementTicksStandingStill();
 			}
 			
 			if (!(entity instanceof EntityPlayer) && dinoEntity.actions.isMesmerized())
@@ -963,20 +894,12 @@ public class DinocraftEntity implements IDinocraftEntity
 					}
 				}
 
-				//				for (int i = 0; i < 2; i++)
-				//				{
-				//					DinocraftServer.spawnParticle(EnumParticleTypes.SPELL_WITCH, true, entity.world, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-				//							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-				//							0, 0, 0, 0);
-				//				}
-				//
-				//				if (entity.ticksExisted % 2 == 0)
-				//				{
-				//					DinocraftServer.spawnParticle(EnumParticleTypes.END_ROD, true, entity.world, entity.posX + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-				//							entity.posY + entity.world.rand.nextFloat() * entity.height, entity.posZ + entity.world.rand.nextFloat() * entity.width * 2.0F - entity.width,
-				//							entity.world.rand.nextGaussian() * 0.0025D, entity.world.rand.nextGaussian() * 0.0025D, entity.world.rand.nextGaussian() * 0.0025D, 0);
-				//				}
-				
+				if (entity.ticksExisted % 2 == 0)
+				{
+					float f0 = entity.height / 2.5F;
+					DinocraftServer.spawnMesmerizedParticles(entity.world, 3, 1, entity.posX, entity.posY + f0, entity.posZ, entity.width, f0, entity.width);
+				}
+
 				dinoEntity.ticks.mesmerizedTicks--;
 				
 				if (dinoEntity.ticks.mesmerizedTicks <= 0)
@@ -1040,6 +963,10 @@ public class DinocraftEntity implements IDinocraftEntity
 				}
 			}
 		}
+		else if (dinoEntity.isFrozen())
+		{
+			KeyBinding.unPressAllKeys();
+		}
 	}
 	
 	@SubscribeEvent(priority = EventPriority.LOWEST)
@@ -1061,43 +988,9 @@ public class DinocraftEntity implements IDinocraftEntity
 
 			DinocraftEntity newDinoPlayer = DinocraftEntity.getEntity(newPlayer);
 			DinocraftEntity oldDinoPlayer = DinocraftEntity.getEntity(oldPlayer);
-			
 			IStorage<IDinocraftEntity> storage = DinocraftCapabilities.DINOCRAFT_ENTITY.getStorage();
 			NBTBase state = storage.writeNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, oldDinoPlayer, null);
 			storage.readNBT(DinocraftCapabilities.DINOCRAFT_ENTITY, newDinoPlayer, null, state);
-		}
-	}
-	
-	public enum Type
-	{
-		CHAT, ACTIONBAR, TITLE, SUBTITLE
-	}
-	
-	/**
-	 * If this entity is a player, sends a raw message of the specified type to this entity
-	 */
-	public void sendMessage(Type type, String msg)
-	{
-		if (this.entity instanceof EntityPlayerMP)
-		{
-			EntityPlayerMP player = (EntityPlayerMP) this.entity;
-			
-			if (type == Type.ACTIONBAR)
-			{
-				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.ACTIONBAR, new TextComponentString(msg)));
-			}
-			else if (type == Type.CHAT)
-			{
-				player.sendMessage(new TextComponentString(msg));
-			}
-			else if (type == Type.TITLE)
-			{
-				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, new TextComponentString(msg)));
-			}
-			else if (type == Type.SUBTITLE)
-			{
-				player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, new TextComponentString(msg)));
-			}
 		}
 	}
 	
@@ -1260,13 +1153,9 @@ public class DinocraftEntity implements IDinocraftEntity
 		if (DinocraftConfig.WEAPON_RECOIL)
 		{
 			boolean sneaking = entity.isSneaking();
-			//			float f = realism && sneaking ? -knockback / 2.0F : !entity.onGround ? -knockback * 1.5F : -knockback;
-			//			double x = -MathHelper.sin((float) (entity.rotationYaw / 180F * Math.PI)) * f;
-			//			double z = MathHelper.cos((float) (entity.rotationYaw / 180F * Math.PI)) * f;
 			entity.rotationPitch -= sneaking ? recoil / 2.0F : recoil;
 			float f = entity.world.rand.nextFloat() * (recoil / (sneaking ? 3.0F : 2.0F));
 			entity.rotationYaw -= entity.world.rand.nextBoolean() ? f : -f;
-			//			entity.addVelocity(x, 0.0D, z);
 		}
 	}
 	
@@ -1464,32 +1353,21 @@ public class DinocraftEntity implements IDinocraftEntity
 		tag.setFloat("FallDamageReductionAmount", this.fallDamageReductionAmount);
 		tag.setBoolean("Invulnerable", this.invulnerable);
 		tag.setBoolean("Frozen", this.frozen);
-		
-		if (!this.actions.standingStill)
-		{
-			tag.setBoolean("Regenerating", this.regenerating);
-		}
+		tag.setBoolean("Regenerating", this.regenerating);
 		
 		if (this.lastDeathPos != null)
 		{
-			tag.setDouble("LastDeathX", this.lastDeathPos.getX());
-			tag.setDouble("LastDeathY", this.lastDeathPos.getY());
-			tag.setDouble("LastDeathZ", this.lastDeathPos.getZ());
+			tag.setInteger("LastDeathX", this.lastDeathPos.getX());
+			tag.setInteger("LastDeathY", this.lastDeathPos.getY());
+			tag.setInteger("LastDeathZ", this.lastDeathPos.getZ());
 		}
 		
 		if (this.lastTeleportPos != null)
 		{
-			tag.setDouble("LastTeleportX", this.lastTeleportPos.getX());
-			tag.setDouble("LastTeleportY", this.lastTeleportPos.getY());
-			tag.setDouble("LastTeleportZ", this.lastTeleportPos.getZ());
+			tag.setInteger("LastTeleportX", this.lastTeleportPos.getX());
+			tag.setInteger("LastTeleportY", this.lastTeleportPos.getY());
+			tag.setInteger("LastTeleportZ", this.lastTeleportPos.getZ());
 		}
-		
-		tag.setDouble("LastTickPosX", this.lastTickPosX);
-		tag.setDouble("LastTickPosY", this.lastTickPosY);
-		tag.setDouble("LastTickPosZ", this.lastTickPosZ);
-		tag.setDouble("PosX", this.posX);
-		tag.setDouble("PosY", this.posY);
-		tag.setDouble("PosZ", this.posZ);
 
 		this.actions.write(tag);
 		this.ticks.write(tag);
@@ -1511,20 +1389,13 @@ public class DinocraftEntity implements IDinocraftEntity
 		
 		if (tag.hasKey("LastDeathX") && tag.hasKey("LastDeathY") && tag.hasKey("LastDeathZ"))
 		{
-			this.lastDeathPos = new BlockPos(tag.getDouble("LastDeathX"), tag.getDouble("LastDeathY"), tag.getDouble("LastDeathZ"));
+			this.lastDeathPos = new BlockPos(tag.getInteger("LastDeathX"), tag.getInteger("LastDeathY"), tag.getInteger("LastDeathZ"));
 		}
 		
 		if (tag.hasKey("LastTeleportX") && tag.hasKey("LastTeleportY") && tag.hasKey("LastTeleportZ"))
 		{
-			this.lastTeleportPos = new BlockPos(tag.getDouble("LastTeleportX"), tag.getDouble("LastTeleportY"), tag.getDouble("LastTeleportZ"));
+			this.lastTeleportPos = new BlockPos(tag.getInteger("LastTeleportX"), tag.getInteger("LastTeleportY"), tag.getInteger("LastTeleportZ"));
 		}
-		
-		this.lastTickPosX = tag.getDouble("LastTickPosX");
-		this.lastTickPosY = tag.getDouble("LastTickPosY");
-		this.lastTickPosZ = tag.getDouble("LastTickPosZ");
-		this.posX = tag.getDouble("PosX");
-		this.posY = tag.getDouble("PosY");
-		this.posZ = tag.getDouble("PosZ");
 
 		this.actions.read(tag);
 		this.ticks.read(tag);

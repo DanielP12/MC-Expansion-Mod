@@ -8,9 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.world.WorldServer;
 
 public class CPacketDoubleJump extends AbstractPacket<CPacketDoubleJump>
 {
@@ -45,18 +43,16 @@ public class CPacketDoubleJump extends AbstractPacket<CPacketDoubleJump>
 			stack.damageItem(1, player);
 		}
 		
-		for (int i = 0; i < 25; i++)
-		{
-			((WorldServer) player.world).spawnParticle(EnumParticleTypes.CLOUD, true, player.posX + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
-					player.posY - 0.1F * player.height + player.world.rand.nextFloat() * player.height * 0.25F, player.posZ + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
-					1, player.world.rand.nextGaussian() * 0.033D, player.world.rand.nextGaussian() * 0.033D, player.world.rand.nextGaussian() * 0.033D, player.world.rand.nextGaussian() * 0.033D, 1);
-		}
+		//		float f0 = player.width * 1.33F;
+		//		DinocraftServer.spawnParticles(EnumParticleTypes.CLOUD, player.world, 25, player.posX, player.posY - 0.2F * player.height, player.posZ, f0, 0.1F * player.height, f0,
+		//				player.world.rand.nextGaussian() * 0.033D, player.world.rand.nextGaussian() * 0.033D, player.world.rand.nextGaussian() * 0.033D);
 
-		for (int i = 0; i < 20; i++)
-		{
-			((WorldServer) player.world).spawnParticle(EnumParticleTypes.TOTEM, true, player.posX + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
-					player.posY - 0.1F * player.height + player.world.rand.nextFloat() * player.height * 0.25F, player.posZ + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
-					1, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.025D, 1);
-		}
+		//
+		//		for (int i = 0; i < 20; i++)
+		//		{
+		//			((WorldServer) player.world).spawnParticle(EnumParticleTypes.TOTEM, true, player.posX + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
+		//					player.posY - 0.1F * player.height + player.world.rand.nextFloat() * player.height * 0.25F, player.posZ + player.world.rand.nextFloat() * player.width * 2.5F - 1.25F * player.width,
+		//					1, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.25D, player.world.rand.nextGaussian() * 0.025D, 1);
+		//		}
 	}
 }

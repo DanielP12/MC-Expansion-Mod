@@ -28,58 +28,56 @@ public class ItemJestersHat extends ItemArmor
 	{
 		super(material, renderIndex, equipmentSlot);
 	}
-
+	
 	@Override
 	public void onArmorTick(World world, EntityPlayer player, ItemStack stack)
 	{
-		if (!player.getCooldownTracker().hasCooldown(this) && world.isRemote && !player.capabilities.allowFlying && !player.isCreative())
+		if (!player.getCooldownTracker().hasCooldown(this) && world.isRemote && !player.capabilities.allowFlying)
 		{
 			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 			DinocraftEntityActions actions = dinoEntity.getActionsModule();
-
+			
 			if (player.onGround || player.isInWater() || player.isInLava() || player.isOnLadder() || player.isElytraFlying() || player.isRiding())
 			{
 				actions.setHasJumpedInAir(true);
 				actions.setCanJumpInAir(false);
 			}
-
-			if (!player.onGround)
+			else
 			{
 				boolean jumping = dinoEntity.isJumping();
-
+				
 				if (!jumping && !actions.canJumpInAir())
 				{
 					actions.setHasJumpedInAir(false);
 					actions.setCanJumpInAir(true);
 				}
-
-				if (jumping && !actions.hasJumpedInAir())
+				else if (jumping && !actions.hasJumpedInAir())
 				{
 					actions.setHasJumpedInAir(true);
-					dinoEntity.setFallDamageReductionAmount(4.0F);
+					dinoEntity.setFallDamageReductionAmount(2.0F);
 					Vec3d vec = player.getLookVec().normalize();
-					player.motionY = 0.25D;
-					player.motionX += vec.x / 2.5D;
-					player.motionZ += vec.z / 2.5D;
+					player.motionY += 0.33D;
+					player.motionX += vec.x * 0.5D;
+					player.motionZ += vec.z * 0.5D;
 					player.fallDistance = 0.0F;
 					PacketHandler.sendToServer(new CPacketJestersDash());
 				}
 			}
 		}
 	}
-
+	
 	@Override
 	public IRarity getForgeRarity(ItemStack stack)
 	{
 		return EnumRarity.EPIC;
 	}
-
+	
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
 		KeyBinding shift = Minecraft.getMinecraft().gameSettings.keyBindSneak;
-		
+
 		if (GameSettings.isKeyDown(shift))
 		{
 			tooltip.add(TextFormatting.GRAY + "When worn:");

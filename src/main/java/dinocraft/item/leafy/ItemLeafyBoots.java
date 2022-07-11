@@ -33,7 +33,7 @@ public class ItemLeafyBoots extends ItemArmor
 	@Override
 	public void onArmorTick(World world, EntityPlayer player, ItemStack stack)
 	{
-		if (world.isRemote && !player.capabilities.allowFlying && !player.isCreative())
+		if (world.isRemote && !player.capabilities.allowFlying)
 		{
 			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 			DinocraftEntityActions actions = dinoEntity.getActionsModule();
@@ -43,8 +43,7 @@ public class ItemLeafyBoots extends ItemArmor
 				actions.setHasJumpedInAir(true);
 				actions.setCanJumpInAir(false);
 			}
-
-			if (!player.onGround)
+			else
 			{
 				boolean jumping = dinoEntity.isJumping();
 
@@ -53,13 +52,19 @@ public class ItemLeafyBoots extends ItemArmor
 					actions.setHasJumpedInAir(false);
 					actions.setCanJumpInAir(true);
 				}
-
-				if (jumping && !actions.hasJumpedInAir())
+				else if (jumping && !actions.hasJumpedInAir())
 				{
 					actions.setHasJumpedInAir(true);
 					dinoEntity.setFallDamageReductionAmount(5.0F);
 					PotionEffect effect = player.getActivePotionEffect(MobEffects.JUMP_BOOST);
-					player.motionY = effect != null ? effect.getAmplifier() * 0.095D + 0.575D : 0.488D;
+					double d0 = 0.5D;
+
+					if (effect != null)
+					{
+						d0 += 0.075D + effect.getAmplifier() * 0.1D;
+					}
+
+					player.motionY = d0;
 					player.motionX *= 1.015D;
 					player.motionZ *= 1.015D;
 					player.fallDistance = 0.0F;

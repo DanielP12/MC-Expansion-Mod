@@ -20,31 +20,31 @@ public class ItemSplicentsThrowingKnife extends Item
 	{
 		this.setMaxStackSize(16);
 	}
-
+	
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand)
 	{
 		ItemStack stack = player.getHeldItem(hand);
-
+		
 		if (!player.capabilities.isCreativeMode)
 		{
 			stack.shrink(1);
 		}
-		
-		world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.9F / (itemRand.nextFloat() * 0.4F + 0.8F));
 
+		world.playSound(null, player.getPosition(), SoundEvents.ENTITY_WITCH_THROW, SoundCategory.NEUTRAL, 0.5F, 0.9F / (itemRand.nextFloat() * 0.4F + 0.8F));
+		
 		if (!world.isRemote)
 		{
 			EntitySplicentsThrowingKnife knife = new EntitySplicentsThrowingKnife(player, 0.025F);
 			knife.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, itemRand.nextFloat() * 0.5F + 1.5F, 0.5F);
 			world.spawnEntity(knife);
 		}
-
+		
 		player.swingArm(hand);
 		player.addStat(StatList.getObjectUseStats(this));
 		return new ActionResult(EnumActionResult.SUCCESS, stack);
 	}
-
+	
 	@Override
 	public IRarity getForgeRarity(ItemStack stack)
 	{

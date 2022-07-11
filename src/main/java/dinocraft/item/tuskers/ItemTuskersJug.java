@@ -3,12 +3,10 @@ package dinocraft.item.tuskers;
 import java.util.List;
 
 import dinocraft.capabilities.entity.DinocraftEntity;
-import dinocraft.capabilities.entity.DinocraftEntityActions;
 import dinocraft.capabilities.entity.DinocraftEntityTicks;
 import dinocraft.network.PacketHandler;
 import dinocraft.network.client.CPacketChangeCapability;
 import dinocraft.network.client.CPacketChangeCapability.Capability;
-import dinocraft.network.client.CPacketStandingStill;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
@@ -18,7 +16,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IRarity;
@@ -36,56 +33,90 @@ public class ItemTuskersJug extends Item
 		this.setMaxDamage(742);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
-	
+
+	//	@SubscribeEvent
+	//	public void onLivingUpdate(LivingUpdateEvent event)
+	//	{
+	//		EntityLivingBase entity = event.getEntityLiving();
+	//
+	//		if (entity.world.isRemote && entity instanceof EntityPlayer)
+	//		{
+	//			EntityPlayer player = (EntityPlayer) entity;
+	//			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
+	//			ItemStack mainhandItem = entity.getHeldItemMainhand(), offhandItem = entity.getHeldItemOffhand();
+	//			ItemStack stack = mainhandItem.getItem() == this ? mainhandItem : offhandItem.getItem() == this ? offhandItem : null;
+	//
+	//			if (stack != null && player.shouldHeal() && player.posX == player.prevPosX && player.posY == player.prevPosY && player.posZ == player.prevPosZ)
+	//			{
+	//				DinocraftEntityTicks ticks = dinoEntity.getTicksModule();
+	//				ticks.incrementTicksStandingStill();
+	//
+	//				if (ticks.getTicksStandingStill() == 60)
+	//				{
+	//					PacketHandler.sendToServer(new CPacketStandingStill(mainhandItem == stack ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND));
+	//					dinoEntity.getActionsModule().setStandingStill(true);
+	//				}
+	//			}
+	//			else
+	//			{
+	//				dinoEntity.getTicksModule().resetTicksStandingStill();
+	//				DinocraftEntityActions actions = dinoEntity.getActionsModule();
+	//
+	//				if (actions.isStandingStill())
+	//				{
+	//					PacketHandler.sendToServer(new CPacketChangeCapability(Capability.DA_STANDING_STILL, false));
+	//					actions.resetStandingStill();
+	//				}
+	//			}
+	//		}
+	//	}
+
 	@SubscribeEvent
 	public void onLivingUpdate(LivingUpdateEvent event)
 	{
 		EntityLivingBase entity = event.getEntityLiving();
-
+		
 		if (entity.world.isRemote && entity instanceof EntityPlayer)
 		{
-			EntityPlayer player = (EntityPlayer) entity;
-			DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
-			DinocraftEntityTicks ticks = dinoEntity.getTicksModule();
-			DinocraftEntityActions actions = dinoEntity.getActionsModule();
 			ItemStack mainhandItem = entity.getHeldItemMainhand(), offhandItem = entity.getHeldItemOffhand();
 			ItemStack stack = mainhandItem.getItem() == this ? mainhandItem : offhandItem.getItem() == this ? offhandItem : null;
-
-			if (stack != null && player.shouldHeal() && player.posX == player.prevPosX && player.posY == player.prevPosY && player.posZ == player.prevPosZ)
+			
+			if (stack != null && ((EntityPlayer) entity).shouldHeal() && entity.posX == entity.prevPosX && entity.posY == entity.prevPosY && entity.posZ == entity.prevPosZ)
 			{
+				DinocraftEntityTicks ticks = DinocraftEntity.getEntity(entity).getTicksModule();
 				ticks.incrementTicksStandingStill();
-				
+
 				if (ticks.getTicksStandingStill() == 60)
 				{
-					PacketHandler.sendToServer(new CPacketStandingStill(mainhandItem == stack ? EnumHand.MAIN_HAND : EnumHand.OFF_HAND));
-					actions.setStandingStill(true);
+					PacketHandler.sendToServer(new CPacketChangeCapability(Capability.DA_STANDING_STILL, true));
 				}
 			}
 			else
 			{
-				ticks.resetTicksStandingStill();
+				DinocraftEntityTicks ticks = DinocraftEntity.getEntity(entity).getTicksModule();
 
-				if (actions.isStandingStill())
+				if (ticks.getTicksStandingStill() >= 60)
 				{
 					PacketHandler.sendToServer(new CPacketChangeCapability(Capability.DA_STANDING_STILL, false));
-					actions.resetStandingStill();
 				}
+				
+				ticks.resetTicksStandingStill();
 			}
 		}
 	}
-	
+
 	@Override
 	public IRarity getForgeRarity(ItemStack stack)
 	{
 		return EnumRarity.EPIC;
 	}
-	
+
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
 		KeyBinding shift = Minecraft.getMinecraft().gameSettings.keyBindSneak;
-
+		
 		if (GameSettings.isKeyDown(shift))
 		{
 			tooltip.add(TextFormatting.GRAY + "When held:");

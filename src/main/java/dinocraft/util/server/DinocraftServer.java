@@ -19,8 +19,11 @@ import com.mojang.authlib.GameProfile;
 import dinocraft.capabilities.entity.DinocraftEntity;
 import dinocraft.network.PacketHandler;
 import dinocraft.network.client.CPacketSpawnParticle;
+import dinocraft.network.server.SPacketDreadedParticles;
 import dinocraft.network.server.SPacketElectricParticles;
+import dinocraft.network.server.SPacketElectricParticlesConnection;
 import dinocraft.network.server.SPacketJesterParticles;
+import dinocraft.network.server.SPacketMesmerizedParticles;
 import dinocraft.network.server.SPacketSpawnParticle;
 import dinocraft.network.server.SPacketSpawnParticles;
 import net.minecraft.command.CommandException;
@@ -30,6 +33,7 @@ import net.minecraft.command.server.CommandBroadcast;
 import net.minecraft.command.server.CommandEmote;
 import net.minecraft.command.server.CommandMessage;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -40,12 +44,12 @@ import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry.TargetPoint;
 
 public class DinocraftServer
 {
@@ -59,11 +63,11 @@ public class DinocraftServer
 	public static final Map<UUID, MuteEntry> PLAYER_MUTES = new HashMap<>();
 	/** A <code>Map</code> representing the data for every online player */
 	protected static final Map<UUID, EntityPlayerOP> PLAYER_DATA = new HashMap<>();
-
+	
 	public DinocraftServer()
 	{
 		MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-		
+
 		if (server != null && server.isDedicatedServer())
 		{
 			if (server.getFile("groups.json").exists() && !GROUPS.isEmpty())
@@ -71,7 +75,7 @@ public class DinocraftServer
 				GROUPS.load();
 				GROUPS.setLanServer(false);
 			}
-			
+
 			if (server.getFile("forbidden-words.json").exists() && !FORBIDDEN_WORDS.isEmpty())
 			{
 				FORBIDDEN_WORDS.load();
@@ -79,22 +83,22 @@ public class DinocraftServer
 			}
 		}
 	}
-	
+
 	public static boolean isChatEnabled()
 	{
 		return chatEnabled;
 	}
-	
+
 	public static void enableChat()
 	{
 		chatEnabled = true;
 	}
-	
+
 	public static void disableChat()
 	{
 		chatEnabled = false;
 	}
-
+	
 	/**
 	 * Kicks this player from the game with specified message
 	 */
@@ -102,7 +106,7 @@ public class DinocraftServer
 	{
 		((EntityPlayerMP) player).connection.disconnect(new TextComponentString(msg));
 	}
-
+	
 	/**
 	 * Returns a copy of the data for every online player
 	 */
@@ -118,27 +122,27 @@ public class DinocraftServer
 		//		return playerData;
 		return Collections.unmodifiableMap(PLAYER_DATA);
 	}
-	
+
 	public static Map<UUID, MuteEntry> getPlayerMutes()
 	{
 		Map<UUID, MuteEntry> playerMutes = new HashMap<>();
 		Set<Entry<UUID, MuteEntry>> UUIDs = PLAYER_MUTES.entrySet();
 		Iterator<Entry<UUID, MuteEntry>> iterator = UUIDs.iterator();
-		
+
 		while (iterator.hasNext())
 		{
 			Entry<UUID, MuteEntry> entry = iterator.next();
 			MuteEntry muteEntry = entry.getValue();
-
+			
 			if (!muteEntry.hasExpired())
 			{
 				playerMutes.put(entry.getKey(), muteEntry);
 			}
 		}
-
+		
 		return playerMutes;
 	}
-	
+
 	@SubscribeEvent
 	public void onServerChat(ServerChatEvent event)
 	{
@@ -146,20 +150,20 @@ public class DinocraftServer
 		GameProfile profile = player.getGameProfile();
 		DinocraftEntity dinoEntity = DinocraftEntity.getEntity(player);
 		String username = event.getUsername();
-		
+
 		if (!chatEnabled && !dinoEntity.hasOpLevel(2))
 		{
 			player.sendMessage(new TextComponentTranslation("commands.togglechat.tryTalk").setStyle(new Style().setColor(TextFormatting.RED)));
 			event.setCanceled(true);
 		}
-		
+
 		String[] words = FORBIDDEN_WORDS.getKeys();
-		
+
 		if (words != null)
 		{
 			ITextComponent component = event.getComponent();
 			List<String> list = new ArrayList<>();
-			
+
 			for (String word : words)
 			{
 				if (StringUtils.containsIgnoreCase(component.getUnformattedComponentText(), word))
@@ -167,14 +171,14 @@ public class DinocraftServer
 					list.add(word);
 				}
 			}
-			
+
 			list.sort((first, second) -> Integer.compare(second.length(), first.length()));
-			
+
 			for (String word : list)
 			{
 				String formattedText = component.getFormattedText();
 				int endOfUsername = formattedText.indexOf(username) + username.length();
-				
+
 				if (word.equalsIgnoreCase(username))
 				{
 					component = new TextComponentString(formattedText.substring(0, endOfUsername) + formattedText.substring(endOfUsername).replaceAll("(?i)" + word, FORBIDDEN_WORDS.getEntry(word).getReplacement()));
@@ -184,22 +188,22 @@ public class DinocraftServer
 					component = new TextComponentString(formattedText.replaceAll("(?i)" + word, FORBIDDEN_WORDS.getEntry(word).getReplacement()));
 				}
 			}
-			
+
 			//			if (dinoEntity.isNicked())
 			//			{
 			//				component = new TextComponentString(StringUtils.replaceIgnoreCase(component.getFormattedText(), username, dinoEntity.getNickname(), 1));
 			//			}
-			
+
 			event.setComponent(component);
 		}
 	}
-	
+
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public void onCommand(CommandEvent event) throws CommandException
 	{
 		ICommand command = event.getCommand();
 		ICommandSender sender = event.getSender();
-
+		
 		if (sender instanceof EntityPlayerMP)
 		{
 			EntityPlayerMP player = (EntityPlayerMP) sender;
@@ -240,11 +244,11 @@ public class DinocraftServer
 			//					}
 			//				}
 			//			}
-			
+
 			if (command instanceof CommandBroadcast || command instanceof CommandEmote || command instanceof CommandMessage)
 			{
 				GameProfile profile = player.getGameProfile();
-				
+
 				if (!chatEnabled && !DinocraftEntity.getEntity(player).hasOpLevel(2))
 				{
 					player.sendMessage(new TextComponentTranslation("commands.togglechat.tryTalk").setStyle(new Style().setColor(TextFormatting.RED)));
@@ -253,14 +257,14 @@ public class DinocraftServer
 			}
 		}
 	}
-	
+
 	//	@SubscribeEvent
 	//	public void onPlayerLoggedIn(PlayerLoggedInEvent event)
 	//	{
 	//		EntityPlayerMP player = (EntityPlayerMP) event.player;
 	//		GameProfile profile = player.getGameProfile();
 	//		UUID UUID = player.getUniqueID();
-	
+
 	//		try
 	//		{
 	//			PLAYER_DATA.put(UUID, EntityPlayerOP.getOfflinePlayer(UUID));
@@ -305,7 +309,7 @@ public class DinocraftServer
 	//					+ new File("./player_data/errored_data/" + UUID + ".json").getAbsolutePath() + "'");
 	//		}
 	//	}
-	
+
 	/**
 	 * Spawns the particle at the specified position - Server-side.
 	 */
@@ -313,7 +317,7 @@ public class DinocraftServer
 	{
 		PacketHandler.sendToAllAround(new SPacketSpawnParticle(particleType, longRange, xCoord, yCoord, zCoord, xSpeed, ySpeed, zSpeed, parameters), world, longRange ? 262144.0D : 1024.0D);
 	}
-	
+
 	/**
 	 * Spawns the particle around the entity - Server-side.
 	 */
@@ -325,7 +329,7 @@ public class DinocraftServer
 				(float) entity.posZ - zRadius + entity.world.rand.nextFloat() * 2.0F * zRadius,
 				xSpeed, ySpeed, zSpeed, parameters), entity.world, longRange ? 262144.0D : 1024.0D);
 	}
-	
+
 	/**
 	 * Spawns the particle at the specified position - Server-side.
 	 */
@@ -334,36 +338,32 @@ public class DinocraftServer
 		PacketHandler.sendToAllAround(new SPacketSpawnParticles(particleType, particleCount, (float) xCoord, (float) yCoord,
 				(float) zCoord, xOffset, yOffset, zOffset, (float) xSpeed, (float) ySpeed, (float) zSpeed, parameters), world, 1024.0D);
 	}
-	
+
 	public static void spawnJesterParticles(World world, int count1, int count2, double xCoord, double yCoord, double zCoord, float xOffset, float yOffset, float zOffset)
 	{
 		PacketHandler.sendToAllAround(new SPacketJesterParticles(count1, count2, (float) xCoord, (float) yCoord, (float) zCoord, xOffset, yOffset, zOffset), world, 1024.0D);
 	}
-	
+
 	public static void spawnElectricParticles(World world, int count1, int count2, int degreeOfElectricity, double xCoord, double yCoord, double zCoord, float xOffset, float yOffset, float zOffset)
 	{
 		PacketHandler.sendToAllAround(new SPacketElectricParticles(count1, count2, (byte) degreeOfElectricity, (float) xCoord, (float) yCoord, (float) zCoord, xOffset, yOffset, zOffset), world, 1024.0D);
 	}
-
-	/**
-	 * Spawns the particle at the specified position
-	 *
-	 * @param particleType the particle type
-	 * @param longRange whether or not this particle is visible to players that are far away
-	 * @param world the world
-	 * @param xCoord the x-coordinate
-	 * @param yCoord the y-coordinate
-	 * @param zCoord the z-coordinate
-	 * @param xOffset the x-coordinate offset/spread
-	 * @param yOffset the y-coordinate offset/spread
-	 * @param zOffset the z-coordinate offset/spread
-	 * @param particleSpeed the particle speed
-	 */
-	public static void spawnParticle(EnumParticleTypes particleType, boolean longRange, World world, double xCoord, double yCoord, double zCoord, double xOffset, double yOffset, double zOffset, double particleSpeed, int parameters)
+	
+	public static void spawnElectricParticlesConnection(World world, EntityLivingBase entity1, EntityLivingBase entity2, int degreeOfElectricity)
 	{
-		((WorldServer) world).spawnParticle(particleType, longRange, xCoord, yCoord, zCoord, 1, xOffset, yOffset, zOffset, particleSpeed, parameters);
+		PacketHandler.sendToAllAround(new SPacketElectricParticlesConnection(entity1, entity2, (byte) degreeOfElectricity), new TargetPoint(entity1.world.provider.getDimension(), entity1.posX, entity1.posY, entity1.posZ, 1024.0D));
 	}
 
+	public static void spawnMesmerizedParticles(World world, int count1, int count2, double xCoord, double yCoord, double zCoord, float xOffset, float yOffset, float zOffset)
+	{
+		PacketHandler.sendToAllAround(new SPacketMesmerizedParticles(count1, count2, (float) xCoord, (float) yCoord, (float) zCoord, xOffset, yOffset, zOffset), world, 1024.0D);
+	}
+
+	public static void spawnDreadedParticles(World world, int count1, int count2, double xCoord, double yCoord, double zCoord, float xOffset, float yOffset, float zOffset)
+	{
+		PacketHandler.sendToAllAround(new SPacketDreadedParticles(count1, count2, (float) xCoord, (float) yCoord, (float) zCoord, xOffset, yOffset, zOffset), world, 1024.0D);
+	}
+	
 	/**
 	 * Spawns the particle at the specified position - Client-side.
 	 */
@@ -371,7 +371,7 @@ public class DinocraftServer
 	{
 		PacketHandler.sendToServer(new CPacketSpawnParticle(particleType, longRange, xCoord, yCoord, zCoord, xSpeed, ySpeed, zSpeed, parameters));
 	}
-
+	
 	public static void getSide(World world)
 	{
 		if (world.isRemote)

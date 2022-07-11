@@ -43,22 +43,21 @@ public class ItemLeafyPipe extends Item
 		
 		if (!world.isRemote)
 		{
-			if (player.isCreative() || DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL) || DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL_BUNDLE))
+			if (player.capabilities.isCreativeMode || DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL) || DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL_BUNDLE))
 			{
-				//player.getCooldownTracker().setCooldown(this, 10);
 				world.playSound(null, player.getPosition(), DinocraftSoundEvents.SEED_SHOT, SoundCategory.NEUTRAL, 1.0F, world.rand.nextFloat() + 0.5F);
 				
 				if (player.isCreative())
 				{
 					EntitySpikeBall ball = new EntitySpikeBall(player, 0.033F);
-					ball.shoot(player, player.rotationPitch, player.rotationYaw, 0F, 1.75F, 1F);
+					ball.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.75F, 1.0F);
 					world.spawnEntity(ball);
 				}
 				else if (DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL))
 				{
 					EntitySpikeBall ball = new EntitySpikeBall(player, 0.033F);
 					DinocraftEntity.consumeAmmo(player, DinocraftItems.SPIKE_BALL, 1);
-					ball.shoot(player, player.rotationPitch, player.rotationYaw, 0F, 1.75F, 1F);
+					ball.shoot(player, player.rotationPitch, player.rotationYaw, 0.0F, 1.75F, 1.0F);
 					world.spawnEntity(ball);
 				}
 				else if (DinocraftEntity.hasAmmo(player, DinocraftItems.SPIKE_BALL_BUNDLE))
@@ -73,9 +72,10 @@ public class ItemLeafyPipe extends Item
 					}
 				}
 				
-				PacketHandler.sendTo(new SPacketRecoilPlayer(1.05F), (EntityPlayerMP) player);
-				DinocraftEntity.recoil(player, 1.05F);
+				PacketHandler.sendTo(new SPacketRecoilPlayer(1.025F), (EntityPlayerMP) player);
+				DinocraftEntity.recoil(player, 1.025F);
 				stack.damageItem(1, player);
+				player.getCooldownTracker().setCooldown(this, 5);
 				return new ActionResult(EnumActionResult.SUCCESS, stack);
 			}
 			

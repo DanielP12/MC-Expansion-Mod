@@ -22,19 +22,19 @@ public class ItemMagatiumBoots extends ItemArmor
 	{
 		super(material, renderIndex, equipmentSlot);
 	}
-
+	
 	@Override
 	public IRarity getForgeRarity(ItemStack stack)
 	{
 		return EnumRarity.EPIC;
 	}
-
+	
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
 	{
 		KeyBinding shift = Minecraft.getMinecraft().gameSettings.keyBindSneak;
-
+		
 		if (GameSettings.isKeyDown(shift))
 		{
 			tooltip.add(TextFormatting.GRAY + "When worn:");

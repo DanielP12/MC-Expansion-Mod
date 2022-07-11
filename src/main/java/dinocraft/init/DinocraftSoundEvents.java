@@ -11,7 +11,6 @@ import net.minecraftforge.registries.IForgeRegistry;
 public class DinocraftSoundEvents
 {
 	public static final SoundEvent GRAB;
-	public static final SoundEvent CHARM;
 	public static final SoundEvent HARP;
 	public static final SoundEvent SPELL;
 	public static final SoundEvent SEED_SHOT;
@@ -28,7 +27,6 @@ public class DinocraftSoundEvents
 	static
 	{
 		BOUNCE = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "bounce"));
-		CHARM = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "charm"));
 		CLOCK = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "clock"));
 		CRACK = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "crack"));
 		GHOST_WHISPER = new SoundEvent(new ResourceLocation(Dinocraft.MODID, "ghost_whisper"));
@@ -56,7 +54,6 @@ public class DinocraftSoundEvents
 		{
 			IForgeRegistry<SoundEvent> registry = event.getRegistry();
 			registry.register(getUnregisteredSoundEvent(BOUNCE, "bounce"));
-			registry.register(getUnregisteredSoundEvent(CHARM, "charm"));
 			registry.register(getUnregisteredSoundEvent(CLOCK, "clock"));
 			registry.register(getUnregisteredSoundEvent(CRACK, "crack"));
 			registry.register(getUnregisteredSoundEvent(GHOST_WHISPER, "ghost_whisper"));

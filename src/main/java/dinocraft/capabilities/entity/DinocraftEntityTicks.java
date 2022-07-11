@@ -8,7 +8,7 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 	{
 		super(entity);
 	}
-	
+
 	protected int regenerationTicks = 0;
 	protected float regenerationLoopTicks = 0.0F;
 	protected float healthToRegenerate = 0.0F;
@@ -20,22 +20,27 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 	protected int fallingCrystalsTicks = 0;
 	protected int ticksStandingStill = 0;
 	public int jesterSpeedingTicks = 0;
-
+	
 	public int getTicksStandingStill()
 	{
 		return this.ticksStandingStill;
 	}
-
+	
 	public void incrementTicksStandingStill()
 	{
 		this.ticksStandingStill++;
 	}
-
+	
 	public void resetTicksStandingStill()
 	{
 		this.ticksStandingStill = 0;
 	}
-	
+
+	public void setStandingStill()
+	{
+		this.ticksStandingStill = 60;
+	}
+
 	@Override
 	public void write(NBTTagCompound tag)
 	{
@@ -46,16 +51,16 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 		root.setInteger("RegenCount", this.regenerationCount);
 		root.setFloat("RegenHealth", this.healthToRegenerate);
 		root.setInteger("TicksInvulnerable", this.ticksInvulnerable);
-		
+
 		root.setInteger("TicksStandingStill", this.ticksStandingStill);
 		root.setInteger("MesmerizedTicks", this.mesmerizedTicks);
 		root.setInteger("ElectrifiedTicks", this.electrifiedTicks);
 		root.setInteger("JesterizedTicks", this.jesterizedTicks);
 		root.setInteger("FallingCrystalsTicks", this.fallingCrystalsTicks);
-
+		
 		root.setInteger("JesterSpeedingTicks", this.jesterSpeedingTicks);
 	}
-
+	
 	@Override
 	public void read(NBTTagCompound tag)
 	{
@@ -65,13 +70,13 @@ public class DinocraftEntityTicks extends DinocraftEntityModule
 		this.regenerationCount = root.getInteger("RegenCount");
 		this.healthToRegenerate = root.getFloat("RegenHealth");
 		this.ticksInvulnerable = root.getInteger("TicksInvulnerable");
-
+		
 		this.ticksStandingStill = root.getInteger("TicksStandingStill");
 		this.mesmerizedTicks = root.getInteger("MesmerizedTicks");
 		this.electrifiedTicks = root.getInteger("ElectrifiedTicks");
 		this.jesterizedTicks = root.getInteger("JesterizedTicks");
 		this.fallingCrystalsTicks = root.getInteger("FallingCrystalsTicks");
-
+		
 		this.jesterSpeedingTicks = root.getInteger("JesterSpeedingTicks");
 	}
 }

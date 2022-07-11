@@ -23,7 +23,7 @@ public class ItemDremoniteSword extends ItemSword
 	@Override
 	public boolean onEntitySwing(EntityLivingBase entity, ItemStack stack)
 	{
-		if (!entity.isSwingInProgress && !entity.world.isRemote)
+		if (entity.isServerWorld() && !entity.isSwingInProgress)
 		{
 			int sharpness = EnchantmentHelper.getEnchantmentLevel(Enchantments.SHARPNESS, stack);
 			float damage = 5.5F;

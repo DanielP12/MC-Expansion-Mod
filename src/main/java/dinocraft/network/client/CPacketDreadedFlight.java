@@ -6,7 +6,9 @@ import dinocraft.network.AbstractPacket;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.PotionEffect;
 
 public class CPacketDreadedFlight extends AbstractPacket<CPacketDreadedFlight>
 {
@@ -71,10 +73,14 @@ public class CPacketDreadedFlight extends AbstractPacket<CPacketDreadedFlight>
 					}
 				}
 			}
+
+			player.addPotionEffect(new PotionEffect(MobEffects.INVISIBILITY, Integer.MAX_VALUE, 0, true, false));
 		}
 		else
 		{
-			player.getCooldownTracker().setCooldown(DinocraftItems.DREMONITE_BOOTS, 100);
+			player.getCooldownTracker().setCooldown(DinocraftItems.DREMONITE_BOOTS, 120);
+			player.addPotionEffect(new PotionEffect(MobEffects.INVISIBILITY, 0, 1, true, false));
+			player.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 120, 1, false, false));
 		}
 	}
 }

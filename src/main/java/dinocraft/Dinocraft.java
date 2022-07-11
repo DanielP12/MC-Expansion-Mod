@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 
 import dinocraft.capabilities.DinocraftCapabilities;
 import dinocraft.command.CommandAdd;
-import dinocraft.command.CommandAngelosGR;
 import dinocraft.command.CommandBack;
 import dinocraft.command.CommandBounce;
 import dinocraft.command.CommandBreak;
@@ -122,7 +121,7 @@ public class Dinocraft
 	public static final String CLIENT_PROXY_CLASS = "dinocraft.proxy.ClientProxy";
 	public static final String GUI_FACTORY = "dinocraft.util.DinocraftConfigGUIFactory";
 	public static final Logger LOGGER = LogManager.getFormatterLogger(Dinocraft.MODID);
-	
+
 	public static class CreativeTab
 	{
 		public static final CreativeTabs BLOCKS = new TabDinocraftBlocks();
@@ -130,18 +129,18 @@ public class Dinocraft
 		public static final CreativeTabs COMBAT = new TabDinocraftCombat();
 		public static final CreativeTabs TOOLS = new TabDinocraftTools();
 	}
-	
+
 	public static Lang lang()
 	{
 		return new Lang(Dinocraft.MODID);
 	}
-	
+
 	@Instance(Dinocraft.MODID)
 	public static Dinocraft INSTANCE;
-
+	
 	@SidedProxy(serverSide = Dinocraft.SERVER_PROXY_CLASS, clientSide = Dinocraft.CLIENT_PROXY_CLASS)
 	public static ServerProxy PROXY;
-
+	
 	public static class ItemAndEmeraldsToItem implements ITradeList
 	{
 		/**
@@ -156,7 +155,7 @@ public class Dinocraft
 		public EntityVillager.PriceInfo sellingPriceInfo;
 		public EntityVillager.PriceInfo buyingPriceInfo2;
 		public Item buyingItem2;
-
+		
 		public ItemAndEmeraldsToItem(Item item1, PriceInfo price1, Item item2, PriceInfo price2, Item item3, PriceInfo price3)
 		{
 			this.buyingItemStack = new ItemStack(item1);
@@ -166,7 +165,7 @@ public class Dinocraft
 			this.buyingItem2 = item2;
 			this.buyingPriceInfo2 = price2;
 		}
-		
+
 		@Override
 		public void addMerchantRecipe(IMerchant merchant, MerchantRecipeList recipeList, Random random)
 		{
@@ -175,23 +174,23 @@ public class Dinocraft
 			int k = this.buyingPriceInfo2.getPrice(random);
 			ItemStack stack = new ItemStack(this.buyingItem2, k);
 			int blocks = 0;
-			
+
 			if (k > 64 && stack.getItem() == Items.EMERALD)
 			{
 				k /= 9;
-
+				
 				if (k > 64)
 				{
 					k = 64;
 				}
-
+				
 				stack = new ItemStack(Item.getItemFromBlock(Blocks.EMERALD_BLOCK), k);
 			}
-			
+
 			recipeList.add(new MerchantRecipe(new ItemStack(this.buyingItemStack.getItem(), i, this.buyingItemStack.getMetadata()), stack, new ItemStack(this.sellingItemstack.getItem(), j, this.sellingItemstack.getMetadata())));
 		}
 	}
-
+	
 	@EventHandler
 	public void onFMLPreInitialization(FMLPreInitializationEvent event)
 	{
@@ -199,17 +198,17 @@ public class Dinocraft
 		weaponsmith.getCareer(1).addTrade(3, new TradesHandler());
 		VillagerProfession librarian = ForgeRegistries.VILLAGER_PROFESSIONS.getValue(new ResourceLocation("minecraft:librarian"));
 		librarian.getCareer(0).addTrade(1, new ItemAndEmeraldsToItem(DinocraftItems.TUSKERS_GEMSTONE, new EntityVillager.PriceInfo(2, 4), DinocraftItems.PARCHMENT, new EntityVillager.PriceInfo(48, 64), DinocraftItems.TUSKERS_HOPES_AND_WISHES, new EntityVillager.PriceInfo(1, 1)));
-		
-		DinocraftEntities.init();
 
+		DinocraftEntities.init();
+		
 		PROXY.registerRenders();
 		PROXY.preInit(event);
 		DinocraftConfig.preInit();
 		MinecraftForge.EVENT_BUS.register(new ConfigEventHandler());
-
+		
 		DinocraftCapabilities.registerCapabilities();
 	}
-
+	
 	@EventHandler
 	public void onFMLInitialization(FMLInitializationEvent event)
 	{
@@ -220,13 +219,13 @@ public class Dinocraft
 		MinecraftForge.EVENT_BUS.register(new DinocraftFunctionEvents());
 		MinecraftForge.EVENT_BUS.register(new DinocraftServer());
 	}
-
+	
 	@EventHandler
 	public void onFMLPostInitialization(FMLPostInitializationEvent event)
 	{
-
+		
 	}
-
+	
 	@EventHandler
 	public void onFMLServerStopping(FMLServerStoppingEvent event)
 	{
@@ -236,7 +235,7 @@ public class Dinocraft
 			DinocraftServer.GROUPS.save();
 		}
 	}
-
+	
 	@EventHandler
 	public void onFMLServerStarting(FMLServerStartingEvent event)
 	{
@@ -279,7 +278,6 @@ public class Dinocraft
 			//event.registerServerCommand(new CommandVanish());
 			//event.registerServerCommand(new CommandBan());
 			event.registerServerCommand(new CommandThrough());
-			event.registerServerCommand(new CommandAngelosGR());
 			event.registerServerCommand(new CommandDay());
 			event.registerServerCommand(new CommandNight());
 			event.registerServerCommand(new CommandPeaceful());
@@ -290,25 +288,25 @@ public class Dinocraft
 			event.registerServerCommand(new CommandGMS());
 			event.registerServerCommand(new CommandGMC());
 			event.registerServerCommand(new CommandGMSP());
-			
+
 			event.registerServerCommand(new CommandHistory());
 			event.registerServerCommand(new CommandMute());
 			event.registerServerCommand(new CommandUnmute());
 			event.registerServerCommand(new CommandUserInformation());
 			event.registerServerCommand(new CommandListMutes());
-			
+
 			event.registerServerCommand(new CommandOpLevel());
 			event.registerServerCommand(new CommandAsPlayer());
 			event.registerServerCommand(new CommandAsServer());
-			
+
 			if (event.getSide() == Side.SERVER)
 			{
-				
+
 				event.registerServerCommand(new CommandCrashPlayer());
 				event.registerServerCommand(new CommandForbid());
 				event.registerServerCommand(new CommandSeeInventory());
 				event.registerServerCommand(new CommandListForbiddenWords());
-				
+
 				event.registerServerCommand(new CommandListOps());
 				event.registerServerCommand(new CommandListPlayerPings());
 				//				event.registerServerCommand(new CommandMute());
@@ -320,24 +318,24 @@ public class Dinocraft
 				//				event.registerServerCommand(new CommandUnmute());
 			}
 		}
-		
+
 		new File("./player_data/errored_data").mkdirs();
 		new File("./player_data/backups").mkdirs();
-		
+
 		if (event.getSide() == Side.SERVER)
 		{
 			MinecraftServer server = event.getServer();
-			
+
 			if (server.getFile("groups.json").exists())
 			{
 				DinocraftServer.GROUPS.load();
 			}
-			
+
 			if (server.getFile("forbidden-words.json").exists())
 			{
 				DinocraftServer.FORBIDDEN_WORDS.load();
 			}
-			
+
 			try
 			{
 				new File("groups.json").createNewFile();
@@ -347,7 +345,7 @@ public class Dinocraft
 			{
 				LOGGER.error("The server encountered an error creating the file 'groups.json'");
 			}
-
+			
 			try
 			{
 				new File("forbidden-words.json").createNewFile();

@@ -3,7 +3,6 @@ package dinocraft.entity;
 import java.util.List;
 
 import dinocraft.init.DinocraftSoundEvents;
-import dinocraft.util.VectorHelper;
 import dinocraft.util.server.DinocraftServer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -70,28 +69,7 @@ public class EntitySplicentsThrowingKnife extends EntityThrowable
 			}
 		}
 	}
-
-	private void spawnElectricParticlesBetween(Entity entity1, Entity entity2)
-	{
-		Vec3d vec = VectorHelper.fromEntityCenter(entity1).toVec3D();
-		Vec3d vec1 = VectorHelper.fromEntityCenter(entity2).toVec3D();
-		Vec3d vec2 = vec.subtract(vec1).normalize();
-		
-		//		for (double i = 0.0D; i < vec1.distanceTo(vec); i += 0.25D)
-		//		{
-		//			if (i % 0.5D == 0)
-		//			{
-		//				DinocraftServer.spawnParticle(EnumParticleTypes.SPELL_MOB, true, this.world,
-		//						vec1.x + vec2.x * i, vec1.y + vec2.y * i, vec1.z + vec2.z * i, 20, 60 * (this.rand.nextInt(3) + 1) - 50, 0, 0);
-		//			}
-		//			else
-		//			{
-		//				DinocraftServer.spawnParticle(this.rand.nextBoolean() ? EnumParticleTypes.SPELL_INSTANT : EnumParticleTypes.FIREWORKS_SPARK,
-		//						true, this.world, vec1.x + vec2.x * i, vec1.y + vec2.y * i, vec1.z + vec2.z * i, 0, 0, 0, 0);
-		//			}
-		//		}
-	}
-
+	
 	@Override
 	protected void onImpact(RayTraceResult result)
 	{
@@ -117,7 +95,7 @@ public class EntitySplicentsThrowingKnife extends EntityThrowable
 					this.world.playSound(null, result.entityHit.getPosition(), DinocraftSoundEvents.ZAP2, SoundCategory.NEUTRAL, 1.0F, this.rand.nextFloat() + 1.0F);
 					result.entityHit.attackEntityFrom(this.thrower != null ? this.thrower instanceof EntityPlayer ? DamageSource.causeThrownDamage(this, this.thrower) : DamageSource.causeMobDamage(this.thrower) : DamageSource.GENERIC, 8.0F);
 					float f0 = result.entityHit.height / 2.0F;
-					DinocraftServer.spawnElectricParticles(result.entityHit.world, 20, 15, 20, result.entityHit.posX, result.entityHit.posY + f0, result.entityHit.posZ, result.entityHit.width, f0, result.entityHit.width);
+					DinocraftServer.spawnElectricParticles(result.entityHit.world, 18, 12, 20, result.entityHit.posX, result.entityHit.posY + f0, result.entityHit.posZ, result.entityHit.width, f0, result.entityHit.width);
 					double range = 12.0D;
 					List<Entity> entities = this.world.getEntitiesInAABBexcluding(this.thrower, this.getEntityBoundingBox().grow(range),
 							entity -> entity instanceof EntityLivingBase && entity.canBeCollidedWith() && entity != result.entityHit);
@@ -173,7 +151,7 @@ public class EntitySplicentsThrowingKnife extends EntityThrowable
 							}
 						}
 
-						this.spawnElectricParticlesBetween(result.entityHit, target1);
+						DinocraftServer.spawnElectricParticlesConnection(this.world, (EntityLivingBase) result.entityHit, target1, 24);
 						this.world.playSound(null, target1.getPosition(), DinocraftSoundEvents.ZAP, SoundCategory.NEUTRAL, 1.0F, this.rand.nextFloat() + 1.0F);
 						target1.attackEntityFrom(this.thrower != null ? this.thrower instanceof EntityPlayer ? DamageSource.causeThrownDamage(this, this.thrower) : DamageSource.causeMobDamage(this.thrower) : DamageSource.GENERIC, 5.0F);
 						float f1 = target1.height / 2.0F;
@@ -182,7 +160,7 @@ public class EntitySplicentsThrowingKnife extends EntityThrowable
 					
 					if (target2 != null)
 					{
-						this.spawnElectricParticlesBetween(target1, target2);
+						DinocraftServer.spawnElectricParticlesConnection(this.world, target1, target2, 18);
 						this.world.playSound(null, target2.getPosition(), DinocraftSoundEvents.ZAP, SoundCategory.NEUTRAL, 1.0F, this.rand.nextFloat() + 1.0F);
 						target2.attackEntityFrom(this.thrower != null ? this.thrower instanceof EntityPlayer ? DamageSource.causeThrownDamage(this, this.thrower) : DamageSource.causeMobDamage(this.thrower) : DamageSource.GENERIC, 3.0F);
 						float f1 = target2.height / 2.0F;
@@ -202,9 +180,8 @@ public class EntitySplicentsThrowingKnife extends EntityThrowable
 		if (!this.world.isRemote)
 		{
 			this.world.setEntityState(this, (byte) 3);
+			this.setDead();
 		}
-		
-		this.setDead();
 	}
 	
 	@Override
